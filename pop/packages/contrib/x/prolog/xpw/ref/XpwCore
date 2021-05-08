@@ -1,0 +1,99 @@
+REF XPWCORE                                 Andreas Schoter, August 1990
+
+        COPYRIGHT University of Sussex 1990. All Rights Reserved.
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+<<<<<<<<<<<<<<<<<<<<<<<<<                       >>>>>>>>>>>>>>>>>>>>>>>>
+<<<<<<<<<<<<<<<<<<<<<<<<<    XPWCORE  LIBRARY   >>>>>>>>>>>>>>>>>>>>>>>>
+<<<<<<<<<<<<<<<<<<<<<<<<<                       >>>>>>>>>>>>>>>>>>>>>>>>
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+
+         CONTENTS - (Use <ENTER> g to access required sections)
+
+ --  Prolog Predicates
+ --  Resources
+
+
+Prolog Predicates
+-----------------
+
+xpw_set_font(+WIDGETID,+FONTNAME,-FONTID)                    [predicate]
+        Sets the font used for the  window specified by WIDGETID to  the
+        given FONTNAME, which must be  a Prolog atom or string.  Returns
+        the FONTID  if the  font has  been successfully  loaded. If  the
+        attempt to  load  the font  has  not been  successful  then  the
+        predicate fails.
+
+
+xpw_free_font(+WIDGETID,+FONTNAME)                           [predicate]
+        Causes the  entry  for the  font  specified by  FONTNAME  to  be
+        freeded in the font cache for  the WIDGETID. If FONTNAME is  the
+        current font for the widget then the font is set to the  default
+        font.
+
+
+xpw_set_colour(+WIDGETID,+COLORNAME,-COLORID)                [predicate]
+        Sets the colour to be used when drawing on the window  specified
+        by WIDGETID to the colour specified by COLORNAME. COLORNAME must
+        be a Prolog atom or a  Prolog string. If the colour exists  then
+        its ID is returned in COLORID, if the colour does not exist then
+        the call to the predicate fails.
+
+
+xpw_free_color(+WIDGETID,+COLORNAME)                         [predicate]
+        Deletes the entry for  COLORNAME from the  colour cache for  the
+        widget specified by WIDGETID.  If the colour  so removed is  the
+        current  colour then the  current colour is  set to the  default
+        foreground colour.
+
+
+xpw_set_cursor(+WIDGETID,+SHAPE,-CURSORID)                   [predicate]
+        Sets the cursor shape  to that specified  by the SHAPE  argument
+        which must  be an  integer.  The CURSORID  is returned.  If  the
+        cursor cannot be set to the SHAPE then the predicate fails.
+
+
+xpw_free_cursor(+WIDGETID,+SHAPE)                            [predicate]
+        Inspects the cursor cache for  the widget specified by  WIDGETID
+        and if an entry exists for the SHAPE, removes it from the cache.
+        If the entry corresponds to the current cursor then the  current
+        cursor is set to the default cursor shape.
+
+
+Resources
+---------
+
+pointer_shape                                                 [resource]
+        This is  the resource  whos value  is accessed  and altered  via
+        xpw_set_cursor.
+
+
+callback                                                      [resource]
+        Contains the list of callbacks associated with the widget.
+
+
+users_gc                                                      [resource]
+        This resource holds  a pointer to  the default graphics  context
+        specified  for  subclasses  of  XpwCore  widgets.  Other  widget
+        classes modify parts of this resource. The user is referred  the
+        Xlib Programming  Manual, Vol.1,  Ch.6 for  details on  graphics
+        contexts.
+
+
+auto_flush                                                    [resource]
+        This resource is inspected after any  call to a method has  been
+        performed. It it is set TRUE (1) then an XFlush is performed. By
+        setting auto_flush to  FALSE (0) several  methods can be  called
+        without any actions  being performed, then,  when auto_flush  is
+        set TRUE  again,  all  the  methods  will  be  actioned  by  the
+        resulting call to XFlush.
+
+
+modifiers                                                     [resource]
+        This  contains  information   pertaining  to  the   event->state
+        transition after any events in the widget's window.
+
+
+--- C.all/x/plog/ref/XpwCore
+--- Copyright University of Sussex 1990. All rights reserved. ----------

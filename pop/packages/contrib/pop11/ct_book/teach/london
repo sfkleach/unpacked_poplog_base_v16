@@ -1,0 +1,617 @@
+LONDON                                       Mike Sharples, Nov 1985
+
+With the help of this TEACH file you will build an 'automated tourist
+guide' that will answer a tourist's questions about London. It follows
+on from TEACH RESPOND (which introduced 'pattern matching' as a means of
+holding a conversation (of sorts) in normal English) and it describes
+the 'database' as a means of storing fragments of knowledge.
+
+-- OVERVIEW -----------------------------------------------------------
+
+This file will introduce further POP-11 skills:
+
+1) You will store and retrieve items from the POP-11 database, using the
+   commands 'add' and 'present'.  
+
+2) You will be introduced to 'multiple' conditionals, linked by 'and'
+   and 'or'.
+
+3) You will combine database queries with pattern matching responses to
+   produce a simple 'natural language' query system.
+
+
+-- INTRODUCTION -------------------------------------------------------
+
+Imagine you are a visitor to London, standing bewildered near the ticket
+office at Victoria underground station. There is a long queue of people
+at the information window. You just resign yourself to joining it when
+you notice a sign reading 'Automated Tourist Guide'. You walk up to it
+and find a computer terminal displaying the words:
+
+Can I help you? Please type in query about London in normal English.
+For example: How do I get to the National Gallery
+Press the RETURN button to finish the query.
+
+This TEACH file describes the design of a (very simple) version of such
+a guide.
+
+-- USING 'CONVERSE' TO ANSWER SIMPLE QUERIES --------------------------
+
+For some general purpose queries about London we can use the 'Eliza'
+technique of matching the pattern of a user's query and providing a set
+response. For example, a reply to the question 'where is marble arch'
+could be the standard response: 'marble arch is at the west end of oxford
+street' (as in TEACH RESPOND we will sidestep the problem of dealing
+with capital letters by putting everything in lower case). You could
+modify your 'answer' procedure (described in TEACH RESPOND) to deal with
+such questions, eg:
+
+    define answer(query);
+       vars response place;
+        if  query matches [where == marble arch ==] then
+           [at the west end of oxford street]->response;
+        elseif query matches [what == marble arch ==] then
+           [a triumphal arch]->response;
+        elseif query matches [where == information = ??place] then
+           [the a-z of london street atlas will show the location of ^^place .
+           for further information ring the london tourist office.]->response;
+        else
+           [i have no answer to that question]->response;
+        endif;
+        return(response);
+    enddefine;
+
+Notice the pattern
+
+    [where == information = ??place]
+
+This would match a wide range of queries, such as 'where can i get
+information about the national gallery' and give a stock answer, using
+part of the input to form the reply.
+
+Open a new VED file (you could call it 'london.p') and copy across the
+procedures in your 'respond.p'. To do this you need to:
+
+    Press: ENTER
+    Type:  ved london.p                          <to open the new file>
+    Press: RETURN
+
+    Press: ENTER
+    Type:  r respond.p       <this reads respond.p into your new file>
+    Press: RETURN
+
+Now delete the entire 'answer' procedure in your new file (by moving the
+cursor to the first line of the procedure then repeatedly pressing the
+F2 key). Lastly, copy the 'answer' procedure from this TEACH file into
+your own file. You can do this by marking the entire 'answer' procedure
+shown earlier in this TEACH file (with the F7 and F8 keys) and then
+typing:
+
+    <ESC>x                       <to move to your london.p file>
+Move the cursor to the place where you want the 'answer' procedure to go
+    ENTER ti                     <to copy 'answer' into 'london.p'>
+
+The command 'ti' stands for 'transcribe in'. It copies a marked range
+from one file to another. Try out 'answer' by calling it from within your
+controlling procedure, 'converse':
+
+      converse([emma tourist]);
+
+-- EXERCISE -----------------------------------------------------------
+
+Modify your 'ready' procedure in 'london.p' so that it prints out a more
+appropriate message.
+
+For the next part of this TEACH file you will be learning how to use the
+POP-11 'database'. Since this section is not directly concerned with
+the 'tourist guide' you should open another file (called eg 'temp.p') to try
+the exercises.         
+
+-- KNOWLEDGE REPRESENTATION --------------------------------------------
+
+There are two major problems with the 'answer' procedure as a basis for
+a tourist guide. First, as we pointed out in TEACH RESPOND, its language
+capabilities are limited. Pattern matching is not adequate for dealing
+with the full complexity of English language. The other, rather more
+subtle, problem is that we need to produce a little chunk of knowledge
+(in the form of an if....then condition) for every type of question. It
+would be nice to have a general database containing nuggets of knowledge
+like
+
+            [[marble arch] at [the west end of oxford street]]
+            [[marble arch] near [hyde park]
+            [[marble arch] isa [landmark]]
+            [[marble arch] description [a triumphal arch]]
+            [[kensington palace] near [hyde park]]
+            [[the national gallery] at [trafalgar square]]
+            etc.
+
+and to provide a few general purpose if...then conditions that call
+on this knowledge to answer a wide range of questions like 'what
+is near hyde park?', or 'where is the national gallery'. POP-11 has a
+facility, called the 'database package', for storing and retrieving
+simple facts.
+
+-- THE DATABASE -------------------------------------------------------
+
+The database has many many uses. It can be used when writing planning
+programs, game playing programs, vision programs and, of course,
+language programs (like ELIZA). This file introduces the following
+procedures for manipulating the database:
+
+        ADD which adds a 'fact' to the database
+        PRESENT which checks if a fact is in the database
+        REMOVE which removes a fact
+
+The initial value of the database is an empty list. You can check this
+by giving the following command (type it in, then mark it and run it
+with ENTER lmr):
+
+    database =>
+
+Suppose we wanted to store the fact that Marble Arch is near Hyde Park.
+We could 'add' a list which states that fact, in English, for example:
+
+    add([marble arch is near hyde park]);
+
+We could also store the fact that Marble Arch is a triumphal arch:
+
+    add([marble arch is a triumphal arch]);
+
+Add these two commands to the end of your temp.p file, mark and run
+them, and then print out the database with the command:
+
+    database =>
+
+-- STORING MORE 'FACTS' -------------------------------------------
+
+Now try adding some more facts to the database, for example:
+
+    add([kensington palace is near hyde park]);
+    add([the national gallery is at trafalgar square]);
+    database=>
+
+-- THE PRETTY PRINT ARROW IS PRETTIER THAN THE PRINT ARROW ------------
+
+Notice how when there are several things in the database it is a bit
+hard to read. This is because the 'print arrow', =>, doesn't try to lay
+things out neatly. The 'pretty print arrow', ==>, is better; try it:
+
+    database ==>
+
+When there are only a few things in the database, there is no difference
+between "=>" and "==>".
+
+-- THE POP-11 SYSTEM DOESN'T REALLY KNOW WHAT'S IN THE DATABASE -------
+
+Just because one element of the list which is the value of 'database'
+has the form:
+
+    [the national gallery is at trafalgar square]
+
+that does NOT mean that the computer KNOWS the whereabouts of the
+National Gallery, anymore then ELIZA knows what it is to be unhappy. All
+that is happening is that various 'list structures' are being built and
+modified in the computer's short term memory. We can 'add' any list to
+the database, for example:
+
+    add([foo baz]);
+    database ==>
+
+All that happens is that an extra element gets added to the list stored
+as the value of 'database'. I.e. 'add' adds its 'argument' to the
+database. (NB 'argument' is a technical word meaning the input to a
+procedure).
+
+-- THERE IS NOTHING SPECIAL TO THE WORD 'DATABASE' ---------------------
+
+To summarize, the 'database' is NOT some special sort of object; it is
+just another POP-11 variable. Its value is a list of lists. We choose to
+interpret 'database' as a collection of 'facts' - but POP-11 doesn't
+interpret the list at all; as far as POP-11 is concerned, 'database' is
+a list like any other list.
+
+-- WE CAN CHECK IF THINGS ARE IN THE DATABASE ------------------------------
+
+A database that can only be added to is a bit useless. We need some simple
+way of testing to see if some item is 'present' in the 'database'.
+Try the following:
+
+    present([marble arch is a triumphal arch])=>
+    present([kensington palace is near hyde park])=>
+
+-- PRESENT CAN TAKE A PATTERN CONTAINING VARIABLES --------------------------
+
+You have already have met the use of 'pattern variables' in connection
+with 'matches' (patterns can be used as the second argument to
+'matches'). 'present' can also be given a pattern as its argument, i.e. a
+list with one or more pattern variables. Try out the following:
+
+    vars x;
+    present([??x is at trafalgar square]) =>
+    x=>
+    present([??x is at hyde park])=>
+    x=>
+    present([marble arch is ??x]) =>
+    x=>
+
+-- PRESENT RETURNS A TRUTH VALUE AND SETS QUERY VARIABLES ------------------
+
+Notice how 'present' returns true if the the thing you give it is in the
+database and how it returns false otherwise. Notice also that if there
+are 'query variables' in the argument given to 'present' it will search
+for an appropriate item in the database. It sets the value of any such
+variable, just as 'matches' does. (See TEACH MATCHES) If 'present'
+returns false then the value of the query variable is unpredictable
+(it's just coincidence that x has the value [marble arch is near hyde
+park] in the second example above).
+
+-- A EXAMPLE OF PRESENT BEING USED IN A PROCEDURE --------------------------
+
+We normally usually use 'present' as an 'if' condition. Here is an
+example of a simple procedure using the database:
+
+    define scold(person);
+      if present([^^person is at the pub]) then
+          [i always knew ^^person was a drunkard] =>
+      else
+          [i always knew ^^person was to be trusted] =>
+      endif;
+    enddefine;
+
+Add this procedure to your temp.p file, load it, and then try using it,
+for example:
+
+    []->database;
+    scold([steve]);
+    add([steve is at the pub]);
+    database ==>
+    scold([steve]);
+
+Notice that we cleared the database of the old information simply by
+making it the empty list, with the line:
+
+    []->database;
+
+Notice also how the result of calling 'scold' is conditional on the
+state of the database.
+
+-- HOW TO REMOVE SELECTED ITEMS FROM THE DATABASE ---------------------     
+
+We now introduce yet another procedure, called 'remove', which (how did
+you guess?) removes an item from the database. Put some items into the
+database, for example:
+
+    []->database;
+    add([mary kisses john]);
+    add([john kisses jane]);
+    add([steve kisses tarina]);
+    database ==>
+
+-- AN EXAMPLE OF HOW TO USE 'REMOVE' ----------------------------------
+
+Now remove some items from the database, for example:
+
+    remove([john kisses jane]);
+    database ==>
+
+-- REMOVE - LIKE PRESENT BUT NOT ADD - CAN BE GIVEN QUERY VARIABLES
+
+Notice how 'remove', like 'add', is a 'silent' procedure - it causes
+nothing to be printed. Also it produces no result. Despite this it is
+not useless, for it changes the value of the variable 'database'. That
+is, it has a 'side effect'.
+
+'remove', like 'present' (but not 'add') can be given an item containing
+query variables although this is less useful than in 'present', for
+example:
+
+    remove([steve kisses ??x]);
+
+will 'remove' a fact about Steve's romantic habits from the database.
+Should there be several such facts then 'remove' will pick just one for
+removal. Either way, the query variables (in this case x) will be set as
+appropriate. (In case your program needs to know who steve used to
+kiss.)
+
+-- REMOVE CAN'T REMOVE SOMETHING THAT ISN'T THERE ----------------------
+
+What do you suppose 'remove' will do if the item to be deleted isn't in
+the database to begin with? Try it and see:
+
+    remove([ronald kisses nancy]);
+
+-- SUMMARY OF THE DATABASE PROCEDURES -------------------------------------
+
+In summary, the three main database procedures are 'add', 'present' and
+'remove'.
+
+ADD adds its argument to the database.
+PRESENT produces the result TRUE if, and only if, its argument is in the
+database.
+REMOVE removes its argument.
+PRESENT and REMOVE can be given arguments containing query variables.
+
+DATABASE is a simple POP-11 variable which has as value a list.
+
+-- FINDING MANY ITEMS -------------------------------------------------
+
+Suppose you have a collection of facts stored in the database. You may
+wish to find a single item, or you may wish to find several items.
+'present' can only find a single item. Lets demonstrate with a database
+of information about some places. Go back to your 'london.p' file and
+add this procedure at the start of it:
+
+    define places();
+        []  -> database;        ;;; clear the database
+        add([marble arch is a landmark]);
+        add([marble arch is at the west end of oxford street]);
+        add([marble arch is near hyde park]);
+        add([kensington palace is a building]);
+        add([kensington palace is near hyde park]);
+        add([the national gallery is a building]);
+        add([the national gallery is near nelsons column]);
+        add([nelsons column is a landmark]);
+    enddefine;
+
+(You could extend this procedure with more examples of the same kind).
+We'll use this procedure every time we want to start off with a new database.
+Load the procedure then try it out:
+
+    database ==>
+    places();
+    database ==>
+
+-- PRESENT FINDS ONE THING ONLY ---------------------------------------
+
+We have information about two landmarks in the database, but if you do
+
+    present([??x is a landmark])=>
+    x =>
+
+and then do it again
+
+    present([??x is a landmark])=>
+    x =>
+
+you'll see that it always finds the same thing (provided the database
+has not changed in between).
+
+That's fine if you just want to get the name of any one landmark. But
+suppose you want to find the names of all of them?
+
+-- FOREACH ITERATES SELECTIVELY OVER THE WHOLE DATABASE ----------------
+
+The POP-11 syntax word 'foreach' can be used to solve the problem.
+Try the following:
+
+    foreach [??x is a landmark] do x => endforeach;
+
+Every time the pattern matches a database item, the instruction x=> will
+be obeyed. FOREACH has the format:
+
+    foreach <pattern> do <action> endforeach
+
+-- TRIPLES ARE A COMPACT MEANS OF REPRESENTING KNOWLEDGE --------------
+
+Adding statements to the database expressed in English is not an
+efficient and effective way of storing knowledge for subsequent
+retrieval. Given free English we might, for example, store entries for
+the Science Museum and Natural History Museum as:
+
+    add([the science museum is next to the natural history museum]);
+    add([the science museum is beside the geological museum]);
+    add([the science museum is near the victoria and albert museum]);
+
+in which case
+
+    foreach [the science museum is near ??x] do x=> endforeach;
+
+would only pick out
+
+    [the victoria and albert museum]
+
+because the other two entries do not match the pattern. So a standard
+way of storing structured information for retrieval by pattern matching
+is 'triples' of the form:   
+
+    [<item1> <relation> <item2>]
+
+with <relation> being one of a restricted set of words. The particular
+set will depend on the application; for our purposes it will be words
+like: "near", "description", "transport", "at". The items are lists,
+such as [trafalgar square]. Some examples of triples are:                     
+
+    [[science museum] near [geological museum]]
+    [[marble arch] at [the west end of oxford street]]
+    [[marble arch] isa [landmark]]
+
+You may well ask why the <relation> isn't a list also. There's no
+particular reason, just convention. Also, because the relations don't
+have any special 'meaning' to POP-11, then we can just as well use a
+non-English name for a link (such as 'isa'), providing we, the
+programmers, use appropriate patterns to match against it.
+
+-- EXERCISE -----------------------------------------------------------
+
+Rewrite your 'places' procedure in 'london.p' so that each entry added
+to the database is in the form of a triple. Thus the first 'add' line
+would be:
+
+    add([[marble arch] isa [landmark]]);
+
+Load it, and then try out the database by typing, for example:
+
+    []->database;
+    places();
+    foreach [?x near [hyde park]] do x=> endforeach;
+
+NB. We are now using ?x to match the item, rather than ??x. This is
+because a triple only contains three items (unlike the free-English
+lists used earlier) and we can pick out the first element of the triple
+with ?x. To make sure you understand the difference between ?x and ??x,
+try:
+
+    foreach [??x near [hyde park]] do x=> endforeach;
+
+What is printed out now? Why?
+
+-- PUTTING IT ALL TOGETHER --------------------------------------------
+
+You can now make use of the database to answer queries. You should by
+now have five procedures in your 'london.p' file, in this order: places,
+respond, ready, answer, converse. If you have any other procedures or
+commands in the file then now is a good time to tidy it up.
+
+Look at your controlling 'converse' procedure. As well calling 'respond'
+and 'ready' you want it to set up a database. Your 'places' procedure
+does just that, so add a call of 'places' to 'converse'. Below the
+second line in 'converse' add the line:
+
+    places();
+
+Next you need to alter 'answer' so that, instead of just producing a
+'canned' reply, it refers to the database:
+
+    define answer(query);
+       vars response x y;
+        if  query matches [where is ??x] and present([^x at ?y])then
+           [^^x is at ^^y]->response;
+        elseif (query matches [== description of ??x] or
+                query matches [== describe ??x]) and
+                present([^x description ?y]) then
+           [^^x is ^^y]->response
+        elseif query matches [what == near ??x] and
+               present([?y near ^x]) then   
+           [^^y is near ^^x]->response;
+        else
+           [i have no answer to that question]->response;
+        endif;
+        return(response);
+    enddefine;
+
+
+Let's look at one if..then condition from 'answer' in detail:
+
+        if  query matches [where is ??x] and present([^x at ?y])then
+           [^^x is at ^^y]->response;
+
+The 'if' statement has a 'multiple' condition, with two conditions:
+
+    1) query matches [where is ??x]
+    2) present([^x at ?y])
+
+They are linked by the operator 'and'. This requires that, for the
+entire condition to be <true>, both conditions must be <true>. If one or
+other, or both, conditions are <false> then the multiple condition is
+<false>. 'And' is a 'boolean operator'.
+
+A typical value of the variable 'query' might be:
+
+    [where is marble arch]
+
+The first line of the conditional matches 'query' against
+
+    [where is ??x]
+
+In this case the match succeeds and the list:
+
+    [marble arch]
+
+is assigned to 'x'. Given this value of 'x', the second part of the
+condition evaluates to:
+
+    present([[marble arch] at ?y]);
+
+Note that we used a double question mark '??x' to pick out a part of the
+query list and then a single up-arrow '^x' to put that, as a list, into
+the argument for 'present'. The database, set up by 'places', should
+look something like this:
+
+    [...[[marble arch] near [hyde park]]
+        [[marble arch] at [the west end of oxford street]]
+        [[marble arch] description [a triumphal arch]] ..... ]
+
+Thus the argument to 'present' will match against
+
+    [[marble arch] at [the west end of oxford street]]
+
+and will assign the value
+
+    [the west end of oxford street]
+
+to the variable 'y'. Also, the entire condition will be <true> and so
+the action part will be executed. This consists of:
+
+           [^^x is at ^^y]->response;
+
+Given the values of [marble arch] for 'x' and [the west end of oxford
+street] for 'y', then
+
+    [marble arch is at the west end of oxford street]
+
+will be assigned to 'response' and thus be returned as a result of
+'answer'. The second if...then in 'answer' contains three conditions:
+
+        elseif (query matches [== description of ??x] or
+                query matches [== describe ??x]) and
+                present([^x description ?y]) then
+           [^^x is ^^y]->response
+
+It has the form:
+
+    if (<a> or <b>) and <c> then
+
+In English this means: 'If <c> is true and either <a> or <b> is true (or
+both of them are true) then the whole condition is true, otherwise it's
+false.'
+
+-- EXERCISE -----------------------------------------------------------
+
+Extend 'places' to create your own database with information about
+tourist attractions in the centre of London. Then extend your 'answer'
+procedure to respond to a range of questions, such as:
+
+    'where is hyde park'
+    'what is near buckingham palace'
+    'how do i get to the national gallery'
+
+To answer the last question you will need to add database items of the
+form:
+
+    [<item1> transport <item2>]
+
+where <item1> is the name of a place and <item2> is a list of
+directions, such as [take a tube train on the victoria line] (remember
+that the tourist guide is supposed to be situated at Victoria Station).
+
+-- ADDITIONAL EXERCISE FOR THE KEEN -----------------------------------
+
+So far we have been concerned only with extracting items from the
+database. What about adding items? Suppose you want to provide a
+facility for London Transport employees to add new information to the
+tourist guide using English language commands. Let's say also that they
+have to type in a code word (such as 'expert') before a command. So they
+would type in eg:
+
+    expert westminster abbey is near the houses of parliament
+
+and the program would automatically add the item:
+
+    [[westminster abbey] near [the houses of parliament]]
+
+to the database. All we need to do is add extra if...then conditions to
+'answer', such as:
+
+    elseif query matches [expert ??x is near ??y] then
+      add([^x near ^y]);
+      [ok now i know that ^^x is near ^^y]->response;
+
+The call of 'add' automatically adds the item to the database, so later,
+when a person types in 'what is near the houses of parliament' they
+would get the response 'westminster abbey is near the houses of
+parliament'. Simple isn't it?
+
+--- File: local/teach/london
+--- Distribution: all
+--- University of Sussex Poplog LOCAL File ------------------------------

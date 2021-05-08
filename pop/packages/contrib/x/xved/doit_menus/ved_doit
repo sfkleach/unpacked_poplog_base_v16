@@ -1,0 +1,395 @@
+HELP VED_DOIT                                     Aaron Sloman July 1991
+
+LIB VED_DOIT
+
+Provides an extendable, portable, VED based menu mechanism, including a
+mechanism partly similar to the "pinnable" persisten menus of Open Look,
+so that you don't have to search repeatedly for the same menu.
+
+    ENTER doit
+        Do a menu action
+    ENTER menu [topic]
+        Browse menu files
+    ENTER clear_menu_files
+        Get rid of menu files
+    ENTER makemenu
+        Provide header for a new menu file
+
+         CONTENTS - (Use <ENTER> g to access required sections)
+
+ -- Introduction
+ -- Format of menu files
+ -- Getting started
+ -- Selecting a menu option
+ -- Getting rid of menu files
+ -- Browsing the menus
+ -- Size of menu windows
+ -- Adding new menus
+ -- More on action types
+ -- RETURNAFTER and RETURNTHEN actions
+ -- QUIT actions
+ -- Recognizing menu files
+ -- WARNING
+ -- NOTE
+
+-- Introduction -------------------------------------------------------
+
+This is an experimental VED-based menu facility for driving VED, HELP,
+etc. inspired by the XVED menus available with OpenWindows.
+
+This package is available for XVED users who do not have access to or do
+not like the Openwindows-based or Motif-based XVED menu facility, as it
+does not depend on Openwindows or Motif widgets. In fact, it simply uses
+ordinary VED files as menus, though it displays them in a smaller
+window, to indicate that they are menus. Thus in some ways it is more
+primitive, but also a lot more portable. It even works on dumb vdus (and
+might be useful with LIB WINDOWS, which allows more than two files to be
+visible at once.)
+
+It is also (almost) "modeless", in the sense that you never go into a
+mode in which your normal VED actions are not available. E.g. when
+providing a file name as argument for a selected action the full VED
+editing commands are available, unlike the X "dialogue boxes".
+Similarly, in a menu file all normal VED facilities are available,
+including VED search, mark, copy. And you can quit a menu the same way
+you quit any other VED file, though there is a mechanism to get rid of
+all VED menu files.
+
+The only exception is that the menu-driven actions themselves cannot be
+used on menu files because they work on the last NON-menu file you were
+editing.
+
+It is still very much a "rough draft", put together in a great hurry,
+and subject to improvements.
+
+
+-- Format of menu files -----------------------------------------------
+
+Apart from the header, menu files have three kinds of entries:
+
+    1. Comments explaining the following items. (Not many of these)
+    2. Pointers to other menus. These are always indicated by a
+        right pointing arrow "--->" in the menu option.
+    3. Actions that are immediately available.
+
+To examine a menu file do,
+
+load $popcontrib/x/xved/doit_menus/ved_doit.p
+
+then try the following, to look at some available menus.
+
+
+    ENTER menu menu
+        (This gets the "top-leve" menu"
+    ENTER menu range
+    ENTER menu search
+    ENTER menu replace
+
+Alternatively you can invoke the top level menu with a mouse key, as
+explained below, after compiling the library file.
+
+Every menu file, at present, ends with a pointer back to the top level
+menu file, so that from any file you can easily get to all the others.
+However, there is no compulsion to have menu files in this format.
+
+The menu entries are represented by a description, followed by "!!"
+(usually in column 45 or later, but not necessarily so), followed by
+some code that can be compiled and run. If invoked within XVED,
+everything apart from the description will be invisible, because of the
+narrowness of the window.
+
+The format for the action specifications following "!!" is described
+below.
+
+
+-- Getting started ----------------------------------------------------
+
+If someone has put the ved_doit.p file in one of your library
+directories, you should be able to do
+
+    lib ved_doit
+
+otherwise
+
+load $popcontrib/x/xved/doit_menus/ved_doit.p
+
+Under XVED you should then be able to get the top level menu by holding
+down the META key and (quickly) clicking button 3 (the right button)
+once. This runs the ved_doit command.
+
+The ved_doit command, if run outside a menu file, whether invoked on the
+command line (ENTER doit), by a key sequence (CTRL-X d), or a mouse
+click, gets you the top level menu file, called menu_menu which is a
+pointer to other menu files.
+
+(Currently the menu_menu file points to ALL the others, but lower level
+ones don't need to be mentioned in the top level file if the set of
+menus grows.)
+
+The menu files remain in VED (and therefore on the screen) once
+selected, though invoking a menu option keeps bringing the last non-menu
+file back to the top of vedbufferlist, and this may cover up some menu
+files. However, they are easily retrieved by selecting them from the top
+level menu.
+
+
+-- Selecting a menu option --------------------------------------------
+
+To select a menu item, you move the VED cursor to it, and run ved_doit.
+Within XVED this is done with a mouse click, as described above. You can
+also use the sequence "CTRL-X d". Or use vedsetkey, or vedset to assign
+your own key sequence. (See HELP * VEDSET, HELP * VEDSETKEY).
+
+The XVED mouse action described as
+
+    "click button 3 while holding META".
+
+invokes the procedure. See HELP * XVEDMOUSE
+
+The META key is marked "LEFT" on Sun3s, and has a diamond mark on
+some Sun4 keyboards. There may be other marking conventions depending
+on the keyboard.
+
+(This setting should avoid clashes with other XVED facilities. But if
+used with TWM it could clash with something in your .twmrc, if you have
+assigned a twm function to the combination of META and button 3).
+
+If you wish to change the program to use button 3 on its own, which is
+far more convenient, try the following
+
+    vedset mouse (at front)
+        doit = click btn3
+        clearmenus    = click btn3 2 times
+    endvedset;
+
+
+-- Getting rid of menu files ------------------------------------------
+
+This is trivial because each file is a VED file and you can get rid
+of them just like any other VED file, e.g. point at the file and do
+ESC q, or ENTER q, or use any key that you have mapped onto ved_q,
+or use the window manager quit option (if you are using one that
+XVED understands for other files.)
+
+In addition, there is a procedure ved_clear_menu_files that gets rid of
+ALL menu files currently in VED.
+
+It is assigned to
+    CTRL-X q
+and to
+    "click button 3 twice while holding META"
+
+And can be invoked as
+
+    ENTER clear_menu_files
+
+The above "vedset mouse" command changes this so that you don't need
+to hold the META key down.
+
+There is also a procedure ved_qdoit, which gets rid of the menu files
+consulted since the most recent non-menu file before doing an action. At
+present this is not assigned to a button or key sequence, though it
+could be.
+
+
+-- Browsing the menus -------------------------------------------------
+
+The command
+    ENTER menu
+
+will get you the first file called menu_menu found in a directory in
+vedmenulist, as explained above.
+
+Similarly
+
+    ENTER menu topic
+
+will search directories in vedmenulist until it finds a file called
+topic_menu (e.g. range_menu, search_menu etc. are available).
+
+So the ENTER menu command can be used to browse the menus without
+performing any of the menu actions.
+
+This may be useful for finding out what kinds of facilities are worth
+attaching to key sequences or function keys in your vedinit.p , e.g.
+using ved_dk, (or associating with mouse actions).
+
+(This supplements the REF files REF * VEDCOMMS and REF * VEDPROCS,
+which include all such avilable procedures, but not separated
+out from other VED procedures.)
+
+-- Size of menu windows -----------------------------------------------
+
+By default the menu windows will appear with vedscreenwidth set to 45,
+and vedscreenlength set to 10. This can be varied by assigning to
+menuColumns and menuRows. E.g. to make menu windows really tiny do:
+5 -> menuRows;
+
+
+-- Adding new menus ---------------------------------------------------
+
+You can add your own collection of menus by putting files with names
+of the form <topic>_menu in a directory whose name you put onto
+vedmenulist, and then for each file use the command
+
+    ENTER makemenu
+
+to put a header in that will be recognized subsequently as indicating
+a menu file. (The present format is provisional, and could change).
+
+You can copy the "system" version of "menu_menu" add pointers to some of
+your own menus, and they will then immediately be avilable. Nothing gets
+compiled to build internal menu structures: the menu structure consists
+entirely of disk files, so that there is no space overhead in your
+program, and the structures can be as circular as you like, with related
+menus pointing to each other. You can have as many menus available as
+you like without adding to your process size, unless you actually invoke
+them.
+
+The cost is that use of the menus causes files to be read in and
+selected actions to be compiled and run, which produces a garbage
+collection overhead. But that will hardly add to the normal VED garbage
+collection load, which is usually not noticeable.
+
+It is very easy to add a collection of menus for a group of people, e.g.
+students on a course, or a project team, by creating a directory to
+go on vedmenulist, and of course, the standard menus can be completely
+shadowed if required.
+
+However, in order to access the menus entirely via the mouse it is
+necessary to ensure that your top level menu is called menu_menu.
+
+Instead you can have a toplevel menu with a different name, e.g.
+top_menu, and invoke it via the command
+
+    ENTER menu top
+
+after which you can use the mouse to access sub-menus referred to
+in it.
+
+
+-- More on action types ----------------------------------------------
+
+If you create menu files, you will probably find it easiest to copy
+those that are already provided. E.g. to look at some of the formats do
+
+    ENTER menu range
+    ENTER menu file
+    ENTER menu miscellaneous
+
+Either enlarge the window or use VED's TEXTRIGHT key to examine the
+actions to the right of the "!!" marks in the file.
+
+Currently there are the following types of action specifications
+in menu files, occurring to the right of "!!"
+
+1. A string, e.g.
+
+    !!      'menu range'
+    !!      'help vedsearch'
+
+The string is given as argument to veddo, so it is treated as an ENTER
+command.
+
+
+2. An expression that evaluates to a procedure. Examples are
+
+    !!      ved_cut <> ved_splice
+    !!      ved_m
+    !!      sysdelete(%vedpathname%) <> erase
+    !!      useslib(%"popxlib"%) <> useslib(%"popxved"%)
+
+3. An interactive command line specification, consisting of the
+word "ENTER" followed by a string e.g.
+
+    !!      ENTER 'ds '
+    !!      ENTER 'r '
+    !!      ENTER 'sendmr '
+    !!      ENTER 'gs/'
+
+These take you back to the last non-menu file, put the string on the
+command line, and then leave you to complete the command and press
+RETURN.
+
+-- RETURNAFTER and RETURNTHEN actions ---------------------------------
+
+Some of the actions in menu files are preceded by RETURNAFTER. These are
+things that are likely to be done more than once in succession, and
+therefore VED returns to the menu file (if it has not been quit) after
+doing the required actin. E.g. the delete menu includes
+
+    !!  RETURNAFTER vedlinedelete
+    !!  RETURNAFTER ved_yankl
+    !!  RETURNAFTER vedclearhead
+    !!  RETURNAFTER ved_yankw
+
+Some menus include actions are preceded by RETURNTHEN. These actions are
+temporarily placed on vedprocesstrap, instead of being done immediately.
+They are then done later, after the event handler has finished. These
+are things that apparently don't work well if invoked by a callback,
+e.g. vedfileselect, or anything else that invokes vedinascii. E.g.
+an action could be
+
+    !! RETURNTHEN vedfileselect
+
+
+-- QUIT actions -------------------------------------------------------
+
+If the action starts with QUIT then on selection of the action the menu
+file will always be abandoned. This is useful for actions that
+themselves create temporary menu files, such as the action to create a
+menu of files currently in the editor. This is the second option in the
+file menu. It creates a list of files each associated with an action
+(invisible to the right of the VED window) to go to that file.
+
+The list of action types may be extended later.
+
+
+-- Recognizing menu files ---------------------------------------------
+
+The procedure is_ved_menu_file returns true if the current file is a
+menu file, otherwise false.
+
+It can therefore be used to define a new version of vedloadline, thus,
+
+define menu_loadline;
+    if is_ved_menu_file() then
+        ved_doit()
+    else
+        vedloadline()
+    endif
+enddefine;
+
+This can then be assigned to CTRL-d
+
+vedsetkey('\^D', "menu_loadline");
+
+
+-- WARNING ------------------------------------------------------------
+
+Do not try to associate a menu option with a procedure that directly
+attempts to read input from the terminal. If you need to use such a
+procedure (e.g. vedfileselect) use the RETURNTHEN keyword before
+it, e.g.
+
+        !!      RETURNTHEN vedfileselect
+
+
+
+-- NOTE ---------------------------------------------------------------
+
+This was all done in a great hurry to explore the possibility of basing
+a portable easily extendable "modeless" menu system on relatively
+primitive VED facilities, with menus indefinitely extensible as files.
+
+Many cosmetic improvements are possible within an Xpop environment
+including choice of special fonts or colours for menus, etc.
+
+Similarly tools could be provided to make it easier to create menu
+files.
+
+
+Comments welcome.
+
+--- $popcontrib/x/xved/doit_menus/ved_doit
+--- Copyright University of Sussex 1991. All rights reserved. ----------

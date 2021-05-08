@@ -1,0 +1,10 @@
+-rw-r--r--    1 axs      poplog       2237 Oct 10 16:13 contrib/nlp_book/AREADME
+-rw-r--r--    1 axs      poplog      69383 Apr 23  1993 contrib/ai_through_search/progall.p
+-rw-r--r--    1 axs      poplog      48424 Apr 23  1993 contrib/ai_through_search/progall.pl
+-rw-r--r--    1 axs      poplog       9710 Jun 28  1991 contrib/ved/ved_auto_mins.p
+-rw-r--r--    1 axs      poplog       2867 Nov 19  1990 contrib/ved/ved_so.p
+-rw-r--r--    1 axs      11            344 Sep 14  1990 contrib/pwm/AREADME
+
+contrib/pml/WorkingProgrammer:
+total 6
+drwxr-xr-x    2 axs      11            512 Jul 31  1995 ORIG

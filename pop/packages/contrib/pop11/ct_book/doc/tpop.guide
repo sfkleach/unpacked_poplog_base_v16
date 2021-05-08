@@ -1,0 +1,259 @@
+                          REFERENCE GUIDE TO TPOP-11
+                          ==========================
+
+This guide lists the words, symbols and structures of the TPOP subset of
+POP-11, in roughly the order that you will meet them during the lectures. Those
+items not enclosed in angle brackets <> are POP11 reserved words (ie they have
+a special meaning to POP-11). A relevant help file is indicated by a star, eg
+*LISTS. To read it press ENTER and type: help lists .
+
+
+ITEM        DESCRIPTION AND HELP FILE            EXAMPLE
+----        -------------------------            -------
+
+<Word>      A letter followed by a series of     "cat"
+            letters or digits (including the     "a_long_word"
+            underscore). It may also be          "M1"
+            a series of signs such as $          "#$#$#$#"
+            A word is put in double quotes,
+            except within a list. *WORDS
+
+<Number>    One or more digits, with an          55
+            optional decimal point. *NUMBERS     3.14159
+
+<List>      A series of text items, such as      [a b c d]
+            words, numbers, and other lists,     [1 Acacia Avenue]
+            within square brackets. *LISTS       [[CAT CHAT][DOG CHIEN]]
+
+;;;         Begins a comment (text that will     ;;; This is a comment.
+            be ignored by POP11). The comment
+            ends at the end of the line. *COMMENT
+
+vars        Used to declare variables. *VARS     vars x y z;
+
+;           Terminates commands.                 vars a; 100->a;
+
+undef       Printed out for a variable that      vars xxx;
+            has been declared, but not had a     xxx=>
+            value assigned to it. *UNDEF         ** <undef xxx>
+
+=>          Print arrow. *PRINTARROW             3+4=>
+                                                 ** 7
+==>         Pretty print arrow (prints a long
+            list tidily). *PRINTARROW
+
+=>>         Print lists without the brackets.    [[the] [cat] [sat]] =>>
+                                                 the cat sat
+
+->          Assignment arrow. Assigns a value    vars a;
+            to a variable.                       100->a;
+
+^           Includes the value of a variable     vars animal;
+            in a list. *ARROW                    "cat"->animal;
+                                                 [the ^animal sat]=>
+                                                 ** [the cat sat]
+
+^^          Includes the value of a variable     vars animal;
+            (which must be a list) inside        [orang utang]->animal;
+            another list. *ARROW                 [the ^^animal sat]=>
+                                                 ** [the orang utang sat]
+<Procedure> A 'package' of POP11 commands,
+            usually with a name. *PROCEDURES
+
+define      Mark the start and end of a          define perim(width,height);
+enddefine   procedure definition *DEFINE           return(2*width + 2*height);
+                                                 enddefine;
+
+return      Ends the current procedure. Any      define first_and_last(list);
+            results to be returned from the         return(list(1),
+            procedure are typed in brackets            list(length(list)));
+            after the 'return'. *RETURN          enddefine;
+
+readline()  A POP11 procedure that prints a ?    readline()->input_words;
+            and then waits for input from the
+            terminal. Any words typed on the
+            line after the ? are returned as
+            a list. *READLINE
+
+date()      A procedure that returns a list      date()=>
+            giving the current time and date.    ** [18 Sep 1985 11 47 16]
+            *DATE
+
+length(<item>)                                   length([the cat sat])=>
+            A procedure that returns the         ** 3
+            length of an item. *LENGTH           length("iguana")=>
+                                                 ** 6
+<Subscript>
+            An element can be picked from a      vars sentence animal;
+            list by giving its position in       [the cat sat]->sentence;
+            brackets after the name *LISTSUMMARY sentence(2)->animal;
+
+oneof(<list>)                                    vars throw;
+            Returns an element picked at random  oneof([1 2 3 4 5 6])->throw;
+            from a list. *ONEOF
+
++           Adds one number to another.          width+height->half_perim;
+
+*           Multiplies two numbers.              3.14159*d->circum;
+
+/           Divides one number by another.       total/items->average;
+
+//          Divides one integer by another to    10//3 ->dividend ->remainder;
+            get dividend and remainder,
+
+**          Raises one number to the power of    2**3=>
+            another.                             ** 8
+
+(   )       Round brackets have two uses. They   3+(2*4)=>
+            can alter the order of evaluation    ** 11
+            in expressions, or they can enclose  perim(45,23)=>
+            the arguments to a procedure.        ** 136
+            *ROUNDBRA
+
+<Boolean>   A variable whose value is either     true
+            true or false. Used in conditionals  false
+            and loops. *BOOLEAN
+
+?<variable> Matches one item inside a list       mylist matches [?first ==]
+            pattern and makes that the value
+            of the variable. *MATCHES
+
+??<variable>                                     alist matches [?first ??rest]
+            Matches zero or more items within
+            a list pattern and makes the list
+            of matched items the value of the
+            variable. *MATCHES
+
+=           Has two uses. It tests whether two   a=100
+            items are equal. It also matches
+            one item inside a list pattern.      mylist matches [= cat sat]
+            *EQUAL *MATCHES
+
+
+==          Has two uses. It tests whether two   a==[cat]
+            items are identical. It also
+            matches zero or more items inside    mylist matches [== cat ==]
+            a pattern. *MATCHES
+
+/=          Tests whether two items are unequal. a /= b
+            * EQUAL
+
+/==         Tests whether two items are not
+            identical.               
+
+>           Compares two numbers. The result is
+            true if the first is greater.
+
+>=          Compares two numbers. The result is
+            true if the first is greater or equal.
+
+<           Compares two numbers. The result is
+            true if the first is smaller.
+
+<=          Compares two numbers. The result is
+            true if the first is smaller or equal.
+
+and         Forms the 'conjunction' of two       x>0 and x<100
+            boolean expressions. *AND
+
+or          Forms the 'disjunction' of two       word="cat" or word="puss"
+            boolean expressions. *OR
+
+not         Negates a boolean expression. *NOT   not(list matches [== cat ==])
+
+if          Marks the start of an 'if'           if english="cat" then
+            conditional. *IF                        "chat"=>
+                                                 endif;
+then        Ends the condition part of an 'if'
+            conditional. *THEN
+
+elseif      Begins a second (or subsequent)      if english="cat" then
+            condition in an 'if' statement.        "chat"=>
+            *ELSEIF                              elseif english="dog" then
+                                                   "chien"=>
+else        Marks the beginning of the           else
+            alternative course of action in        [I dont know]=>
+            a conditional. *ELSE                 endif;
+
+endif       Marks the end of a conditional.
+            *ENDIF
+
+matches     Compares a list with a pattern. It   vars sentence;
+            returns true if they match, false    [the cat sat]->sentence;
+            otherwise.                           sentence matches [= cat =] =>
+                                                 ** <true>
+
+database    A POP11 variable whose value is      database==>
+            the database. *DATABASE
+
+add(<list>)                                      add([john loves mary]);
+            Puts an item into the database.
+            *ADD
+
+remove(<pattern>)                                remove([john loves =]);
+            Removes an item matching the
+            pattern from the database.
+
+
+
+present(<pattern>)                               if present([?x loves mary])
+            Searches the database for an item      then
+            matching the database and returns      x=>
+            true if it is found, false           endif;
+            otherwise.
+
+it          A variable that is set by 'add',    if present([?x loves mary])
+            'remove', 'present' and 'foreach'.  then
+            Its value is the last item found        it=>
+            in the database. *IT                 endif;
+
+repeat      Marks the start of a repeat loop.    repeat
+            *REPEAT                                readline()->line;
+                                                   quitif(line/=[]);
+endrepeat   Marks the end of a repeat loop.      endrepeat;
+            *ENDREPEAT
+
+times       Indicates the number of times a      repeat 4 times;
+            is to be repeated (If it is omitted    "."=>
+            then looping is forever, unless      endrepeat;
+            halted by quitif). *TIMES
+
+quitif(<expression>)                             2->n;
+            If the expression is true then       repeat;
+            quit the loop. This example and        quitif(n>1000);
+            the one using the while loop           n=>
+            below are equivalent (ie they          n*n->n;
+            give the same result). *QUITIF       endrepeat;
+
+while       Marks the start of a while loop.     2->n;
+            *WHILE                               while n<=1000 do
+                                                    n=>
+do          Ends the condition part of a            n*n->n;
+            'while', 'for', or 'foreach' loop.   endwhile;
+            *DO
+
+endwhile    Marks the end of a while loop.
+            *ENDWHILE
+
+for         Marks the start of a for loop.       for x in [paris london] do
+            *FOR                                   [^x is a city]=>
+                                                 endfor;
+endfor      Marks the end of a for loop. *ENDFOR
+
+foreach     Marks the start of a foreach loop,   vars x y;
+            which matches a pattern against      foreach [?x loves ?y] do
+            each item in the database. *FOREACH     it=>
+                                                 endforeach;           
+endforeach  Marks the end of a foreach. *FOREACH
+
+trace <names of procedures>                       trace add first_and_last;
+            A command that alters procedures so
+            they print out helpful information.
+            (NB. You can trace built-in
+            procedures like 'add'). *TRACE
+
+untrace <names of procedures>                     untrace add first_and_last;
+            A command that switches off tracing
+            of the named procedures. *TRACE
+
+untraceall  Switches off any traces.*UNTRACEALL   untraceall;

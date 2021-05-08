@@ -1,0 +1,489 @@
+TEACH CT_ELIZA                                              Chris Hutchison
+                                                            15th October 1986
+
+
+File:           $usepop/pop/local/teach/ct_eliza
+Purpose:        Background to dialogue and question-answering systems for CT.
+Author:         Chris Hutchison 15th October 1986
+Machines:
+Documentation:  referenced in text
+Related Files:  HELP *ELIZA, TEACH *RESPOND, HELP *DOCTOR, LIB *DOCTOR
+
+
+
+1.  Computer applications for natural language.
+
+        Why should we want to  develop computational models of language? Below
+are described five of the more important areas of research, though the list is
+far from exhaustive.  A concise and eminently readable  historical overview of
+research in natural language processing is David Waltz's "The State of the Art
+in  Natural Language  Understanding",  which is  the  introductory chapter  to
+Lehnert & Ringle (eds.), Strategies for Natural Language Processing, 1982.
+
+  1.1.  Machine translation.
+
+        The  first application  area to  receive significant  attention (~late
+1940s) was  the translation of  texts (specifically, scientific  and technical
+papers) from one language to another.  It was widely believed that there would
+be  a  tremendous  problem  caused  by  the  expansion  of  the  international
+scientific  community during  the  post-war years,  and  that without  machine
+translation it would  be impossible to handle the massive  number of documents
+to be translated. Although there was work  on a variety of languages, the main
+focus  of research  in  the  west was  Russian-to-English  and,  in the  east,
+English-to-Russian.
+
+        The quality of the translations produced, however, was extremely poor,
+automatic  translation  proving a  far  more  formidable  task than  had  been
+anticipated. The failure  of the initial idea for machine  translation -- that
+it  was basically  a process  of dictionary  look-up, plus  substitution, plus
+grammatical  re-ordering --  is well  illustrated by  the following  (probably
+apocryphal) story  of the  sentence "The  spirit is willing  but the  flesh is
+weak" translated into  Russian and then back into English:  the translation is
+said to have come out as "The vodka is strong but the meat is rotten".
+
+        This early work  on machine translation came to an  ignominious end in
+the early 1960s after the failure to build any reasonably successful automatic
+translator. It is  only in the past  few years that interest in  the field has
+been re-awoken;  and there are  currently several research  projects underway,
+the most  ambitious probably  being the  EEC's EUROTRA  Project to  develop MT
+systems for use in commercial communications within the European community.
+
+
+  1.2.  Information retrieval.
+
+        The amount  of information to be  stored and retrieved was,  after the
+last war, growing even fast than that  to be translated, so that another early
+vision of  computer possibilities was the  'library of the future'.  Much more
+than simply  cataloguing books and  papers, computers  would be able  to store
+representations of  their contents and either  retrieve texts on the  basis of
+information  given by  the  user or  use the  stored  information to  generate
+answers to specific questions by the user.
+
+        It  is especially  the latter  that has  been a  central topic  in the
+development of computational  models of language, including  research into the
+formal  structure of  natural  language, the  connections  between the  formal
+structure  and the  meanings conveyed,  the  intentions of  speakers in  using
+certain forms of language, the importance of real-world knowledge, and so on.
+
+
+  1.3.  Scanning and summarizing newspaper articles, etc.
+
+        Very often  one will be interested  in certain keys aspects  of a news
+story, not  in the minor and  contingent details. A meterological  office, for
+example, might be interested in a  volcanic eruption in the south Atlantc from
+the point  of view of  its possible consequences  for future weather,  but not
+from the point  of view of, say,  danger to shipping or effect  on fishing. It
+becomes a waste  of man-hours to get human beings  to laboriously skim through
+every story that  comes in over a  news-wire, and to select  and summarize the
+important ones, if one can get a machine that can do just that, tirelessly and
+reliably. News  skimming programs  now exist, the  most famous  probably being
+FRUMP. That such systems are not  yet perfect, however, is well illustrated by
+the classic  mistake FRUMP  made in  response to  the following  headline to a
+story:
+
+        <<POPE'S DEATH SHAKES THE WESTERN HEMISPHERE>>
+
+    FRUMP'S summary:
+
+      THERE WAS AN EARTHQUAKE IN THE WESTERN HEMISPHERE.  THE POPE DIED.
+
+Can you guess how the mistake was made?
+
+
+  1.4. Human-machine interaction.
+
+        As well as being used to  provide information from some stored body of
+knowledge, a  natural language  understanding system  is useful  in situations
+where the computer is being used  to perform some task. Consider the advantage
+there is to the non-programmer in being  able to use ordinary language to give
+commands, ask questions,  enter information, and so forth, to  a machine which
+can  in turn  produce  natural  language descriptions  of  what  is going  on,
+explanations  that enable  the program  to  explain why  certain actions  were
+taken, what  state it is in  at a given time,  and the like. Those  of you who
+have seen  the film '2001' may  be reminded of the  'user-friendliness' of the
+computer HAL.
+
+        An  important  major  use  of  such systems  would  be  in  'knowledge
+acquisition'.  Some knowledge-based  systems, known  as 'expert  systems', are
+based on  a large body  of stored knowledge  about a particular  problem area,
+such  as medical  diagnosis  or  oil-well exploration,  for  instance. In  the
+building of such  systems, it would be  useful to 'cut out the  middle man' --
+the computer  programmer -- by  having the expert  in some domain  feeding his
+expertise directly into the expert system.
+
+        A  related research  area is  the  development of  systems that  allow
+programmers  to   specify  computer  programs   in  natural  language   or  in
+natural-language-like programming languages.
+
+
+  1.5.  Computer aided instruction.
+
+        The  building of  systems  that do  not simply  make  use of  'canned'
+language (in the form of questions, answers, and explanations that are rigidly
+pre-planned) but  which can deal  intelligently with  the content of  both the
+pre-stored material and the student's queries and responses is a current vogue
+area of research.
+
+
+  1.6.  Cognitive modelling.
+
+        It has often been remarked that language is a 'mirror of the mind'. If
+we  understood  how   language  worked,  we  would  be  a   long  way  towards
+understanding  how the  rest  of the  mind works  in  reasoning, learning  and
+remembering. Much of the research on  psycholinguistics has a double aim -- to
+understand  language,  and  to  understand the  mind  through  its  linguistic
+abilities. The development  of cognitive theories of language plays  a role in
+the development of more general theories of cognition.
+
+
+
+2.  A short history of early dialogue systems.
+
+  2.1.  The semantic information-processing era.
+
+        Out of the  rubble of machine translation work grew  an effort that is
+closely associated with artificial intelligence. One of the more notable ideas
+of  this  era  which  has  persisted  was  the  use  of  limited  domains  for
+language-understanding  systems.  Rather  than attempting  to  understand  all
+language, the limited-domain approach is to  design a system that is expert in
+one specific  domain of language, but  perhaps knows nothing at  all about any
+other domain.
+
+        Up to now  I have been using words such  as 'understanding' and 'know'
+in a rather fast and loose manner. As  we shall see below, words such as these
+should be treated as highly figurative, if not downright misleading, when used
+to describe the early dialogue systems of the 1960s.
+
+
+  2.2.  'Engineering approaches'.
+
+        There was  a proliferation of dialogue  and question-answering systems
+in the 1960s, of which a representative sample is:
+
+                BASEBALL    1963
+                ELIZA       1966
+                STUDENT     1968
+                SIR         1968
+                PARRY       1971
+                (see Boden [1977], chapter 5)
+
+each  of which  illustrates the  'limited  domain' or  'micro-world' trend  in
+dialogue systems.  I call these  'engineering approaches' to  natural language
+understanding  for two  related reasons:  (i) they  attempted merely  to mimic
+human  (verbal)  behaviour in  specific  problem  domains  and not  to  embody
+whatever psychological  reality lies behind  out ability to use  language, and
+(ii) they paid very little  attention to specifically linguistic insights into
+the nature of language.
+
+        Of the  two main  trends in the  engineering approach  towards natural
+language  --   database  question-answering  systems  and   key-word  systems,
+exemplified by, for instance, the two  early systems, BASEBALL and ELIZA -- we
+shall focus chiefly on the latter.
+
+
+  2.3.  ELIZA
+
+        You  have had  the opportunity  to play  around with  either ELIZA  or
+DOCTOR or both during the first two weeks of this course, and perhaps you have
+some intuitions now as to how the system(s) work.
+
+        ELIZA was  written by Joseph Weizenbaum,  in 1966, as a  program which
+could "converse"  in English.  Weizenbaum chose the  name ELIZA  because, like
+Shaws's Eliza Doolittle, it could be  taught to "speak" increasingly well. The
+program consisted  of two parts, the  one a language analyzer  (or recognizer)
+and the second a  "script" (not to be confused with the use  of that term more
+recently by Schank et  al.) which was a set of rules it  would use to generate
+appropriate  replies  in  specific  knowledge domains,  say  cooking  eggs  or
+managing a bank account.
+
+        The most  famous "script"  used by  ELIZA is  that of  a non-directive
+psychotherapist,  relatively easy  to imitate  because much  of his  technique
+consists of  drawing his  patient out by  reflecting the  patient's statements
+back at him. It  is this version of the program, dubbed  DOCTOR, that you have
+been playing with. ELIZA/DOCTOR's performance -- as a demonstration vehicle --
+was extremely impressive, so much so  that it produced some unanticipated and,
+for its designer at least, unwanted results:
+
+    a)  A number of practicing psychiatrists seriously believed that DOCTOR
+        could grow into a nearly completely automatic form of psychotherapy.
+        The psychoanalyst, Kenneth Colby who, with his co-researchers, was
+        working on the computer simulation of neurosis at the same time at
+        which Weizenbaum was developing ELIZA, wrote of the DOCTOR program
+        that                
+
+            If the method proves beneficial, then it would provide a
+            therapeutic tool which can be made widely available to
+            mental hospitals and psychiatric centres suffering a shortage
+            of therapists.  Because of the time-sharing capabilities of
+            modern and future computers, several hundred patients an hour
+            could be handled by a computer system designed for this
+            purpose.  The human therapist, involved in the design and
+            operation of this system, would not be replaced, but would
+            become a much more efficient man since his efforts would no
+            longer be limited to the one-to-one patient-therapist ratio
+            as now exists.
+            [Weizenbaum, 1984:5].
+
+    b)  Weizenbaum was startled to see how quickly and how deeply people
+        conversing with DOCTOR became emotionally involved with the computer
+        and how unequivocally they anthropomorphosized it.  Once, his
+        secretary, though aware that DOCTOR was merely a computer program,
+        started conversing with it and, after only a few exchanges with it,
+        asked its designer to leave the room.  Other users felt that DOCTOR
+        'really understood' them, and resented Weizenbaum's suggestion that
+        he examine their interactions with it, accusing him of spying on their
+        personal and private conversations.
+
+    c)  Another widespread and surprising reaction to ELIZA was the spread of
+        a belief that it demonstrated a general solution to the problem of
+        computer understanding of natural language.  (As we shall see, however,
+        ELIZA's apparent knowledge of English is as wholly illusory as is its
+        knowledge of Rogerian psychotherapy; more of that later).
+
+The significance  of these reactions  may become clearer  if we make  a slight
+digression  to talk  about  two  topics which  have  become  important in  AI,
+'intentionality' and 'the imitation game'.
+
+
+3.1.  Digression 1: Intentionality.  
+
+        I wish to invoke the  concept of 'intentional systems'. An intentional
+system is one whose behaviour can be -- at least much of the time -- explained
+and predicted  by relying on  ascriptions to  the system of  beliefs, desires,
+hopes, fears, intentions, hunches, and other such mental attitudes. That is, a
+particular thing is  an intentional system only in relation  to the strategies
+of someone who is trying to explain and predict its behaviour.
+
+        Consider, by way of example, the case of a chess-playing computer, and
+the  different strategies  or stances  one might  adopt, as  its opponent,  in
+trying to predict its moves. First, there is the 'design stance': if one knows
+exactly how the  computer, or its chess-playing program, is  designed, one can
+predict  its  designed  response  to  any move  one  makes  by  following  the
+instructions in the program. We can say, "Oh, it made this move because it was
+programmed to behave in such-and-such a way  in response to that move and that
+configuration of pieces" just as we can  say of a coffee machine, "It produced
+this cup  of coffee  because I  put 10 pence  into the  slot and  pressed that
+button".
+
+        Second, there is  what we might call the  'physical stance', according
+to  which our  predictions  are based  on  the actual  physical  state of  the
+particular object, and  are worked out by applying whatever  knowledge we have
+of the laws of  nature. It is from this stance that  we might predict,say, the
+the malfunction  of systems that  are not  behaving as designed.  For example,
+"This coffee machine isn't working because it hasn't been plugged in".
+
+        But  the  best  chess-playing  computers these  days  are  practically
+inaccessible  to prediction  from either  the  design stance  or the  physical
+stance; they have become too complex for even their own designers to view from
+the design stance.  A man's best hope  of defeating such a machine  in a chess
+match is to predict its responses by figuring out as best he can what the best
+or  most rational  move would  be, given  the rules  and goals  of chess.  Put
+another way,  when one  can no longer  hope to beat  the machine  by utilizing
+one's knowledge of programming or of  physics to anticipate its responses, one
+may still be  able to avoid defeat  by treating the machine rather  in the way
+one would an intelligent human opponent. This third stance is the 'intentional
+stance'; and one is then viewing  the computer as an 'intentional system'. One
+predicts its behaviour in such cases by ascribing to the system the possession
+of certain information  and supposing it to be directed  by certain goals, and
+then by working out the most reasonable  or appropriate action on the basis of
+these ascriptions and suppositions.
+
+        Notice, however, that there is a  difference between, on the one hand,
+explaining  and  predicting the  behaviour  of  complex systems  by  ascribing
+beliefs and  desires to them  and, on the  other hand, crediting  such systems
+with actual beliefs and desires. We very often make this mistake with animals:
+we believe that dogs,  for example, answer to their names or  sit when told to
+sit,  rather  than simply  respond  appropriately  to certain  familiar  vocal
+noises; we speak of mice being 'scared' of cats, of trapped flies 'wanting' to
+escape from webs. Users of ELIZA all  too often unwittingly fell into the trap
+of believing that the computer really  and truly understood their problems. To
+that extent, the progam  passed what has become known as  'the Turing test' or
+what Turing himself called 'the imitation game'.                       
+
+
+3.2.  Digression 2: the imitation game.
+
+        The classic  case of ELIZA fooling  its user is that,  quoted in Boden
+[1977:96], of  a vice-president  of a  computer company  not realizing  he was
+on-line to  the program.  The user seems  truly to have  believed that  he was
+conversing with his flesh and blood(y-minded?) colleague.
+
+        It  is something  like  this  scenario that  forms  the  basis of  the
+so-called 'Turing test', named after  the Cambridge mathematician and computer
+pioneer, Alan  Turing, and proposed  in a  visionary paper first  published in
+1950. Turing  asks his  reader to imagine  a game --  the 'imitation  game' --
+played with three people, a man (A),  a woman (B), and an interrogator (C) who
+may be of  either sex. The interrogator  stays in a room apart  from the other
+two. The object of  the game for the interogator is to  determine which of the
+other two is the man and which is the woman. He knows them by the labels X and
+Y, and at the  end of the game he says  either "X is A and Y is  B" or "X is B
+and Y is A". It is A's object in the  game to try to cause C to make the wrong
+identification; while  the third player B  is to help the  interrogator. C may
+ask any questions he wishes, e.g. "Will X  please tell me the length of his or
+her hair?"  If X is B,  then she will obviously  answer truly; if X  is A, the
+man, he will obviously concoct an answer designed to convince the interrogator
+that he is the woman. If A succeeds, then he has won the game.
+
+        Now let  a machine take the  place of A. Will  the interrogator decide
+wrongly as often when the game is played like this as he does when the game is
+played between a man and a woman? If  he does, then the machine has passed the
+Turing test.
+
+        Clearly ELIZA is  very impressive, but would it pass  the Turing test?
+If not,  why not? At least  the following two reasons  suggest themselves. (a)
+despite its  apparent passivity  in allowing  the patient  to explore  his own
+problems  for himself,  ELIZA in  fact manages  to retain  the initiative  for
+nearly all the interaction; in the  imitation game, it is the interrogator who
+endeavours to retain the initiative, but even in mixed initiative dialogues --
+such as  that between ELIZA  and the vice-president  -- the latter  would very
+probably, had the conversation gone on  much longer, have had his doubts about
+his interlocutor. Which leads us on  to: (b) ELIZA can 'talk' appropriately in
+only one domain -- non-directive psychotherapy; ask it to write a sonnet or to
+comment on the state of British football, and it will become at the very least
+unco-operative.
+
+        The imitation  game arose as a  response to the question  posed at the
+end of the  1940s, "Can  computers  think?"  Turing  remains non-committal  as
+regards the  answer to the question,  beyond offering the imitation  game; but
+the thrust  of his argument seems  to be that the  question is fundamentally a
+non-starter. A more  meaningful question would have been,  "Is the intentional
+stance the most appropriate stance to take in dealing with this system?"  When
+we feel we have answered that, perhaps we should ask a second question: "Is it
+important that a machine pass the Turing test?"
+
+
+4.  ELIZA again: how the program works.
+
+        Recall that the third surprising reaction to ELIZA was the spread of a
+belief that  it demonstrated  a general  solution to  the problem  of computer
+understanding of  natural language.  Why should that  be surprising?  Just how
+real is that understanding? It is time we looked at just how ELIZA works.
+
+        Many of you will by now have looked at TEACH RESPOND and perhaps at
+the DOCTOR library program (by typing 'showlib doctor' after the colon prompt
+':'), so you may have some notion of how ELIZA/DOCTOR goes about generating
+responses to input sentences.  The two keys concepts I shall examine are
+'sentence patterns' and 'keywords':
+
+    SENTENCE PATTERNS
+
+    It is clear that sentences (a) to (c) resemble each other in a fairly
+    basic respect:
+
+            a.  My mother drinks black tea
+            b.  My pet alligator drinks neat gin
+            c.  My aunt Mabel drinks anything that comes her way
+
+    They have in common the following underlying pattern, or template:
+
+            My <some word(s)> drinks <some more words>
+
+    and we could easily think of many words and expressions we could insert
+    into the angle brackets to create new sentences of the same kind.  Make
+    up a couple more yourself.
+
+    Suppose that a program is designed so as to be able to recognise that
+    pattern, for example, in the following form:
+
+            [my ??someone drinks ??something]
+
+    and that, having recognised that pattern, is designed to respond with
+    another pattern:
+
+          [you should tell your ^^someone to stop drinking ^^something]
+
+    This, though very much simplified, is much the way that ELIZA performs,
+    and in something like the following manner:
+
+            if the user types in
+                [my ??someone drinks ??something]
+            then reply with
+                [you should tell your ^^someone to stop drinking ^^something]
+
+    where the first and third lines are instructions to ELIZA to look out for
+    a pattern and, having found it, issue a reply by quoting into a template
+    those of the user's words that are 'variables' -- i.e. unfixed elements --
+    in the pattern.
+
+    Thus, the user might type in:
+
+        [my second cousin drinks snake oil]
+
+    and ELIZA will dutifully reply
+
+        [you should tell your second cousin to stop drinking snake oil]
+
+    But ELIZA can make mistakes.  Look, for example, at the following
+    statements and responses, and try to work out why ELIZA went wrong:
+
+        (1) ? to err is human
+        ** [Could a machine err is human ?]
+
+        (2) ? who dares wins
+        ** [I think you know the answer]
+
+        (3) ? no one is more optimistic about life than myself
+        ** [Arent you being a little negative ?]
+
+        (4) ? whatever my problems are not one of them gets me down
+        ** [Can you always expect whatever your problems to be one of them gets
+             you down]
+
+        (5) ? everyone is crazy except you and me
+        ** [Do you think I and you ?]
+
+    In each case ELIZA is trying to match the input sentence against a
+    sentence pattern in the body of the program.  This very often means
+    that it ignores all but a very few words in the input.  For example,
+    if the input sentence contains the sequence
+
+        <some words> you <some other words> me <rest>
+
+    ELIZA ignores all but the words 'you' and 'me, and assumes that the two
+    words are separated by a verb, that is, that they are the subject and
+    object of a clause, e.g. "im sure you really hate me" ( - often enough,
+    this will be a reasonable conjecture and the response will come out
+    right). It then responds by changing 'you' to 'i', 'me' to 'you', and
+    quoting in the word(s) separating the pronouns, e.g. "do you think i
+    really hate you?"  In exchange (5), however, this assumption breaks
+    down.  To what extent, then, can we say that ELIZA truly has some
+    knowledge of language?
+
+    KEYWORDS
+
+    The second main mechanism that ELIZA uses is keyword search.  It scans
+    the sentence for a word that is a specific instance of some more
+    general category or a member of a set.  'mother', for example, is a
+    member of the set which contains 'father', 'brother', and so on, and
+    which we might label 'family'.  'hate', 'dislike', and 'detest' can be
+    grouped together as exemplars of 'strong feelings'.  In the first case,
+    it is often appropriate to respond with some thing like "Tell me more
+    about you family", in the second case "Do strong feelings disturb you?"
+    But how much does ELIZA really know about understanding words in context?
+    Look at exchange (1) below.  English, like any natural language, contain
+    homonyms - words have the same written or spoken form, but having
+    different meanings in different contexts.  'depressed' in one context,
+    for example, can mean something wholly different from what it means in
+    another context.  Look at sentence (2) below.  Finally, the context of
+    a word may convey, not (simply) a different meaning, but a wholly
+    different mental attitude.  For example, 'want' in 'i want a cigarette'
+    'i want some advice on buying a house', and 'i want you to write an
+    essay on ELIZA's ability to understand English' convery three different
+    attitudes to and expectations of the hearer.  Look at exchange (3):
+
+        (1) ? i went out with your mother last night
+        ** [Tell me more about your family]
+
+        (2) ? the money market is depressed at the moment
+        ** [Machines can make people happier]
+
+        (3) ? i want some advice on buying a house
+        ** [Do you think the health centre might be able to help?]
+        ** [Beware of addictions]
+        (How would you feel if an estate agent said this to you?)
+
+Now go on to read TEACH *CT_SYNTAX
+
+--- File: local/teach/ct_eliza
+--- Distribution: all
+--- University of Sussex Poplog LOCAL File ------------------------------

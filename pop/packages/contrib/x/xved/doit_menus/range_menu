@@ -1,0 +1,27 @@
+MENU FILE HEADER (Don't delete)
+MENU FILE NAME: $popcontrib/x/xved/doit_menus/range_menu
+
+Mark a range          ---->                 !!      'menu rangemark'
+Coto beginning of range                     !!      vedmarkfind
+Goto end of range                           !!      vedendrange
+
+Copy in                                     !!      'ti'
+Copy out                                    !!      'to'
+Move in                                     !!      'mi'
+Move out                                    !!      'mo'
+
+Move range to here                          !!      ved_m
+Copy range to here                          !!      ved_t
+Copy in                                     !!      'ti'
+Copy out                                    !!      'to'
+Move in                                     !!      'mi'
+Move out                                    !!      'mo'
+
+Delete range                                !!      ved_d
+Undo it (yank)                              !!      ved_y
+
+Remove range mark                           !!      ved_crm
+Get help                                    !!      'help mark'
+Get tutorial                                !!      'teach mark'
+Programming menu    -->                     !!      'menu programming'
+Menu menu           -->                     !!      'menu menu_menu'

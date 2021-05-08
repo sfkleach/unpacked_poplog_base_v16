@@ -1,0 +1,318 @@
+REF AUDIO_DEVICE                                  Andy Holyer, June 1993
+
+       COPYRIGHT University of Sussex 1993. All Rights Reserved.
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+<<<<<<<<<<<<<<<<<<<<<                             >>>>>>>>>>>>>>>>>>>>>>
+<<<<<<<<<<<<<<<<<<<<<   Sun SPARC Audio Handling  >>>>>>>>>>>>>>>>>>>>>>
+<<<<<<<<<<<<<<<<<<<<<                             >>>>>>>>>>>>>>>>>>>>>>
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+         CONTENTS - (Use <ENTER> g to access required sections)
+
+ --  Overview
+ --  The Physical Audio Device
+ --  The Virtual Device
+ --  Reading from the Device
+ --  Writing to the Device
+ --  Other Operations on the Audio Virtual Device
+ --  The device_user_data field
+ --  Desiderata
+ --  Improved Behaviour on Device Being Busy
+ --  Improved Reading Behaviour
+ --  ULAW - Int converters
+ --  Mixed Output, and Other Sound Manipulation Functions
+ --  Drivers for Other Hardware Platforms
+
+Overview
+--------
+LIB *AUDIO_DEVICE defines  a Poplog virtual  device, (See HELP  *DEVICE)
+named "audio" which allows  the sound port on  a sun SPARCstation to  be
+handled easily in Poplog.
+
+
+
+The Physical Audio Device
+-------------------------
+Sun SPARCstations are  equipped with a  "Telephone Quality" audio  port.
+See MAN *AUDIO for full hardware details. Briefly, it offers sound input
+and output, in  mono, with an  upper bandwidth of  8kHz. In audio  terms
+this is fairly underwhelming, but is sufficient for the playing of sound
+samples, speech, and  AM-quality music.  By comparison  however, the  CD
+standard (which most IBM PC soundcards will handle, for example, as will
+a Macintosh or a NeXt) has a 20kHz bandwidth in full stereo.
+
+    The sampled  sound  data is  compressed  using U-LAW  encoding  from
+12-bits of resolution  to 8 bits.  The encoding method  is a bit  messy,
+frankly, and has resisted all efforts to date to convert it into Pop-11.
+Currently, therefore, the data can  only be handled as anonymous  binary
+data. 8k of  data (8192 bytes)  is consumed/produced by  the device  per
+second. There is  a (hard-coded)  1k buffer  in the  chip and/or  device
+drivers. Sun do ___not recommend that  this is altered, so LIB  *AUDIO_DATA
+handles all buffering beyond that point itself.
+
+    The audio  port is  an  "exclusive resource"  -  that is,  only  one
+process can open the device for read or write access at a time (although
+it is possible for one process to  have the device open for read  access
+while another has it open for write access). LIB *AUDIO_DEVICE  attempts
+to handle this state of affairs  transparently form the user's point  of
+view: it  only attempts  to  open the  physical device  when  absolutely
+necessary. The open is non-blocking: if it turns out that the device  is
+in use,  Poplog mishaps  (this may  not be  the optimal  behaviour:  See
+"Desiderata" for a possible better behaviour). The library tries to be a
+"good neighbour" by checking when a write operation is completed to  see
+if another process has requested the device, and relinquishing it if so:
+however this whole area of  negotiation between competing processes  is
+one which would benefit from further investigation.
+
+    Warning: The loudspeaker  of the  SPARC audio  device is  physically
+situated inside (or  in some models,  attached to) the  CPU case of  the
+machine (in the "pizza box" of  a SPARCstation). Please ensure that  you
+are in fact working on  the same machine that  you are sitting in  front
+of. In particular, if you are rlogged  in on a different machine, or  if
+you are using an Xterminal, it is  ___not recommended that you try and  use
+the sound port. The  actual sound will come  out of the machine  itself,
+which may  well be  in a  different  room (or  for that  matter  another
+country) and will  no doubt surprise  anyone who may  be working on  the
+machine at the time. Please be a good neighbour.
+
+    A SPARCstation's audio input is found  in a small DIN socket on  the
+rear of its case, which provides both a microphone input, and an  output
+channel intended for headphones. An adapter is provided with each Sun to
+convert this DIN connection into two 4.5mm jack sockets as are common on
+low-end audio  products -  the small  headphones intended  for  personal
+stereos, for example.
+
+
+
+The Virtual Device
+------------------
+The Poplog virtual audio device is as follows:
+
+audio                                                         [constant]
+        A Poplog virtual device which provides a graceful wrapper to the
+        physical audio port (/dev/audio) of  a Sun SPARCstation See  MAN
+        *AUDIO for  details  of  the physical  device.  It  responds  to
+        isdevice, device_open_name and device_full_name in the  expected
+        manner  (See   REF   *SYSIO).   The   device_user_data   is   an
+        audio_device_info  record  (q.v.).  Methods  are  provided   for
+        reading, writing  and  closing  the device.  Note:  The  virtual
+        device will open and close the physical audio device for writing
+        as necessary. Loading the library builds the virtual device  and
+        "opens" it.  It is  _____never necessary  to open  the virtual  audio
+        device
+
+
+Reading from the Device
+-----------------------
+In principle, it should be possible to read from the audio device  using
+the character repeater returned by
+
+    discin(audio);
+
+Unfortunately Poplog's character-based io system usually proves to  have
+too much of an  overhead to make this  practicable, so the following  is
+reccomended:
+
+    lvars mysample = inits(80000);      ;;; Enough for 10 seconds of
+                                        ;;; sample
+    sysread( audio, mysample, length(mysample)) -> ;
+
+The library will  block until  the read  is completed  (This could  also
+possibly be improved: see "Desiderata")
+
+
+
+Writing to the Device
+---------------------
+As in the case of reading, it turns out that use of a character consumer
+involves far too much overhead to  be workable. The recommended way  of
+writing to the device is by means of syswrite:
+
+        /* This works on COGS crn machines - on another site you'll
+           have to find your own sample files
+        */
+        lconstant SAMPLEFILE = '/usr/local/src/audio/python/and_now.au';
+        lconstant buffer = inits(sysfilesize(SAMPLEFILE));
+        lconstant file = sysopen( SAMPLEFILE, 0, false);
+        sysread( file, buffer, length(buffer)) ->;
+        syswrite( audio, buffer, length(buffer));
+
+The call  to  syswrite  does  ___not  block: It  queues  up  the  data  for
+transmission,  and  configures  the  physical  device  to  generate   an
+interrupt when  the  chip's  internal  buffer  is  almost  empty,  which
+triggers a daemon process  to queue up another  buffer-full of data.  In
+practice it  is found  that normal  Poplog operations  can carry  on  as
+normal while audio output is going on.
+
+    If a sample is queued  before its predecessor has finished  playing,
+it is  queued  to  play  sequentially -  that  is,  (from  the  previous
+example):
+
+        repeat 10 times
+            syswrite( audio, buffer, length(buffer));
+        endrepeat;
+
+will play  "And now  for something  completely different"  ten times  in
+succession. This gets a bit daunting after a bit. Again, this is not  the
+only conceivable behaviour - see "Desiderata" for more details.
+
+Other Operations on the Audio Virtual Device
+--------------------------------------------
+The  audio   device   handles   other  file   operations   -   sysflush,
+sys_input_waiting, sysclose,  in  the  expected  fashion.  However  this
+behaviour is less interesting than the read and write behaviour.
+
+
+The device_user_data field
+--------------------------
+The device_user_data of the audio virtual device is a record defined  as
+follows. Much of the following  is copied verbatim from INCLUDE  *AUDIO,
+which itself  includes  INCLUDE  *_STREAMIO  and  INCLUDE  *_AUDIO.  The
+include system nests  even deeper  than that.  Most of  these files  are
+rewritings of Sun's C include files. As far as possible, i have tried to
+keep Sun-specific  stuff in  these  include files  in order  to  improve
+modularity and future portability.
+
+audio_device_info                                          [recordclass]
+    {
+        physical_audio_read_device,
+        physical_audio_write_device,
+        audio_ctrl_channel,
+        audio_device_status
+
+    }
+
+where:
+
+physical_audio_read_device                           [recordclass field]
+physical_audio_write_device                          [recordclass field]
+audio_ctrl_channel                                   [recordclass field]
+        The actual  Poplog devices  for the  physical audio  device  for
+        input, output and  control respectively. If  the virtual  device
+        has not currently opened  the audio device  in that manner,  the
+        field is <false>
+
+audio_device_status                                  [recordclass field]
+        A shadowclass pointing  to the audio  device's status block.  It
+        consists of an instance of the following structure:
+
+audio_info_ptr                                             [shadowclass]
+    {
+        audio_info_play     :audio_prinfo_ptr,
+        audio_info_record   :audio_prinfo_ptr,
+        audio_monitor_gain  :uint
+        /* 4 words of buffering - for future use */
+    }
+
+audio_info_play                                            [shadowclass]
+audio_info_record                                          [shadowclass]
+    {
+        audio_prinfo_sample_rate :uint,     /* sample frames per second */
+        audio_prinfo_channels    :uint,     /* number of interleaved channels */
+        audio_prinfo_precision   :uint,     /* bits per sample */
+        audio_prinfo_encoding    :uint,     /* data encoding method */
+
+        /* The following values control audio device configuration */
+        audio_prinfo_gain        :uint,     /* gain level: 0 - 255 */
+        audio_prinfo_port        :uint,     /* selected I/O port (see below) */
+        audio_prinfo__xxx        :uint[4],  /* Reserved for future use */
+
+        /* The following values describe driver state */
+        audio_prinfo_samples     :uint,     /* number of samples converted */
+        audio_prinfo_eof         :uint,     /* number of EOF records (play only) */
+        audio_prinfo_pause       :byte,     /* TRUE to pause, FALSE to resume */
+        audio_prinfo_error       :byte,     /* TRUE if overflow/underflow */
+        audio_prinfo_waiting     :byte,     /* TRUE if a process wants access */
+        audio_prinfo__ccc        :byte[3],  /* Reserved for future use */
+
+        /* The following values are read-only state flags */
+        audio_prinfo_open        :byte,     /* TRUE if access requested at open */
+        audio_prinfo_active      :byte      /* TRUE if HW I/O active */
+    };
+
+
+Desiderata
+----------
+This library is  a spin-off from  work on the  DTI/SERC project "A  User
+Interface Design Environment". It was designed to be a simple and robust
+way of handling the  SPARC sound port.  There are several  enhancements,
+which fall outside the range of the current work: These are suggested as
+'exercises for the interested user':
+
+
+
+Improved Behaviour on Device Being Busy
+---------------------------------------
+The virtual device as provided only attempts to open the physical device
+when needed, since the physical  device is an "exclusive resource"  (see
+"The Physical Audio Device",  above). If, on opening  it turns out  that
+the device is already in use  by another process, the device  currently
+mishaps and aborts the read or write. There is a status bit which is set
+by the physical device when another process requests use of the  device:
+applications are supposed to  monitor this bit  and, if set,  relinquish
+the device  at  the  next  convenient point  (note  that  this  is  only
+"suggested behaviour",  and  there is  no  guarantee that  an  arbitrary
+third-party application will  honour it. LIB  *AUDIO_DEVICE ____does  honour
+this convention). It  is possible  to configure the  physical device  to
+produce an interrupt when the device becomes free. It would therefore be
+possible for LIB  *AUDIO_DEVICE to exhibit  the following behaviour  (at
+least for  writing: correct  behaviour  on reading  is less  clear):  On
+attempting to open a busy device, queue the data as normal. If it it has
+not already  happened,  configure  the physical  device  to  generate  an
+interrupt when it is free, and register a procedure on that interrupt to
+start the output.
+
+
+Improved Reading Behaviour
+--------------------------
+Currently, reading from the audio  device blocks, while write does  not:
+It would be possible to also configure the reading process to run in the
+background allowing  other processing  to go  while a  sample was  being
+recorded
+
+ULAW - Int converters
+---------------------
+It should in principle be  relatively straightforward to produce a  pair
+of functions  which  will  convert between  ULAW  encoding  and  integer
+values. This would  allow Poplog  access to the  actual sampled  values,
+opening the way for graphic displays of samples, voice recognition  (?),
+and a  number of  other applications.  Unfortunately Sun  implement  the
+current library routines as macros which perform a table lookup, and due
+to subtle differences in  the way Pop-11 and C handle  arrays, it has
+not proved easy to convert directly. It  should not be difficult to
+produce the desired functions; there was just not sufficient time to do
+so,  and the functionality was not necessary for the original task at
+hand.
+
+The existence of these functions also open the way for the next possible
+enhancement:
+
+Mixed Output, and Other Sound Manipulation Functions
+----------------------------------------------------
+Currently, two consecutive write() operations will be queued up to  play
+consecutively. While this is for many cases a sensible behaviour,  there
+are application for which it  would be better for  the two sounds to  be
+"mixed"  together.  Given  the   existence  of  ulaw2int  and   int2ulaw
+functions, this is relatively easy. For each "overlapping" byte,  simply
+do:
+
+    int2ulaw( ulaw2int(byte1) + ulaw2int(byte2)) -> newbyte;
+
+Other sound manipulation procedures are also fairly easy. For example to
+change the volume of a sample:
+
+    int2ulaw( modulation * ulaw2int( oldbyte) ) -> newbyte;
+
+Echo effects and the audio  effects known as "flanging" and  "chorusing"
+are thus fairly easy. True reverberation is more difficult.
+
+Drivers for Other Hardware Platforms
+------------------------------------
+I've  tried  to  be  as  modular  as  possible  in  the  design  of  LIB
+*AUDIO_DEVICE. Hopefully, it shouldn't be too hard to #IF_DEF in modules
+for different hardware  platforms - i.e.  SG Iris, HP,  etc. I've  got a
+Sun, so that's what I've written the library for.
+
+--- ??/ref/audio_device
+--- Copyright University of Sussex 1993. All rights reserved. ----------

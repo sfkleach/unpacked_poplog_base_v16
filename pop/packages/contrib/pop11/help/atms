@@ -1,0 +1,120 @@
+HELP ATMS (Version 1.4)                     Roger Sinnhuber 10/10/86
+
+This file describes how to use the experimental (ie it is subject to change)
+Assumption-Based Truth Maintenance System (ATMS). It is based on de Kleer's
+ATMS described in "An Assumption-based TMS", Johan de Kleer, Artificial
+Intelligence 28 (1986) pp 127-162. This package will not make much sense
+unless you have read de Kleer's paper.
+
+
+         CONTENTS - (Use <ENTER> g to access sections)
+
+ -- Getting Started
+ -- Creating Nodes
+ -- Basic ATMS commands
+ -- Extra ATMS Commands
+ -- Feedback
+
+
+-- Getting Started ------------------------------------------------------
+
+To use the ATMS package you need do
+    lib atms;
+
+Normally an ATMS is used by another program to provide the services of truth
+maintence. However to help you get a feel for what an ATMS can do it a package
+is provided which makes it easier to use the ATMS interactively. (See HELP *
+ATMSDEMO)
+
+-- Creating Nodes -------------------------------------------------------
+
+To initialise the ATMS do
+    initialise ();
+(the ATMS automatically initialises itself when loaded).
+
+De Kleer, on pages 146-148, describes four types of nodes (apart from the
+special node falsity): premises, assumptions, assumed nodes, and derived
+nodes. A set of procedures is provided to make it easy to create new nodes of
+these types: "newpremises", "newassumptions", and "newnodes". All of these
+procedures take one argument, a list of node names. Node names are POP-11
+words.
+
+To create premises, that is a nodes that hold universally, use the procedure
+"newpremises". Eg to create the premises "p" & "q":
+    newpremises ([p q]);
+
+To create (or add) assumptions use "newassumptions", eg
+    newassumptions ([A B C D E F]);
+
+Creation of both assumed and derived nodes begins by using "newnodes", eg
+    newnodes([a b c d w_=_1 w_=_2 w_/=_1]);
+
+Assumed nodes are then completed by justifying a newly created node with an
+assumption. Derived nodes then completed by justifying them with a combination
+of assumed nodes and premises, as required (see next section).
+
+To find out what's been done do
+    prstate ();
+which will print out the state of each node using de Kleer's notation (the
+nodes are printed in the order: datum, label, justifications).
+
+
+-- Basic ATMS commands ----------------------------------------------------
+
+Implies (adding new justifications to a node) is written as ">>>", eg
+assumption "A" implies node "a" (making "a" an assumed node) is written:
+    A >>> a;
+or if there are several premises, put them in a list, eg "c" & "d" imply
+"w_=_1" (making w_=_1 a derived node):
+    [c d] >>> w_=_1;
+
+Falsity is written as "#" eg to assert the combination of "b" & "c" as nogood:
+    [b c] >>> #;
+
+You can abbreviate multiple implications of the same justification by using
+">>>" with a list on the right hand side, eg if the combination "a" & "c"
+implys both "w_=_2" and "w_/=_1":
+    [a c] >>> [w_=_2 w_/=_1];
+
+To find out what's been done do
+    prstate ();
+which will print out the state of each node using de Kleer's notation (the
+nodes are printed in the order: datum, label, justifications).
+
+To find out what the implication of a set of beliefs is the procedure
+"impliedby", which takes a list of assumption names, is provided. Eg to find
+out the implications of a belief in A do
+    impliedby ([A]);  
+"impliedby" will return a list of implied beliefs or the empty list if the
+belief is no good.
+
+
+-- Extra ATMS Commands ------------------------------------------------------
+
+Any ATMS implication can be expressed by using >>> but to make life easier a
+few extra commands are provided.
+
+Several assumptions can be declared as mutually exclusive using the
+procedure "mx", eg if A, B & C are mutually exclusive:
+    mx ([A B C]);
+
+If one assumption is incompatible with several others this can be declared
+using the procedure "incom", eg if A is incompatible with D and E:
+    incom (A, [D E]);
+
+If several assumptions are known not to hold procedure "absent" can be
+used, eg if C and F are known not to apply:
+    absent ([C F]);
+
+
+-- Feedback ----------------------------------------------------------------
+
+Feedback is welcome (mail rogers@uk.ac.sussex.cvaxa), please let me know the
+version number of the ATMS you are using, it is kept in the constant
+`atmsversion'.
+    atmsversion =>
+will print the version number.
+
+
+------------------------------------------------------------------------------
+Copywrite University of Sussex (@(#)atms Version 1.4 10/10/86)

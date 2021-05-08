@@ -1,0 +1,18 @@
+#!/bin/csh -f
+
+$popsys/pop11 +$popsavelib/clisp %nort %noinit << \\\\
+
+(setq *making-saved-image* t)
+
+(require :contrib)
+(time (require :clx))
+(use-package :xlib)
+
+(if (savelisp "$poplocalbin/clx.psv" :init t :lock t)
+	(progn
+		(write-line "CLX for X11R5")
+		(setlisp)))
+
+\\\\
+
+rm -f $poplocalbin/clx.psv-

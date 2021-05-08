@@ -1,0 +1,191 @@
+HELP XPW_DRAW                               Simon Nichols, November 1990
+
+    :- library(xpw_draw).
+
+    ?- xpw_draw(Shape).
+    ?- xpw_draw(Window, Shape).
+
+
+         CONTENTS - (Use <ENTER> g to access required sections)
+
+ -- Introduction
+ -- How to load the library
+ -- Predefined shapes
+ -- Shape modifiers
+ -- Defining new shapes
+ -- Unrecognised shapes
+ -- Creating a Graphics Window
+
+
+-- Introduction -------------------------------------------------------
+
+Library XPW_DRAW defines the predicates xpw_draw/1 and xpw_draw/2, which
+are designed to be used in conjunction with the X graphics facilities
+described in HELP * XPROLOG. They provide a higher level, easier to use
+interface to the drawing capabilities provided by the basic XProlog
+libraries. Instead of a separate predicate for drawing each predefined
+shape (e.g. xpw_draw_rectangle/2 and xpw_draw_arc/3) or for changing
+certain attributes of a graphics window (such as xpw_set_color/2 and
+xpw_set_font/2) there is a single predicate xpw_draw/2 which takes as an
+argument a description of the shape to be drawn, together with modifiers
+which change the way the shape is drawn. Moreover, since a shape is
+denoted by a Prolog term, shapes can be constructed by predicates,
+passed as arguments and stored in the database. Compound shapes may also
+be constructed. To draw a shape, it is only necessary to pass it as an
+argument to xpw_draw. For example:
+
+    ?- xpw_draw(rectangle((100,200),70,35)).
+
+The predicate xpw_draw/1 is similar to xpw_draw/2 except it operates on
+the current window (see HELP * XPROLOG for an explanation of the current
+window). The above example draws a rectangle on the current window with
+its top left corner at the position (100,200) and dimensions 70x35.
+
+
+-- How to load the library --------------------------------------------
+
+The following goal loads the library:
+
+    ?- library(xpw_draw).
+
+This will make available the predicates xpw_draw/1, xpw_draw/2,
+xpw_graphic_window/4 (which is described below) and the user-definable
+dynamic predicate xpw_define_shape/2 (also described below).
+
+
+-- Predefined shapes --------------------------------------------------
+
+The following shapes are recognised by xpw_draw:
+
+    (X,Y)
+        A point, represented by the coordinate pair (X,Y).
+
+    line((X1,Y1),(X2,Y2))
+        A line with end points (X1,Y1) and (X2,Y2).
+
+    lines([(X1,Y1),(X2,Y2)|Points])
+    lines([(X1,Y1),(X2,Y2)|Points],Mode)
+        A sequence of lines connected at their end points, i.e., the
+        first line starts at point (X1,Y1) and ends at point (X2,Y2),
+        the second line starts at (X2,Y2) and ends at (X3,Y3), etc. The
+        optional Mode argument specifies how the coordinate pair
+        representing each point subsequent to the first is interpreted.
+        Mode is either the atom origin or the atom previous. If the
+        former, coordinate pairs are interpreted relative to the origin
+        of the window. If the latter, each coordinate pair subsequent to
+        the first is interpreted relative to the preceding coordinate
+        pair. The first coordinate pair is always interpreted relative
+        to the origin of the window. If absent, the Mode is assumed to
+        be origin.
+
+    rectangle((X,Y),Width,Height)
+        A rectangle whose top left corner is given by the point (X,Y)
+        and with dimensions Width x Height.
+
+    arc((X,Y),Width,Height,StartAngle,AngleIncr)
+    arc((X,Y),Width,Height,StartAngle,AngleIncr,Mode)
+        An arc (curve) which is drawn inside a rectangle defined by the
+        (X,Y), Width and Height parameters (interpreted as above). The
+        StartAngle is the position on the arc at which drawing is to
+        start (measured from the 3 o'clock position) and AngleIncr is
+        the size of the arc to be drawn, measured counter clockwise from
+        StartAngle. The optional Mode argument specifies the units in
+        which angles are to be measured. Mode is one of the atoms deg,
+        rad or raw, specifying degrees, radians and the raw underlying X
+        representation of 64th of a degree. If absent, the Mode is
+        assumed to be degrees.
+
+    text((X,Y),Text)
+        A string of text, represented by an atom, starting at point
+        (X,Y).
+
+    image_text((X,Y),Text)
+        A string of text, represented by an atom, starting at point
+        (X,Y). The area where the Text is to be drawn is cleared first.
+
+    [Shape|Shapes]
+        A compound shape formed from a list of shapes. Each shape in the
+        list is drawn in turn.
+
+
+-- Shape modifiers ----------------------------------------------------
+
+The following shape modifiers are recognised by xpw_draw:
+
+    fill(Shape)
+        The Shape is drawn and the area defined by it is filled in. This
+        only makes sense for shapes which enclose an area. However, the
+        fill modifier may be applied to any shape: this permits Shape to
+        be any compound shape, such as one composed of rectangles joined
+        by lines.
+
+    colour(Colour,Shape)
+    color(Colour,Shape)
+        The Shape is drawn in the specified colour. Colour is an atom,
+        such as red, green, blue, cyan, etc.
+
+    font(Font,Text)
+        The text is displayed in the specified font. Font is an atom,
+        such as '9x15', '12x24', 'lucidasans-bold-24', etc.
+
+    raster_op(Op,Shape)
+        The shape is drawn with the given raster operation in effect.
+        See REF * XpwPixmap for information on raster operations.
+
+As an example, the following goal draws a filled rectangle:
+
+    ?- xpw_draw(fill(rectangle((100,200),70,35))).
+
+
+-- Defining new shapes ------------------------------------------------
+
+In addition to the predefined shapes and compound shapes, new shapes may
+be defined in terms of old ones by asserting clauses for
+xpw_define_shape/2. The new shapes so defined have the same status as
+the predefined ones so far as xpw_draw is concerned. For example:
+
+    xpw_define_shape(circle((X,Y),R), arc((X1,Y1),D,D,0,360)) :-
+        X1 is X-R,
+        Y1 is Y-R,
+        D is R+R.
+
+defines the shape circle in terms of arc. The point (X,Y) is the centre
+of the circle and R is its radius. The goal
+
+    ?- xpw_draw(circle((100,50), 50)).
+
+draws a circle of radius 50 with its centre at (100,50) on the current
+window.
+
+Note that shape modifiers may be used with shapes defined in this way
+just as with predefined shapes. For example, the goal:
+
+    ?- xpw_draw(fill(circle((100,50), 50))).
+
+draws a circle similar to the one above and then fills it in.
+
+
+-- Unrecognised shapes ------------------------------------------------
+
+If xpw_draw is asked to draw a shape which it doesn't know about, it
+will fail. (i.e., it will not raise an error).
+
+
+-- Creating a Graphics Window -----------------------------------------
+
+The XProlog graphics libraries define a predicate xpw_graphic_window/2
+for creating a graphics window (see REF * XpwPixmap):
+
+    ?- xpw_graphic_window(Title, [X,Y,Width,Height]).
+
+For consistency with the conventions of xpw_draw, where a point is
+always represented by the coordinate pair (X,Y), library XPW_DRAW
+defines the predicate xpw_graphic_window/4:
+
+    ?- xpw_graphic_window(Title, (X,Y), Width, Height).
+
+Either may be used interchangeably, according to preference.
+
+
+--- $popcontrib/x/prolog/xpw/help/xpw_draw
+--- Copyright University of Sussex 1990. All rights reserved. ----------

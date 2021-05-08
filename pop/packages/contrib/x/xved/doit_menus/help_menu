@@ -1,0 +1,28 @@
+MENU FILE HEADER (Don't delete)
+MENU FILE NAME: $popcontrib/x/xved/doit_menus/menus/help_menu
+Help on documentation available             !!      'help documentation'
+Information on word to right of cursor      !!      vedgetsysfile
+Next cross reference                        !!      vednexthelp
+Previous cross reference                    !!      vedprevioushelp
+Information on VED                          !!      'help ved'
+Help files                                  !!      'help helpfiles'
+Ref files                                   !!      'ref reffiles'
+Teach files                                 !!      'teach teachfiles'
+Help on tailoring Poplog                    !!      'help initial'
+
+Prolog                                      !!      'help prolog'
+Pop11                                       !!      'help pop11'
+Common Lisp                                 !!      'help clisp'
+Standard ML                                 !!      'help pml'
+Recent Poplog developments                  !!      'help news'
+
+Make X documentation available              !!      useslib(%"popxlib"%) <> useslib(%"popxved"%)
+Starting with Xpop                          !!      'help xpop'
+Introduction to X                           !!      'ref x'
+Introduction to XVED                        !!      'help xved'
+Introduction to Open Look facilities        !!      'teach openlook'
+Introduction to Motif facilities            !!      'teach motif'
+
+POP-FORUM email list                        !!      'help popforum'
+Relevant literature                         !!      'help poprefs'
+Menu menu            ----->                 !!      'menu menu'

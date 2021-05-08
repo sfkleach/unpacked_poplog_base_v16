@@ -1,0 +1,863 @@
+TEACH SEMNET2                                               Tom Khabaza
+                                                            November 1985.
+
+This is the second in a pair of teach files on the subject of semantic
+networks.  The companion to this file, TEACH * SEMNET1, should be read first.
+
+TEACH * SEMNET1 explains what semantic networks are, and describes some of the
+theoretical ideas related to them.  This teach file, TEACH * SEMNET2, explains
+how to write POP-11 programs that use semantic networks.
+
+The major tool described in this file is the DATABASE.  The database is also
+described in TEACH * LONDON, and in TEACH * DATABASE; it is helpful, but not
+essential, to have read one of these before you read this file.
+
+Remember when reading this file that you are dealing with EXACTLY the same
+basic principles as described in TEACH * SEMNET1.  All that this file does is
+to show you how to express the same ideas in your own programs.
+
+Note that many of the examples in this teach file are based around the "London
+Underground advisor" example introduced in TEACH * LONDON.  The idea here is
+to show how a "tourist advisor" for the London Underground system could be
+written using the database and semantic networks.  Some of the examples in
+this file assume that you have at least some familiarity with the London
+Underground system.  If you aren't familiar with it, it will help you to have
+a London Underground map with you when you read this file.  London Underground
+maps are often found in diaries, or can be picked up at any London Underground
+station.  If you have problems getting hold of such a map, consult your tutor.
+
+
+Contents of this teach file:
+
+ -- The database is a collection of facts
+ -- The database is like a semantic network
+ -- Using the POP-11 database
+ -- Adding facts to the database
+ -- Checking for facts in the database
+ -- Writing a procedure that checks for a fact
+ -- When a fact is not present
+ -- Asking less specific questions
+ -- Removing facts from the database
+ -- Checking for several facts at once
+ -- Using "allpresent"
+ -- These activities in terms of a semantic network
+ -- The SEMNET package is like the database
+ -- The SEMNET package does simple inference
+ -- Types of link in the SEMNET package
+ -- London Underground fares
+ -- How to use the inference
+ -- Less specific inferences
+ -- Adding more stations
+ -- Exercise
+ -- More difficult exercise
+
+-- The database is a collection of facts ------------------------------------
+
+POP-11 has a facility for storing "facts".  In this context, a fact is taken
+to be simply a list of words, for example:
+
+    [john loves mary]
+
+represents the "fact" that John loves Mary.
+
+The POP-11 database is simply a collection of such facts.  Later sections in
+this file show how to add facts to the database, how to check for facts in the
+database, and how to remove facts.
+
+
+-- The database is like a semantic network ----------------------------------
+
+The "fact"
+
+    [john loves mary]
+
+could also be expressed in a semantic net as in figure 1:
+
+Figure 1:
+
+                     loves
+            john o----->-----o mary
+
+
+Here is another example of a "fact" represented by a list of words:
+
+    [[victoria] on [victoria line]]
+
+This represents the fact that Victoria (the underground station) is on the
+Victoria line (a line in the London Underground).  This could also be
+expressed in a semantic net, as in figure 2:
+
+Figure 2:
+
+                           on
+            [victoria] o---->----o [victoria line]
+
+
+Notice the square brackets ("[" and "]") around the node names ("[victoria]"
+and "[victoria line]").  These node names are shown as POP-11 lists, indicated
+by the brackets.  We make these names lists, rather than single words, because
+we might want a name with more than one word; "victoria line" is an example of
+this.
+
+Thus, POP-11's database of facts can often be thought of as containing a
+number of small semantic networks.  Sometimes these networks are joined
+together, because two facts refer to the same object.  For example, if we have
+two facts:
+
+    [[victoria] on [victoria line]]
+and
+    [[victoria] on [circle line]]
+
+Then we could represent these both together in a semantic network, as in
+figure 3:
+
+Figure 3:
+
+                           on
+            [victoria] o---->----o [victoria line]
+                       |
+                       |
+                       V on
+                       |
+                       |
+                       o [circle line]
+
+
+Most of this teach file only shows the relevant semantic networks when it
+especially clarifies the examples.  This is because, when writing programs to
+deal with semantic networks and the database, it is important to get used to
+dealing with facts in the form of lists, rather than always using diagrams.
+
+
+-- Using the POP-11 database ------------------------------------------------
+
+When using POP-11s database, the first thing to know is how to EMPTY it.  That
+is, if you have been using POP-11, you may have run a program that puts facts
+in the database.  In order to make sure that none of the old facts remain, you
+need to EMPTY or "clear" the database; that is, make sure there are no facts
+at all stored in it.
+
+This is how you clear the database:  Type the following command into a file,
+mark it as a range and use LMR to run it.
+
+    [] -> database;
+
+(See TEACH * LMR if you are not familiar with marked ranges and the LMR
+command).
+
+After doing this, there are no facts left in the database.
+
+
+-- Adding facts to the database ---------------------------------------------
+
+Here is how to add a fact to the database:  Type the following command into a
+file, and use LMR to run it:
+
+    add([john loves mary]);
+
+Make sure you remember to type all the brackets, and the semicolon (;) at the
+end.
+
+This command STORES the fact [john loves mary] in the database.  It uses the
+POP-11 procedure "add", which takes one argument (in this case the list
+[john loves mary]) and stores it as a fact in the database.
+
+Try adding another fact:
+
+    add([[victoria] on [victoria line]]);
+
+Again, don't leave out any brackets!
+
+
+-- Checking for facts in the database ---------------------------------------
+
+When you add a fact to the database, no apparent change takes place.  In order
+to notice the change you have made, you have to EXAMINE the database.  One way
+of doing this is to check for a specific fact, that is, check whether a
+specific fact is stored in the database or not.
+
+Here is how to check for a fact:
+
+    present([john loves mary]) =>
+
+Try typing this into a file and running it.  If you have also done the "add"
+examples above, this will print out the result:
+
+    ** <true>
+
+Here we are using the POP-11 procedure "present".  This procedure takes one
+argument, a "fact", and checks whether this fact is present in the database.
+If it is present, it returns the result "<true>", otherwise, if it is not
+present, it returns the result "<false>".
+
+In this example, we used the POP-11 "print arrow", that is, "=>", to signify
+that the result returned by "present" should be printed out.  So when "<true>"
+is printed out, this signified that the fact [john loves mary] was present in
+the database.
+
+Here is another example of using "present":
+
+    present([[victoria] on [victoria line]]) =>
+
+If you type this into a file and run it, it prints the result:
+
+    ** <true>
+
+signifying that the fact [[victoria] on [victoria line]] is stored in the
+database.  But if you check for a fact that ISN'T stored in the database, as
+in:
+
+    present([[victoria] on [central line] []) =>
+
+you will get the answer:
+
+    ** <false>
+
+that is, there is no such fact stored in the database.
+
+
+-- Writing a procedure that checks for a fact -------------------------------
+
+As shown in TEACH * LONDON, we can also write POP-11 procedures that check for
+facts.  Here is a simple procedure, that checks whether Victoria is on the
+Victoria line:
+
+    define check;
+        if present([[victoria] on [victoria line]]) then
+            [i know that victoria is on the victoria line] =>
+        else
+            [i do not know whether victoria is on the victoria line] =>
+        endif;
+    enddefine;
+
+This procedure uses an "if" statement to make use of the result returned by
+the "present" procedure; thus what it does depends on whether or not we have
+the stored fact [[victoria] on [victoria line]].
+
+If you type this procedure into a file, and load it by marking it and then
+doing ENTER-lmr, you can then run it by typing:
+
+    check();
+
+and, assuming you have done the "add" examples above, it will print:
+
+    ** [i know that victoria is on the victoria line]
+
+
+-- When a fact is not present -----------------------------------------------
+
+Notice that this procedure was written so that if the fact
+
+    [[victoria] on [victoria line]]
+
+was not present in the database, it would print
+
+    [i do not know whether victoria is on the victoria line]
+
+rather than
+
+    [victoria is not on the victoria line]
+
+Why should it be written this way?  The reason is that, if a fact is not
+present in the database, this does not necessarily mean it is not TRUE,
+merely that the database contains no such information.  There will always be
+an unlimited amount of information which is true, but missing from the
+database.  So we can never assume that something is untrue, just because the
+database does not contain it.  Rather, the answer to "is this true", when
+"this" is not in the database, is simply "I don't know."
+
+
+-- Asking less specific questions -------------------------------------------
+
+The example discussed above translates into English roughly as:
+
+    Is Victoria on the Victoria line?
+
+However, a more likely question, for someone who does not know the answer, is
+something like:
+
+    Do you know line Victoria is on?
+
+A question like this has to be answered with TWO pieces of information:
+firstly, that the database DOES contain this information about Victoria, and
+secondly, WHICH line Victoria is on.
+
+The first of these, that is whether or not we know the answer, will be the
+result returned by "present", as in the previous examples.  The second, that
+is which line, will be stored in a variable.  Let us call this variable
+"line".
+
+As with all variables in POP-11, we should "declare" that we are going to use
+this word "line" as a variable.  This is done by giving the command:
+
+    vars line;
+
+Type this into your file, and run it.
+Now you can check for the information about which line Victoria is on with the
+following command:
+
+    present([[victoria] on ?line]) =>
+
+Be careful to get all the punctuation in the right place.  In particular, the
+question mark, as in "?line" is important.
+This command should print the result:
+
+    ** <true>
+
+indicating that some fact was found linking [victoria] to some line.
+The "?line" part of the command means that the name of the line found in this
+fact should be put in the variable "line".  So since we have found an
+appropriate fact, something should have be put in the variable "line".
+Now check to see what it was, like this:
+
+    line =>
+
+This command simply means "print the value of the variable line".  When you do
+this, it should reply:
+
+    ** [victoria line]
+
+What you have done here is to use a PATTERN, like those used with the POP-11
+matcher, to examine the database.  (If you are not familiar with pattern
+matching in POP-11, the teach file TEACH * MATCHES contains an introduction).
+In fact, when using the "present" procedure, you are checking whether there is
+anything in the database that MATCHES the argument to "present".
+
+
+-- Removing facts from the database -----------------------------------------
+
+You can also remove facts from the database, that is make it "forget" a fact
+that you have previously stored.  Here is an example, of removing the
+previously stored fact that Victoria is on the Victoria line:
+
+    remove([[victoria] on [victoria line]]);
+
+Now, if we ask whether we have a stored fact that Victoria is on the Victoria
+line:
+
+    present([[victoria] on [victoria line]]) =>
+
+the answer is
+
+    ** <false>
+
+that is, "no, we have no such stored fact", or "as far as I know, Victoria
+is not on the Victoria line".
+
+In terms of the equivalent semantic network, we have removed the LINK between
+Victoria and the Victoria line in the net; thus the semantic net in figure 4:
+
+Figure 4:
+
+                           on
+            [victoria] o---->----o [victoria line]
+
+
+was changed to that in figure 5:
+
+Figure 5:
+
+            [victoria] o         o [victoria line]
+
+
+You can also remove facts by giving the less specific form of fact, that is bu
+supplying a pattern; in this case, some fact that matches the pattern will be
+removed.  Thus:
+
+    remove([[victoria] on ?line]);
+
+would also have removed the fact
+
+    [[victoria] on [victoria line]]
+
+and in the process would have set the "line" variable to have the value
+
+    [victoria line]
+
+Thus, if we then printed the value of the "line" variable:
+
+    line =>
+
+it would reply
+
+    ** [victoria line]
+
+
+-- Checking for several facts at once ---------------------------------------
+
+This section is about asking more complicated questions about what is stored
+in the database.  In order to do this, the database should contain more
+information than in the above examples.  Start by clearing the database, and
+then adding some more facts:
+
+
+    [] -> database;     ;;; always remember to clear the database
+                        ;;; when starting from scratch.
+
+    ;;; add facts about Victoria
+    add([[victoria] on [victoria line]]);
+    add([[victoria] on [circle line]]);
+
+    ;;; add facts about Green Park
+    add([[green park] on [victoria line]]);
+    add([[green park] on [picadilly line]]);
+
+
+Now we can still ask questions about which station is on which line, for
+example, find out which line Green Park is on:
+
+    vars line;
+
+    present([[green park] on ?line]) =>
+    ** <true>
+
+    line =>
+    ** [picadilly line]
+
+Here we have found that we have a fact that Green Park is on the Picadilly
+line.  We could also ask a similar question about Victoria, thus:
+
+    present([[victoria] on ?line]) =>
+    ** <true>
+
+    line =>
+    ** [circle line]
+
+But suppose we want to ask
+
+    Are Victoria and Green Part on the SAME line?
+
+The above kinds of questions cannot tell us that; if you compare the answers
+above with the facts that you added to the database, you will see that even
+though there are stored facts indicating that both Victoria and Green Park are
+on the Victoria line, neither of these facts was found in the above examples.
+
+This is because we asked the two questions SEPARATELY; first a question about
+Green Park, then a separate question about Victoria.  There was no indication
+that these questions were linked in any way.  If we want to link questions
+together, so as to ask questions like:
+
+    Have we two stored facts, one indicating that Victoria is on
+        some line,
+    and the other indicating that Green Park is on the SAME line?
+
+we must use a different database procedure, called "allpresent".
+
+
+-- Using "allpresent" -------------------------------------------------------
+
+Here is how to ask the question given above:
+
+    allpresent([[[victoria] on ?line] [[green park] on ?line]]) =>
+
+Notice that the argument to allpresent is a LIST of patterns; when you try
+this example, be careful not to leave out the extra square brackets.  The
+answer to this should be:
+
+    ** <true>
+
+and if we examine the variable "line", we will see that it contains the name
+of a line which has BOTH Victoria AND Green Park on it:
+
+    line =>
+    ** [victoria line]
+
+What we have done here is to check for two patterns at once, that is
+
+    [[victoria] on ?line]
+and
+    [[green park] on ?line]
+
+with the added restriction that "?line" must match with the SAME object in
+both facts.
+
+Here is another example of using the same techniques:
+
+Suppose we want to go from Victoria to Bond Street; since these stations are
+on different lines, we have to CHANGE lines at some point in the journey.
+First, we need some more facts:
+
+    add([[green park] on [jubilee line]]);
+    add([[bond street] on [jubilee line]]);
+
+Now when we ask our question, there are several pieces of information that we
+need in the reply, namely:
+
+    what line to start on,
+    what station to change at,
+and what line to finish on.
+
+For each of these, we will store the relevant information in a variable with
+an appropriate name.
+
+    ;;; declare the variables we are going to use
+
+    vars line1 station line2;
+
+Now the question will be:
+
+    Have we 4 stored facts, that
+    Victoria is on some line (call it "line1"), and
+    Some station (call it "station") is also on "line1", and
+    "station" is also on some other line (call it "line2"), and
+    Bond Street is on "line2".
+
+Here is how to express it in POP-11:
+
+    allpresent([    [[victoria] on ?line1]
+                    [?station on ?line1]
+                    [?station on ?line2]
+                    [[bond street] on ?line2]   ]) =>
+
+It is not necessary to put each pattern on a separate line; this is done
+simply for readability.
+
+The reply to this question will be:
+
+    ** <true>
+
+indicating that such a collection of facts was indeed found.  Now, we can look
+at the information about which lines to travel on and where to change, by
+looking at the variables "line1", "line2" and "station".
+
+    ;;; line to start on at Victoria
+    line1 =>
+    ** [victoria line]
+
+    ;;; line to finish on at Bond street
+    line2 =>
+    ** [jubilee line]
+
+    ;;; station at which to switch from the Victoria line to the Jubilee line
+    station =>
+    ** [green park]
+
+
+-- These activities in terms of a semantic network --------------------------
+
+The semantic net for the facts used above is shown in figure 5:
+
+Figure 5:
+
+                           on
+            [victoria] o---->----o [victoria line]
+                                 |
+                                 |
+                                 ^ on
+                                 |
+                                 |
+                    [green park] o
+                                 |
+                                 |
+                                 V on
+                                 |
+                           on    |
+         [bond street] o---->----o [jubilee line]
+
+
+In making the queries shown above, we are simply examining this semantic
+network.  But the computer is not doing any INFERENCE - we are simply asking
+the right questions to get interesting answers.  If we want to perform some
+inference using this semantic net, we must use a package (that is, a set of
+POP-11 procedures) called "lib semnet".
+
+
+-- The SEMNET package is like the database ----------------------------------
+
+In order to use the "lib semnet" package, you must first execute the following
+command:
+
+    lib semnet;
+
+Type this into your file, mark it and load it.  You should get the reply:
+
+    ;;; LOADING LIB semnet
+
+Wait while the word "DOING" is displayed on the command line.  When the
+command line displays the word "DONE", the the semnet package has been loaded.
+This means that the programs for doing inference with semantic networks have
+been loaded by the system, and are ready for you to use.  Always give this
+command before you try to use the "lib semnet" package, otherwise the
+procedures it provides will not work.
+
+The procedures provided for doing inference with semantic networks are similar
+to those described above for manipulating the database (that is "add",
+"remove", "present" and "allpresent").  Their names are also similar; the only
+difference being that all the names begin with the letter "s".  So, for
+example, to add a fact to the database, instead of using the "add" procedure,
+as above, we would use the procedure called "sadd", thus:
+
+    sadd([[victoria] on [victoria line]]);
+
+Similarly, to check whether this fact was present, we would now say:
+
+    spresent([[victoria] on [victoria line]]) =>
+
+That is, as before, except that the new procedure name "spresent" starts with
+an "s".  The only exception to this is the command for clearing the database:
+as before, to clear out the database and start with no facts present at all,
+we would say:
+
+    [] -> database;
+
+
+-- The SEMNET package does simple inference ---------------------------------
+
+The new procedures are more powerful that the simple database procedures.  We
+can now make use of inference of the more reliable kinds described in
+TEACH * SEMNET1.  That is, among other things, we can make use of property
+inheritance, via ISA links in our semantic net.  This is the only kind of
+inference described in this teach file, although lib semnet is also capable of
+doing the other forms described in TEACH * SEMNET1.
+
+The inference provided by "lib semnet" is done by the "spresent" and
+"sallpresent" procedures, that is in EXAMINING the database.  Whereas the
+ordinary database procedure "present" checks for facts currently stored in the
+database, "spresent" checks for facts either currently stored in the database,
+OR that can be INFERRED from those currently stored.  For example, if we have
+stored the facts
+
+    [dog has tail]
+and
+    [fido isa dog]
+
+then if we ask:
+
+    spresent([fido has tail]) =>
+
+we get the answer
+
+    ** <true>
+
+or "yes".  The "spresent" procedure has inferred that because Fido is a dog,
+and a dog has a tail, so Fido must have a tail; so we got the answer "<true>"
+even though the fact
+
+    [fido has tail]
+
+is not actually STORED in the database, because it can be inferred from the
+facts that ARE stored there.
+
+-- Types of Link in the SEMNET Package -------------------------------------
+
+The SEMNET package recognises all three types of relational link described in
+* TEACH SEMNET1
+
+isa                 "isa" hierarchies, property inheritance.
+
+ispart              transitive relations.
+
+connects            transitive relations, commutative relations.
+
+
+To make use of SEMNET the facts must be stored in the database as 'triples' of
+the form
+
+    [<item1> <relation> <item2>]
+
+To use one of the special links, just include the word in the <relation>
+position, eg:
+
+    sadd([fido isa dog]);
+    sadd([dog has tail]);
+
+The SEMNET package recognises 'isa' as being a KEYWORD and carries out the
+inferencing:
+
+    spresent([fido has tail])=>
+
+    ** <true>
+
+Similarly we can use the 'ispart' and 'connects' keywords:
+
+    sadd([eye ispart face]);
+    sadd([face ispart body]);
+    spresent([eye ispart body]) =>
+
+    ** <true>
+
+    sadd([[ankle bone] connects [knee bone]]);
+    sadd([[knee bone] connects [hip bone]]);
+    spresent([[ankle bone] connects [hip bone]])=>
+
+    ** <true>
+
+    spresent([[hip bone] connects [ankle bone]])=>
+
+    ** <true>
+
+
+The same kind of inference is also performed by "sallpresent". Just as
+"spresent" looks for single facts in the database or that can be inferred from
+it, so "sallpresent" looks for collections of facts that are stored in, or can
+be inferred from, the database.
+
+For examples, we will be using more facts from the domain of the London
+Underground advisor.  In particular, we can use the property inheritance now
+provided to work out the fare to any station from Victoria, if we know the
+fare zone of the station.
+
+
+-- London Underground fares -------------------------------------------------
+
+In order to work out the fare for a London Underground journey, we need to
+know certain facts.  These are
+
+o   London Underground stations are grouped into "fare zones".
+
+o   The fare for a journey depends on how many fare zones you pass through on
+    the journey.
+
+o   If you are at Victoria, in Zone 1, and you want to go to a station in some
+    other zone the fare depends upon the zone you are going to.
+
+o   Starting from Victoria (which is in Zone 1), the fare to any station in
+    Zone 2 is 60p, and the fare to any (other) station in Zone 1 is 40p.
+
+
+-- How to use the inference -------------------------------------------------
+
+Here is how we might put the last part of this knowledge of fares into the
+database.  First of all, empty the database of any irrelevant facts:
+
+    [] -> database;
+
+Now add the fact that the fare (from our current position at Victoria) for any
+zone 2 station is 60p.
+
+    sadd([[zone 2] fare 60]);
+
+Notice that we used "sadd", rather than "add", because we are now using the
+"lib semnet" procedures, whose names all start with an "s".
+
+Also add the fact that Brixton is in fare zone 2:
+
+    sadd([[brixton] isa [zone 2]]);
+
+Here we have added a fact that represents an ISA link; that is, Brixton is a
+Zone 2 station.
+
+Now we can ask
+
+    Is the fare to Brixton 60p?
+
+or in POP-11:
+
+    spresent([[brixton] fare 60]) =>
+
+since this fact (that the fare to Brixton is 60p) can be inferred from those
+stored in the database, we get the answer:
+
+    ** <true>
+
+The reason that "spresent" answered "yes", is that, in semantic network terms,
+the "[brixton]" node has INHERITED the 60p fare from the "[zone 2]" node.
+Figure 6 shows the semantic net we have used:
+
+Figure 6:
+
+                  isa       fare
+    [brixton] o---->----o----->-----o 60
+                     [zone 2]
+
+
+But if we ask:
+
+    Is the fare to Brixton 30p?
+
+that is:
+
+    spresent([[brixton] fare 30]) =>
+
+we get the answer
+
+    ** <false>
+
+or "no", because this fact is not in the database, and CANNOT be inferred from
+it.
+
+
+-- Less specific inferences -------------------------------------------------
+
+More likely, we will want to ask something like:
+
+    What is the fare to Brixton?
+
+As before, we are asking for two types of information: whether we know the
+fare, and what the fare actually was.  Also as before, we will be trying to
+MATCH some required fact with a pattern containing a variable, so that if the
+fact is found, the variable will contain the fare we were asking about.
+
+So we declare a variable to store the fare:
+
+    vars fare;
+
+and then we ask:
+
+    spresent([[brixton] fare ?fare]) =>
+
+and the answer (to "do we know, or can we infer, any such fact?") is:
+
+    ** <true>
+
+or "yes".  Now the "fare" variable will contain the fare we were asking about,
+so print out its value:
+
+    fare =>
+    ** 60
+
+
+-- Adding more stations -----------------------------------------------------
+
+Since we have incorporated "general" knowledge about, stations in fare zone 2
+(i.e. that the fare to this kind of station is 60p), we can now add more Zone
+2 stations to the database, and "spresent" will infer the relevant fares.
+
+Add some more stations:
+
+    ;;; Camden Town is in fare zone 2.
+    sadd([[camden town] isa [zone 2]]);
+
+    ;;; Shepherd's Bush is in fare zone 2.
+    sadd([[shepherds bush] isa [zone 2]]);
+
+Now we can ask about the fares to these stations:
+
+    spresent([[camden town] fare ?fare]) =>
+    ** <true>
+    fare =>
+    ** 60
+
+so the fare to Camden Town is 60p, and
+
+    spresent([[shepherds bush] fare ?fare]) =>                    
+    ** <true>
+    fare =>
+    ** 60
+
+the fare to Shepherd's Bush is also 60p.
+
+-- Exercise ------------------------------------------------------------------
+
+Can you work out how to add information about different fare zones (i.e.
+other than Zone 2)?
+
+Try adding to the database the information that the fare to Zone 1 stations is
+40p, and the fare to Zone 3a is 90p.  Also add some stations to the new fare
+zones, say Charing Cross and Tower Hill in Zone 1, and Highgate and Tooting
+Bec in Zone 3a.
+
+Now ask about the fares to these new stations.
+
+
+-- More difficult exercise ---------------------------------------------------
+
+If you found the last exercise easy, try the following:
+
+Can you work out how to find two stations to which the fare is the same?
+
+Clue: use the "sallpresent" procedure.
+
+--- File: local/teach/semnet2
+--- Distribution: all
+--- University of Sussex Poplog LOCAL File ------------------------------

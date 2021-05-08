@@ -1,0 +1,183 @@
+HELP PWMCOLOURS                                 Ben Rubinstein, Feb 1987
+                                             Revised: Nic Ford, Apr 1987
+
+Using colour with the Poplog Window Manager graphics functions.
+
+    pwmsun_gfxkillcms(<cms-id>)
+    pwmsun_gfxnewcms(<integer>) -> <cms-id|false>
+    pwmsun_gfxusecms(<cms-id>)
+    pwm_gfxgetmapentry(<integer>) -> <vector|false>
+    pwm_gfxsetmapentry(<integer:E>, <vector>)
+    pwm_gfxsetmapentry(<integer:E>, <integer:R>, <integer:G>, <integer:B>)
+
+Keywords: PWM, graphics, colour, cms, sun.
+
+== CONTENTS - (Use <ENTER> g to access required sections) ==
+
+ -- Introduction
+ -- Finding out what kind of screen you are connected to
+ -- Setting and reading the values of logical colours
+ -- Special facilities for Sun colour workstations
+
+
+-- Introduction -------------------------------------------------------
+
+You should have read HELP *PWMGRAPHICS before reading this file.
+
+Most machines with graphics facilities use logical colours: that is, the
+number which specifies the "colour" of a particular pixel (for example,
+the argument to -pwm_gfxpixel-, or the value of -pwmgfxpaintnum-) does
+not directly specify what the viewer will see.  Instead it is used as an
+index into a "colour map" or "colour table", which defines the
+particular tint that will be displayed for pixels with that colour
+number (usually in terms of red, green and blue intensities).
+
+An analogy for the concept of logical colours frequently used in the
+field of home microcomputers is that of pens and inks: the screen is
+thought of as a blank sheet of paper, the colours which can be seen on
+screen are thought of as inks, and the logical colours mentioned above
+are said to be pens - there are as many pens available to a workstation
+as there are colours available to a pixel (see below for more on the
+number of colours available to a pixel under -pwm_screendepth-).
+
+Any pen can be "dipped into" any ink, so a pen can be at one moment
+drawing in red ink, the next in blue, and so on. Thus the integers
+associated with -pwmgfxpaintnum- et al do not refer to the actual ink
+seen on screen, but instead to the pen which put it there. The analogy
+stops when a pen is dipped into a new ink pot - with conventional paper
+this means any subsequent drawing from that pen will be in the new
+colour; on a computer (at least, in most colour systems), anything
+ALREADY DRAWN with that pen will also change its colour!
+
+Unfortunately, there is wide variation in the implementation of colour
+graphics between different machines, and it is unlikely that the PWM
+will be able to present a perfectly consistent interface across all
+machines.  The functions described in the first two sections below,
+however, should be useful on most machines.
+
+-- Finding out what kind of screen you are connected to ---------------
+
+    pwm_screendepth() -> <integer>
+
+This function returns the depth, in bits per pixel, of the screen on
+which is running the PWM to which POPLOG is currently connected. The
+depth of a screen can be thought of as the number of logical colours in
+which a pixel on that screen can be "drawn" described as a power of two
+(this is equivalent to the number of pens available to that screen).
+Thus on a monochrome screen (a choice of two colours per pixel) it will
+usually return 1 (2**1 = 2); on a standard colour Sun or Bobcat (256
+colours available) it will return 8 (2**8 = 256); and on a standard
+Atari ST connected to a colour monitor (16 colours available) it will
+return 4 (2**4 = 16).
+
+-- Setting and reading the values of logical colours ------------------
+
+At present it is assumed that machines for which the PWM is supported
+specify the actual appearance of a particular logical colour in terms of
+red, green, and blue intensities.  The software may have to be revised
+in the event of a machine or window manager which uses another model,
+for example luminosity, intensity, hue.
+
+    pwm_gfxgetmapentry(<integer:E>) -> <vector|false>
+
+This procedure will discover the actual value of a logical colour
+specified by the integer E in the colour-map of the window
+-pwmgfxsurface-.  The result is false if the call was unsuccessful for
+some reason, a vector of three integers otherwise.  If the integer was
+inappropriate (e.g. it specified a logical colour outside the range of
+the colour-map) then all three three integers may be -1.  Otherwise they
+
+specify the Red, Green and Blue intensities respectively.  The range of
+these values is not presently specified: for all current machines it is
+0-255.  This may need revision as the PWM is ported to more machines.
+
+    pwm_gfxsetmapentry(<integer:E>, <vector>)
+    pwm_gfxsetmapentry(<integer:E>, <integer:R>, <integer:G>, <integer:B>)
+
+Set the actual value of a logical colour identified by E in the
+colour-map for the window -pwmgfxrasterop-.  The value may be specified
+either as a vector of the kind returned by -pwm_gfxgetmapentry- or as
+three separate integers.  The notes above about the range in which the
+R, G and B arguments lie apply.
+
+-- Special facilities for Sun colour workstations ---------------------
+
+The Sun colour workstations provide a slightly more complex model of
+colour.  Rather than having a single colour-map for the whole screen,
+there is a notion of "colour-map segments" (CMS) which can be shared by
+one or more windows.  This model adds some power and convenience,
+because it allows different programs to share the screen and specify
+their own set of colours without interference.  But there is a cost in
+complexity, and this is compounded by the fact that Sun's model of
+colour-map segments is both incomplete and not fully supported by their
+software.
+
+More details of Sun's colour support can be gathered by reading the
+appropriate Sun manuals.  It is important to appreciate, however, that
+the underlying hardware has only a single, 256 entry, colour map.
+Colour-map segments are therefore implemented in the first instance by
+the window manager software knowing, for example, that window W has a
+four entry CMS which is actually located starting at entry 128 in the
+"real" colour map.  When a program attempts to assign the value 2 to a
+pixel in window W, the software traps this and actually assigns the
+value 130 to that pixel; and similarly when a program attempts to read
+the value of a pixel, the window manager software subtracts 128 from the
+value it finds in memory before returning it.
+
+Some problems arise because not all the window-manager routines have
+been written to do this properly: for example, copying between windows
+with different colour-map segments doesn't work "correctly". A second
+point to note is that a rather complicated system is used by the window
+manager software to assign portions of the "real" colour-map to CMS's.
+If your program (or other programs running simultaneously on the screen)
+are making many or large CMS's, it may not be able to fit them all into
+one 256 entry colour-map.  When this happens, the window-manager creates
+another 256 element colour-map, and switches between the two (or more)
+"real" colour-maps according to which window is selected for input (i.e.
+which window the mouse is in): thus one or more windows may give the
+wrong appearance according to the position of the mouse.
+
+As mentioned above, the CMS model is not complete: the Sun PWM therefore
+imposes a slightly more complete model over the Sun one, and allows a
+fairly consistent use of colour-maps with different windows.  The basic
+rules of this model are: a CMS has an existence independent of whether
+it is attached to any windows, and retains its data even when not
+attached to a window; the entries of a CMS can only be examined or
+changed when it is assigned to a window; a CMS can only be killed when
+no windows are using it.
+
+    pwmsun_gfxnewcms(<integer>) -> <cms-id|false>
+
+Instructs the PWM to create a new colour-map segment, with the given
+number of entries.  The number must be a power of two in the range
+2 - 256 (that is, 2, 4, 8, 16, 32, 64, 128 or 256). If successful, the
+function returns an identifier record by which the CMS can be
+referenced.
+
+    pwmsun_gfxkillcms(<cms-id>)
+
+Free the resources associated with a colour-map segment.  It can
+then no longer be validly referenced.
+
+    pwmsun_gfxusecms(<cms-id>)
+
+Associate the colour-map segment with the current graphics window (i.e.
+-pwmgfxsurface-).  It is only now that the elements of the CMS can
+be accessed.
+
+One more complication of the Sun model should be noted: the Sun has it's
+own ideas of what a CMS should look like: in a particular it tends to
+try and keep some contrasting colours at the start and end of the
+colour-map.  I have been unable to establish an exact set of rules
+governing the behaviour in this respect: you can usually set the colours
+you want unless you have a 256-entry CMS, but you may find it useful to
+set the values for entry 0 last.
+
+Finally you should note that on the Sun, the function described above
+for setting the value of an entry in a colour-map (actually, in this
+case, in a colour-map segment) -pwm_gfxsetmapentry- can only be used
+with a CMS you have defined: i.e. it will be ignored unless the current
+graphics window has had a CMS assigned to it by -pwmsun_gfxusecms-.
+
+--- C.all/help/pwmcolours ----------------------------------------------
+--- Copyright University of Sussex 1987. All rights reserved. ----------

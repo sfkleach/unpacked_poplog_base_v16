@@ -1,0 +1,327 @@
+TEACH PSYS2                                                   Mike Sharples
+                                                              February 1986
+
+This is the second of a pair of teach files about production systems. The
+first of the pair, TEACH * PSYS1, gave an description of production systems
+and their use as methods of representing rule-based knowledge. This teach file
+gives some practical examples using the POP-11 production system, LIB PRODSYS.
+
+Contents of this file:
+
+ -- LIB PRODSYS
+ -- Control variables
+ -- What's-On Guide
+ -- Adding a What's-On Guide to your Tourist Guide
+
+-- LIB PRODSYS --------------------------------------------------------------
+
+To use the PRODSYS package load the following line (by marking it and typing
+ENTER lmr):
+
+    lib prodsys;
+
+This will set up PRODSYS and allow you to create and run production rules.
+
+As PSYS1 describes, a production system has three major components:
+
+(i)     A set of FACTS, called a "database".
+(ii)    A set of RULES, called a "rulebase".
+(iii)   A program to use the rules and facts together, called a
+        "production system interpreter".
+
+The database used by PRODSYS is just the standard POP-11 database (you should
+already be familiar with the database; if you are not then see TEACH
+* DATABASE).
+
+A production rule is similar to a procedure in that it has a header line,
+which describes when it is to be used, followed by a body, i.e. some POP-11
+code specifying what it is to do when it is invoked. The major difference
+between a production rule definition and a procedure definition is that the
+header line for a rule simply contains a sequence of patterns, describing
+items which are expected to be in the database for the production rule to be
+runnable.
+
+Thus
+
+    rule 1 [wear sunglasses] [forecast rain] ;
+        remove([wear sunglasses]);
+        add([wear raincoat]);
+    endrule;
+
+defines a rule which will be available for use if there are two items in
+the database which match the patterns [wear sunglasses] and [forecast rain].
+If the system decides to try running this rule, then the patterns will be
+matched, using the standard POP-11 matcher, against items in the database,
+until both patterns are matched.
+
+We can use variables to make the rule more general:
+
+    rule 2 [wear ?x] [forecast rain] ;
+        remove([wear ^x]);
+        add([wear raincoat]);
+    endrule;
+
+When the patterns are matched against the database, the variable 'x' will be
+given the appropriate value from the matched item (as usual), so that inside
+the body of the rule this value will be used wherever the value of 'x' is
+required.
+
+When you have written your production rules you can load them like normal
+POP11 procedures, by marking the range and doing ENTER lmr. They will be
+automatically stored in a list called "rulebase". If you want to reload them,
+you should first reset "rulebase" to nil.
+
+Try this now. Create a new file, say 'weather.p', and put the following into
+it:
+
+    nil -> rulebase;
+
+    rule 1 [wear sunglasses] [forecast rain] ;
+        remove([wear sunglasses]);
+        add([wear raincoat]);
+    endrule;
+
+Mark and load the lines above (with ENTER lmr). The single rule will be ready
+to fire. You now need to set up the database with the initial condition:
+
+    [[wear sunglasses] [forecast rain]] -> database;
+
+Add this line to your file, mark it and load it. To run your production
+system, mark and load the procedure "run", thus:
+
+    run();
+
+PRODSYS uses the normal POP11 database as its working memory, and calls up the
+production rule. This is what should be produced in the output file:
+
+
+ Using rule 1 with
+ Database: [[wear sunglasses] [forecast rain]]
+ Conditions: [[wear sunglasses] [forecast rain]] matching  [[wear sunglasses]
+     [forecast rain]]
+ Actions: [remove ( [ wear sunglasses ] ) ; add ( [ wear raincoat ] ) ;]
+
+It is a "trace" that shows which rule has been fired. The final value of the
+database represents the working memory after the rule has been fired:
+
+    database=>
+    ** [[wear raincoat] [forecast rain]]
+
+What has happened is this. The condition part of the rule has been matched
+against the database, item by item. In this case both items ([wear sunglasses]
+and [forecast rain]) in the condition match corresponding items in the
+database, so the rule fires. The action part of the rule is run, ie:
+
+        remove([wear sunglasses]);
+        add([wear raincoat]);
+
+This has the effect of removing the item [wear sunglasses] from the database
+and adding [wear raincoat], leaving a final database:
+
+         [[wear raincoat] [forecast rain]]
+
+Now try the same with rule 2. Alter your file to:
+
+
+    nil -> rulebase;
+
+    rule 2 [wear ?x] [forecast rain] ;
+        remove([wear ^x]);
+        add([wear raincoat]);
+    endrule;
+
+Load it, then run the rule (WARNING - this rule will keep on firing. You will
+need to stop it by pressing CTRL-C ie. hold down the CTRL key and press the C
+key). Try running the rule with:
+
+    [[wear sunglasses] [forecast rain]] -> database;
+    run();
+
+and stop it with CTRL-C.
+
+EXERCISE
+
+Why does the rule keep on firing? Hint: Look at the trace produced in your
+OUTPUT file. Look also at the final state of the database. Will the rule match
+the new database? Why?
+
+-- Control variables --------------------------------------------------------
+
+There are four control variables which alter the way the production system
+works:
+        chatty
+            if this is set true then the system prints out the database before
+            each rule is activated and also prints out the rule being used
+        walk
+            if this is set true the system pauses before firing a rule and
+            waits for a response. You can either press RETURN to continue with
+            the next rule, or type "why" to be shown the conditions that cause
+            the rule to be fired, or "show" to be given a listing of the rule.
+        repeating
+            if this is set false the system will not trigger the same rule on
+            the same database items twice.
+
+Try setting REPEATING to FALSE with the command:
+
+    false->repeating;
+
+then run the rule again, ie load:
+
+    false->repeating;
+    [[wear sunglasses] [forecast rain]] -> database;
+    run();
+
+Why does the rule now terminate without you needing to press CTRL-C?
+
+If you want to stop the "trace" information being printed out each time a rule
+is fired then set CHATTY to FALSE.
+
+So far we have only shown one production rule in operation. If there is more
+than one rule in the rulebase then the problem the arises of what happens if
+two or more rules match the database, eg if we had the following rulebase:
+
+    nil -> rulebase;
+
+    rule 1 [wear ?x] [forecast rain] ;
+        remove([wear ^x]);
+        add([wear raincoat]);
+    endrule;
+
+    rule 2 [forecast rain];
+        add([carry umberella]);
+    endrule;
+
+Given an initial database of:
+
+    [[wear sunglasses] [forecast rain]]->database;
+
+then both rules match. The production rule interpreter (the part of PRODSYS
+that fires the rules) must use a "conflict resolution strategy" to decide
+which rule to fire. Different production rule interpreters have different
+strategies. The strategy used in PRODSYS is to fire the rule that was loaded
+first (in this case rule 1). So rule 1 is fired first. Then, if REPEATING is
+set to FALSE, it will not be fired again. Rule 2, however, still matches
+the database, so it will fire next, leaving a final database of:
+
+    ** [[carry umberella] [wear raincoat] [forecast rain]]
+
+A proper production rule system may have tens or hundreds of rules.
+
+-- What's-On Guide ----------------------------------------------------------
+
+This next section assumes that you have done the exercises in the TEACH
+* LONDON teach file.
+
+Production rules are useful for representing human rule-based knowledge. An
+example related to an automated tourist guide might be a What's-On Guide to
+London. The production rules would prompt the user for information about, say,
+what kind of entertainment he or she preferred and which area he/she wanted to
+visit and then apply rules to deduce suitable events. Here is a very simple
+example:
+
+nil->rulebase;
+false->chatty;
+false->repeating;
+
+/* Asks the user for a type of entertainment - the only acceptable replies
+   are: 'cinema' or 'theatre'  */
+
+rule find_type [entertainment type unknown];
+  vars enttype;
+  [What type of entertainment would you like: cinema or theatre?]=>
+  readline()->enttype;
+  remove([entertainment type unknown]);
+  add([entertainment type ^^enttype]);
+endrule;
+
+/* Asks the user for a place to go - the only acceptable replies are
+   'centre' or 'suburbs' */
+
+rule find_place [entertainment place unknown];
+  vars place;
+  [Where do you want to go in the city: centre or suburbs?]=>
+  readline()->place;
+  remove([entertainment place unknown]);
+  add([entertainment place ^^place]);
+endrule;
+
+/* Add the theatre location to the database */
+
+rule centre_theatre [entertainment type theatre] [entertainment place centre];
+   add([location picadilly circus]);
+endrule;
+
+/* Add the cinema location to the database */
+
+rule centre_cinema [entertainment type cinema] [entertainment place centre];
+    add([location leicester square]);
+endrule;
+
+/* If 'suburbs' is the chosen place */
+
+rule suggest_suburbs [entertainment place suburbs];
+    [I suggest you look at the Entertainments section of the Standard]=>
+endrule;
+
+/* If 'centre' is the chosen place */
+
+rule suggest_centre [location ??x];
+   [I suggest you take a tube to ^^x and look around]=>
+endrule;
+
+Load these rules, then run them with the following database:
+
+   [[entertainment type unknown][entertainment place unknown]]->database;
+   run();
+
+Try running them a few times, giving different responses to the questions.
+
+A more sophisticated set of production rules might ask the user whether he/she
+has children, what day of the week he/she can go etc, and give more specific
+advice, suggesting a particular venue or show.
+
+-- Adding a What's-On Guide to your'Tourist Guide' ---------------------------
+
+It is possible to call the production rules from your tourist guide. If you
+have completed the exercises in TEACH * LONDON then you should have an ANSWER
+procedure looking something like this:
+
+    define answer(query);
+       vars response place;
+        if  query matches [where is ??x] and present([^x at ?y])then
+           [^^x is at ^^y]->response;
+        .
+        .
+        .
+        else
+           [i have no answer to that question]->response;
+        endif;
+        return(response);
+    enddefine;
+
+The production rules will be triggered by a query like: 'What entertainments
+are there in London?'. Thus you will have to add an ELSEIF statement to your
+ANSWER procedure that matches the query and runs the production system. It
+should look something like this:
+
+  elseif query matches [== entertainments ==] then
+      [[entertainment type unknown][entertainment place unknown]]->database;
+      run();
+      [Consultation finished]->response;
+  elseif ......
+
+EXERCISE
+
+Load the rulebase given earlier. Next modify your ANSWER procedure to deal
+with a query about entertainments. Load all the 'tourist guide' procedures and
+then run them by calling CONVERSE. Type in a query like 'What entertainments
+are there' and your program should run the production system.
+
+ADDITIONAL EXERCISE (PROJECT)
+
+The rules could be extended in many ways, for instance by adding 'certainty
+factors'. See TEACH * PRODSYS for details.
+
+--- File: local/teach/psys2
+--- Distribution: all
+--- University of Sussex Poplog LOCAL File ------------------------------

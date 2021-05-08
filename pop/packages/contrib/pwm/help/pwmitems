@@ -1,0 +1,828 @@
+HELP PWMITEMS Ben Rubinstein, Mar 1987
+                                             Revised: Nic Ford, Apr 1987
+                                             Extended: Anthony Worrall Nov 87
+
+Input items in PWM windows.
+
+Keywords: PWM, input, items, toggle, cycle, gauge, button
+
+    pwmitem_valof(<pwmitem>) -> <item>
+    <item> -> pwmitem_valof(<pwmitem>)
+
+    pwmitem_area(<pwmitem>) -> <vector>
+
+    remove_pwmitem(<pwmitem>)
+
+    pwmtoggleitem(<window-id>, <integer:X>, <integer:Y>,
+                  <boolean:I>, <string:L>, <procedure:C> ) -> <pwmitem>
+
+    pwmcycleitem(<window-id>, <integer:X>, <integer:Y>,
+                     <list:V>, <string:L>, <procedure:C> ) -> <pwmitem>
+
+    pwmradioitem(<window-id>, <integer:X>, <integer:Y>, <item:I>,
+                <list:V>, <string|false:L>, <procedure:C>) -> <pwmitem>
+
+    pwmexecitem(<window-id>, <integer:X>, <integer:Y>,
+                                <string:L>, <procedure:C>) -> <pwmitem>
+
+    pwmlabelitem(<window-id>, <integer:X>, <integer:Y>, <integer:W>
+                       <string:P>, <string:L>, <procedure:C) -> <pwmitem>
+
+    pwmslideritem(<window-id>, <integer:X>, <integer:Y>, <integer:W>
+                  <integer:H>, <integer:Initval>, <integer:Size>,
+                  <procedure|false:C)-> <pwmitem>
+
+    pwmlistitem(<window-id>, <integer:X>, <integer:Y>, <list:V>,
+                             <string:L>, <integer:C>, <integer:R>,
+                             <procedure|false:P>) -> <pwmitem>
+
+    pwmmenuitem(<window-id>, <list|pwmitem:box>,
+                        <string:menu> <vector:procs>) -> <pwmitem>;
+
+== CONTENTS - (Use <ENTER> g to access required sections) ==
+
+ -- Introduction
+ -- Utilities for use with pwmitems
+ -- Toggle-items
+ -- Cycle-items
+ -- Radio-items
+ -- Exec-items
+ -- Label-items
+ -- Slider-items
+ -- List-items
+ -- Menu-item
+ -- An example
+
+-- Introduction -------------------------------------------------------
+
+An item is a procedure, or series of procedures, in conjunction with
+some form of on-screen display, which is used to handle some mouse input
+from one part of a screen or window. This file describes procedures
+which are available to construct some common kinds of user input items.
+Each of the items described here uses -pwmitemhandler- to take over
+"press" and "release" events for the left mouse button within a portion
+of a window. You should be familiar with the use of -pwmitemhandler-,
+described in HELP *PWMINPUT.
+
+Each of the items maintains an internal record of its current 'value'.
+The item's display on screen usually reflects the current value (a
+programme can discover the current value by using -pwmitem_valof-,
+described below).  The value of an item can be changed by the user via
+the mouse, or from a programme (again using -pwmitem_valof-).  When you
+make an item, you can specify a procedure: whenever the value of the
+item is changed, whether by the programme or the user, this procedure is
+called with the new value.
+
+The item-constructing procedures described here can only be used on
+graphics windows (although -pwmitemhandler- can be used on either
+graphics or text windows).  As a cosmetic issue, you might like to note
+that if you are using a graphics window principally as a 'control panel'
+containing these kinds of items, you might prefer the effect of using
+the standard cursor in that window (i.e. call -pwm_setwincursor- with
+the window and -pwmstdscursor- as arguments, after making the window).
+
+Each item-constructing procedure takes as its first three arguments a
+window identifier, and two integers X and Y which establish the position
+of the top-left corner of the item.  The first thing it does is to
+calculate the size of the item, and make sure that -pwmitemhandler- will
+allow it reserve the press and release events for that area: i.e. that
+there are no overlapping event specifications.  It then draws the item
+in the appropriate manner and returns.
+
+The last two arguments to each of the item-constructing procedures are a
+string and a procedure.  The string is a label: it will be displayed as
+part of the item (the label is optional for "radio-items": the
+penultimate argument to -pwmradioitem- can be false instead of a
+string).  The procedure will be called whenever the value of an item is
+changed: for an "exec-item" it will not be passed an argument; for all
+other kinds of item it will be passed one argument, the new value of the
+item; so it should be prepared to accept this.  If you don't want
+anything to happen when the item's value is changed, you can use -erase-
+as the procedure argument (see HELP *ERASE); or in the case of an
+"exec-item", -identfn- (see HELP *IDENTFN);
+
+Many of the item-constructing procedures take an optional final argument
+which produces a nicer displayed form than the default. These fancy
+versions tend to be slightly (one or two pixel) larger than the plain
+versions.
+
+A final warning: do not attempt to kill the window that contains an item
+in the procedure which is called when the value of the item is changed:
+this will cause an error. This does not apply to pwmexecitem so that it
+can be used as a kill window button.
+
+NB. These procedures use pwm_gfxtext and expect the text to be written
+transparently. This is different from the standard PWM released from
+Sussex. See HELP * PWMFONTS/pwm_gfxtext. They also only use the raster
+operations PWM_SET, PWM_CLR which are effectively the foreground and
+background colours and PWM_NOTDST for inverting. The exception to this
+is when rasters are used in which case the reasterop is PWM_SRC.
+Note down loading raster does not seem to work across the network.
+See HELP * PWMRASTERS
+
+-- Utilities for use with pwmitems ------------------------------------
+
+A programme can discover or change the current value of an item with the
+procedure -pwmitem_valof-, i.e.
+
+    pwmitem_valof(<pwmitem>) -> <item>
+    <item> -> pwmitem_valof(<pwmitem>)
+
+Some kinds of items restrict the values they can be given in the updater
+version of this function: see the sections below on each item
+constructing procedure for details.  If the updater form is used to
+assign a new value to an item, and the new value is different from the
+old value, the procedure specified when the item was made will be
+called.
+
+Note that you should be very careful about having this procedure itself
+try to update the value of the item, since this could lead to infinite
+recursion.  Normally, the procedure specified when the item is
+constructed should only be taking any actions required when the value is
+changed, and you should use another procedure, working through
+-pwmitem_valof-, to take those actions and change the item display.  If
+you find yourself doing this kind of thing, it may be that you are using
+the wrong kind of item (e.g. see -pwmexecitem-).
+
+    pwmitem_area(<pwmitem>) -> <vector>
+
+This function returns the area covered by the item, which is also the
+area within which it traps mouse events, as a vector of four integers:
+respectively left, top, right and bottom (in pixels, since all these
+items can only be installed on graphics windows).  Thus you can use this
+to decide where to construct another item, so that they don't overlap.
+
+    remove_pwmitem(<pwmitem>)
+
+This function removes the item from the window (by clearing the area of
+the window it covered to the background colour) and removes the event
+trap for that item from -pwmitem_handler-.  After this procedure has
+been invoked, the item is unusable, and none of the functions described
+in this section can legally be applied to it.
+
+
+-- Toggle-items -------------------------------------------------------
+
+Toggle-items are useful when some attribute can either be on or off.
+They can be constructed using -pwmtoggleitem-
+
+    pwmtoggleitem(<window-id>, <integer:X>, <integer:Y>,
+                  <boolean:I>, <string:L>, <procedure:C> ) -> <pwmitem>
+
+The toggle-item consists of a label (the string L) with a square box
+next to it, in which there can be displayed a filled-in square, if the
+current value of the attribute is true.  The label and box are enclosed
+in another box: pressing the left mouse button anywhere within this box
+'toggles' the state of the toggle-item: i.e., if its value was false it
+becomes true, and vice-versa.  The argument I determines the initial
+value for the toggle-item.  If C is a procedure, it will be called
+whenever the toggle-item's value is changed, either by the user clicking
+it with the mouse or by a call to -pwmitem_valof-.  The procedure C is
+passed the the new value of the toggle-item as argument.
+
+The initial value, and any new value assigned to the toggle-item by
+-pwmitem_valof-, need not be a boolean.  In line with the usual pop11
+interpretation, any item other than -false- will be interpreted as true.
+If the value of the toggle-item is updated through -pwmitem_valof- is
+not a boolean, it will be returned by subsequent calls of
+-pwmitem_valof-: however, it the user then clicks twice on the item
+(i.e. turning it to false and then back to true) the value then returned
+by -pwmitem_valof- will be -true-, not whatever item had been previously
+assigned.
+
+Pwmtoggleitem can take some optional arguments. A boolean in which case
+the button is drawn using a raster image to give the impression of depth
+or two pwmrasterarrays. If two pwmrasters are given then the first
+raster array is displayed when the value of the toggle item is true and
+the second when it is false.
+
+-- Cycle-items --------------------------------------------------------
+
+Cycle-items are useful when some attribute can have several different
+values.  They can be constructed using -pwmcycleitem-
+
+    pwmcycleitem(<window-id>, <integer:X>, <integer:Y>,
+                        <list:V>, <string:L>,
+                        <procedure|false:C> ) -> <pwmitem>
+
+A cycle-item consists of a label, the string L, separated by one space
+from its current value.  The whole is enclosed in a box large enough for
+any of the possible values to be displayed.  Each time the left mouse
+button is pressed within this box, the cycle-item's value is changed to
+the next possible value: thus it cycles through the possible values. You
+can use the middle button to go to the previous value to save having to
+cycle round all the values. To select any value use the right button to
+pull up a menu. The possible values are contained in the list V: the
+first thing in the list will be the initial value for the cycle item.
+
+Any of the values in the list can be a two-element list: in this case,
+the first element will be displayed for that value, while the second
+element will be the one given as argument to the procedure C, or
+returned by -pwmitem_valof-.
+
+If a new value is assigned to the cycle-item by -pwmitem_valof-, the new
+value must be one of those originally specified in the list V.  If an
+attempt is made to assign any other value, a mishap will be generated
+(note: in the case of a value for which different items were given to be
+displayed and to be returned as the 'current value', it is the latter
+that should be used to update the cycle-item).
+
+When -pwmitem_valof- is used to assign a new value to the cycle-item,
+the list of values is invisibly cycled through as if the user had
+clicked the mouse on the cycle-item enough times to obtain the required
+value: thus the subsequent ordering of values will be unchanged.
+
+A value can be deleted from the list of values using the procedure
+
+        pwmcycle_delete(item,value);
+
+An attempt to delete a non-existent value is ignored. A value can be
+appended to the list of values by using
+
+        pwmcycle_append(item,value);
+
+In this case value can be a two element vector or list.
+
+Pwmcycleitem can take an optional boolean argument. If this boolean is
+true then a cycle image is drawn between the label and the values.
+
+-- Radio-items --------------------------------------------------------
+
+Radio-items are useful in similar situations to cycle-items when the
+attribute can have several different values.  They have the advantage
+over cycle-items that all the possible values can be seen at once, and
+that values can be selected in any order (i.e. the user doesn't have to
+cycle through the values to get to the one required).   They have the
+disadvantage that they take up more space, to display all the values
+simultaneously, so cycle-items may be more appropriate if there a lot of
+possible values.  A radio-item can be constructed with -pwmradioitem-
+
+    pwmradioitem(<window-id>, <integer:X>, <integer:Y>, <item:I>,
+                <list:V>, <string|false:L>, <procedure:C>) -> <pwmitem>
+
+The name comes from an analogy with push button radios, in which when
+one button is pushed to select a channel, any other button that is
+currently pushed pops out.  The item displays as a box inside which the
+possible values are listed in a column, and beside each a check box like
+that used for a toggle-item.  If a label is specified in the argument L
+(and note that for this kind of item it is optional) this appears above
+all the items, slightly separated.
+
+As with a cycle-item, the possible values are given in the list V; and
+any or all of them may be given as a two-element list in which the first
+element is used for displaying the value, while the second is the one
+that is passed to the procedure C, and returned or accepted by the item
+through the procedure -pwmitem_valof-.  One of the values must be
+selected as the initial value of the item: this is given in the argument
+I.
+
+Again as with a cycle-item, you should note that when specifying a value
+for the item, either in the argument I or with -pwmitem_valof-, it must
+be one of the values originally specified in the list V; and if a value
+was specified in V as list of a value-to-be-displayed and a value-to-use
+it is the value-to-use that should be used.
+
+Pwmradioitem can take an optional boolean argument. If this boolean is
+true then the buttons are drawn using a raster image to give the
+impression of depth.
+
+-- Exec-items ---------------------------------------------------------
+
+Exec-items are a little different from the other ones described above,
+in that they don't really have a value.  Instead, they are like a button
+the user can push (with the mouse) to cause your programme to do
+something.  An exec-item is constructed with -pwmexecitem-
+
+    pwmexecitem(<window-id>, <integer:X>, <integer:Y>,
+                                <string:L>, <procedure:C>) -> <pwmitem>
+
+When the user presses the left mouse button on an exec-item, the whole
+item is inverted; then the procedure C specified when the item was
+constructed is called; finally the item is un-inverted again.  An
+exec-item, as noted above, doesn't really have a value: normally calling
+-pwmitem_valof- to get the value of an exec-item will return false.  If
+the procedure C is being called at the point at which -pwmitem_valof- is
+called (i.e. it -pwmitem_valof- is being called by the procedure C, or
+by something that C has called) it will return true.
+
+Finally, if -pwmitem_valof- is used to assign a value to an exec-item,
+if the new value is not false and the item is not currently active (i.e.
+C is not being called) then the item will be inverted and C called in
+the same way as if the user had pressed the left button on the item.
+Thus if there is some function (for example, clearing a display area)
+which the user can request your programme to execute, and which your
+programme may itself execute, then you can assign the function as the
+argument C to -pwmexecitem-, and when your programme wishes to call the
+function itself it can do
+
+    true -> pwmitem_valof(clear_item)
+
+That way the user will know what is happening because the button will be
+'illuminated' (inverted) while the function is being executed.
+
+The string label can be replaced by two integers which specify the width
+and height of the item and a procedure. The procedure is used to draw
+inside of exec item after the area has been cleared and the border
+drawn. The procedure is called with  the argument that is the same as
+pwmitem_area. For example
+
+    define draw_cross(area);
+    lvars x y w h area;
+        explode(area) -> h -> w -> y -> x;
+        pwm_gfxdrawline(x,y,w,h,2);
+        pwm_gfxdrawline(x,h,w,y,2);
+    enddefine;
+
+    pwmexecitem(window,10,10,64,64,draw_cross,syssleep(%5%)) -> exec;
+
+If the label is a pwmrasterarray then the raster is used to set the size
+of the exec item and then the raster is drawn inside the exec item.
+
+Pwmexecitem can take an optional boolean argument. If this boolean is
+true and the label is a string then the item will be drawn with
+chamfered corners.
+
+Some procedures might not return for a long time if ever because for
+example they involve chaining or start up VED. In these cases the exec
+item should not remain inverted. This can be done by using a closure on
+the procedure pwmexec_chaining_proc with the the user procedure as the
+frozen value. For example a exec item to call up a help file might be
+created with
+
+    pwmexecitem(window,10,10,'Help',
+        pwmexec_chaining_proc(%
+            vededitor(%
+                vedhelpdefaults,
+                systranslate('$usepop') dir_>< '/pop/help/help'
+            %)
+        %),
+        true
+    ) -> help_button;
+
+
+-- Label-items --------------------------------------------------------
+
+Label-items are useful when a arbitrary text input or value is required
+They can be constructed using -pwmlabelitem-
+
+    pwmlabelitem(<window-id>, <integer:X>, <integer:Y>, <integer:W>
+                        <string:P>, <string:L>,
+                        <procedure|false:C) -> <pwmitem>
+
+A Label-item consists of a prompt, the string P, separated by one space
+from an label L which is the items current value and an optional
+procedure C. The whole is enclosed in a box large enough for up to a W
+character label to be displayed. If the string exceeds this size it is
+scrolled to the left. The labelitem is selected for input by clicking
+the left button on the anywhere in the box. The Input allows only
+standard ascii characters and ignores control character except backspace
+and delete. When a newline or return character is detected then the
+procedure C is executed, if it is not false, with the item as argument.
+
+The label string can be obtained or replaced by using -pwmitem_valof-
+The procedure C can be executed by assigning true to the
+pwmitem_valof(item). This will not effect the value of the label.
+
+If the left mouse button is cliced on the selected label item then a
+menu will popup. The title of the menu is the value of the labelitem and
+the two options are CLEAR and STUFF. Clear will set the value of the
+labelitem to the null string. Stuff will append the contents of the
+selection to the label by calling -pwm_getselection-. It would be nice
+if the selection could be set to the value of the labelitem, but this is
+not suported by PWM.
+
+There are three procedures that can be used with label items each takes
+a label item as argument. They are:-
+
+    pwmselectlabelitem(<labelitem>);
+    pwmdeselectlabelitem(<labelitem>);
+    pwmlabelcompile(<labelitem>);
+
+pwmlabelcompile will compile the value of the label item in the top
+section see HELP * SECTIONS. Another useful procedure is
+
+    pwmselectnextlabelitem(currentitem,nextitem);
+
+This can be used as a closure on nextitem in the creation of a label
+item. When return is pressed in this label item then the nextitem will
+be selected. If the argument nextitem in pwmselectnextlabelitem is a
+word the its value must be a label item.
+
+-- Slider-items -------------------------------------------------------
+
+Slider items can be used for controlling integer values in fixed range.
+They are constructed using -pwmslideritem-
+
+    pwmslideritem(<window-id>, <integer:X>, <integer:Y>, <integer:W>
+                  <integer:H>, <integer:Offset>, <integer:Size>,
+                  <procedure|false:C>,<Boolean:Interactive>)-> <pwmitem>
+
+
+  +------------------------------------------------------------------+
+  |                      ##############                              |
+  |                      ##############                              |
+  +------------------------------------------------------------------+
+   <------ Offset ------><--- Size --->
+
+The slider consists of a box containing a black mark. The position of
+the mark can be changed by pressing the left mouse button. The mark will
+then, within the confines of the box, follow the mouse until the button
+is released.
+
+If the width W is greater that the height H then a horizontal slider is
+produced other wise a vertical slider is produced. The integer Size is
+the size of the mark and can be in the range 1 to max(W,H) - 1. The
+integer Offset is the distance from the end of the slider to mark. It
+can be in the range 1 to max(W,H) - Size. The Offset can be changed by
+user interaction as discused above.
+Note: maxium Offset + Size = max(W,H).
+
+If C is not false then it should take two arguments. The first argument
+is the offset and the second is the size of the mark. When the procedure
+is called depends on the boolean Interactive. If Interactive is true
+then the procedure is called every time the mouse moves after the button
+has benn pressed, otherwise the procedure is only called when the button
+is released. If the procedure takes a long time to execute (for example
+more the half a second) then when Interactive is true the mark will lag
+behind the mouse. Note all the mouse move events will get processed no
+matted how long the procedure call takes. (NB if too many mouse move
+events get put on the input queue then PWM has been known to crash).
+
+The value of a slider item is a two element vector, the first entry is
+the offset of the mark and the second is the size of the mark. This
+allows procedures to control the size of the mark and so the range of
+the offset by assigning a vector to pwmitem_valof(slider). Any attempts
+to change the value of the slider while it is tracking the mouse are
+ignored.
+
+-- List-items ---------------------------------------------------------
+
+List items are similar to cycle items except you can see more than one
+item at a time.
+
+    pwmlistitem(<window-id>, <integer:X>, <integer:Y>, <list:V>,
+       <string:L>, <integer:C>, <integer:R>, <procedure|false:P>) -> pwmitem;
+
+The first four arguments are the same as for cycle item. The integer C
+is the width of displayed values in characters. The integer R is the
+number of values visible at any one time. The string L is a label at the
+top of the item. The procedure P, which maybe false, is called when a
+value is selected.
+
+Pwmlistitem will look something like this
+
+                    ---------------------
+                   | L A B E L           |
+                   |---------------------|
+     SCROLL UP --> |/\| VALUE_2          |
+                   |--| VALUE_3          |
+                   |  | VALUE_4          |
+                   |##| VALUE_5          |
+       SLIDER ---> |##| VALUE_6          |
+                   |##| VALUE_7          |
+                   |  |#VALUE#8##########| <-- SELECTED VALUE
+                   |  | VALUE_9          |
+                   |  | VALUE_10         |
+                   |--| VALUE_11         |
+   SCROLL DOWN --> |\/| VALUE_12         |
+                    ---------------------
+
+
+Pressing the left mouse button on the scroll up button moves the window
+up, i.e. the text scrolls down. Similarly with the scroll down button.
+Scrolling can also be done by pressing the left mouse button on the
+slider area.
+
+A value can be selected by pressing the left button in the text area.
+The value highlighted is the selected value and will be returned by
+pwmitem_value. Assigning a value to pwmitem will cause that value to be
+highlighted. If the selected value is not visible then the text will be
+scrolled so the it is visible.
+
+Initially no value is selected and pwmitem_valof will return undef. A
+value can be deselected by assigning undef to pwmitem_valof.
+
+If the selected value is not visible it can be made visible by clicking
+the left mouse button on the label area.
+
+A value can be deleted from the list of values using the procedure
+
+        pwmlist_delete(item,value);
+
+An attempt to delete a non-existent value is ignored. A value can be
+appended to the list of values by using
+
+        pwmlist_append(item,value);
+
+In this case value can be a two element vector or list.
+
+The all the values of a list item can be obtained by using
+
+    pwmlist_contents(item) -> list;
+
+This procedure also has an updater which allows all the values to be
+changed. The list|vector should be in the same format as in the
+pwmlistitem call.
+
+    <L:list|vector> -> pwmlist_contents(item);
+
+-- Menu-item ----------------------------------------------------------
+
+This item is different from the other items in that it does not have any
+visual appearance. It can be used to call up menu using the third
+(right) mouse button in a particular area of the window. They can be
+constructed using -pwmmenuitem-
+
+    pwmmenuitem(<window-id>, <vector|pwmitem:box>,
+                        <string|menu_id:menu>,
+                        <vector:procs>) -> <pwmitem>;
+
+The argument box is either a vector specifying the area over which the
+item operates in the same format as return by -pwmitem_area- or a
+pwmitem. In the later case the area of the item is used, This allows
+menus to be simple associated with pwmitem. Note a menu can not be
+overlaid on a -pwmcycleitem- which already has a menu. If box is a list
+then the area of the box is cleared and boundary is drawn. The last two
+arguments are the same as the first two of -pwm_menucall- (see HELP *
+PWMMENUS/pwm_menucall ). Menu is either a string defining a menu or a
+menu_id and procs is a vector of procedures. The vector of procedures is
+the value of the pwmitem and can be accessed and changed using
+-pwmitem_valof- but this is not recommended.
+
+-- An example ---------------------------------------------------------
+
+The quickest way to understand what the items look like and how they
+work may be to load the code below, which makes a small window and puts
+an example of each kind of item in it.  You can load the example by
+marking the whole range (from after this paragraph down to, but not
+including, the copyright notice at the end of this file) and typing
+<CTRL>D or <ENTER>lmr<RETURN> (see HELP *LMR).
+
+    ;;; make a window
+    vars cpanel = pwm_makegfxwin('Ved Control Panel\tVCP',310,228);
+
+    ;;; this just makes it look pretty
+    pwm_setwincursor(cpanel, pwmstdcursor);
+
+    ;;; default handler for window, for other mouse buttons and in
+    ;;; areas not occupied by an item.
+
+    (erase <> vedputmessage(% 'no items there/not left button' %))
+        -> pwmitemhandler(cpanel, false, false, false);
+
+    ;;; for this item, we can construct a procedure using standard
+    ;;; bits of pop11 that will just assign it's argument to the
+    ;;; value of a word.  This item changes the value of -vedbreak-
+    ;;; so we make its initial value be the current value of -vedbreak-
+    ;;; Note that this isn't quite right as a real control panel for VED
+    ;;; because it won't change the value of the item when you switch
+    ;;; files (the value of -vedbreak- is local to each file).
+
+    vars break_toggle;
+    pwmtoggleitem(cpanel,220,200,true,'Break ',
+            updater(valof(%"vedbreak"%)),true) -> break_toggle;
+
+    ;;; for this item, we are specifying four values for -vedautowrite-,
+    ;;; in a sensible order: but the list is in a slightly funny order
+    ;;; so that it will start off with 1500 as the initial value.
+    ;;; Perhaps we ought to be using the current value of -vedautowrite-
+    ;;; in the list, since unless you happen to have -vedautowrite-
+    ;;; already set to 1500 the item will lie until it has been used at
+    ;;; least once.  Note that we specify that when the value of
+    ;;; -vedautowrite- is false, it should be displayed as "off".  False
+    ;;; work (i.e. it can be displayed quite happily) but this is
+    ;;; neater.  As with the item above, it is slightly incomplete,
+    ;;; since if you change -vedautowrite- by assigning a number to it,
+    ;;; the displayed item will not reflect this.  Maybe -vedautowrite-
+    ;;; should be an active variable?
+
+    vars autowrite_cycle;
+    pwmcycleitem(cpanel,45,200,
+        [ [ off ^false ] 500 1500 3000 ],
+        'Autowrite:',
+        procedure(v);
+            v->vedautowrite;
+            vedputmessage('VEDAUTOWRITE now '><v);
+        endprocedure,
+        true
+    ) -> autowrite_cycle;
+    ;;;set initial value
+    1500 -> pwmitem_valof(autowrite_cycle);
+
+    ;;; this is a silly procedure, used in the item below
+
+    define tuning(frequency);
+        vedputmessage('tuning to ' >< frequency >< 'kHz');
+    enddefine;
+
+    ;;; here we are having each value displayed with a name which makes
+    ;;; sense to the user, but being stored internally as something
+    ;;; which makes sense to the programme (or would if POPLOG could
+    ;;; receive VHF radio).  The fourth argument (648) is the frequency
+    ;;; for the World Service, so it specifies that that should be
+    ;;; selected as the initial value of the item.  When this has been
+    ;;; made, you can try assigning frequencies to the item (only one
+    ;;; of those it knows about) and see how the display is updated and
+    ;;; the procedure -tuning- called again (unless you give the
+    ;;; frequency it is already tuned to).  E.g. do
+    ;;;  95.8 -> pwmitem_valof(channel_selector);
+
+    vars channel_selector;
+    pwmradioitem(cpanel,212,84,648,
+        [
+            [ 'Radio 4 ' 92.4  ]
+            [ Capital 95.8  ]
+            [ World 648  ]
+        ],
+        'Frequency',
+        tuning,true
+    ) -> channel_selector;
+
+    ;;; again, you can try doing
+    ;;;  true -> pwmitem_valof(refresh_button)
+    ;;; and see how the item is 'illuminated' while the refresh is
+    ;;; happening.  If you were really keen, you could assign that to
+    ;;; <ESC>v (normally mapped directly to -vedrefresh-), e.g.
+    ;;; vedsetkey('\^[v',
+    ;;;        (updater(pwmitem_valof))(% true, refresh_button %)
+    ;;; );
+
+    vars refresh_button;
+
+    pwmexecitem(cpanel,210,33,' Refresh  ',vedrefresh,
+        true) -> refresh_button;
+
+    ;;; a simple command line for ved
+    ;;; note This will not recover from errors such as unknown command
+
+    vars command_item;
+    pwmlabelitem(cpanel,45,171,22,
+        'Command:','',
+        procedure(item);
+        lvars item;
+            veddo(pwmitem_valof(item));
+            unless vedbufferlist=nil then
+                if vedcursorset() then
+                    vedsetcursor();
+                else
+                    vedcheck();
+                endif;
+                ''->pwmitem_valof(item);
+            endunless
+        endprocedure
+    ) -> command_item;
+
+    ;;;here is an example of a slider item it is used to scroll the
+    ;;; current ved window
+
+    vars scroll_slider INSLIDER_PROC=false;
+    lconstant slider_size = 210;
+    pwmslideritem(cpanel,8,8,18,slider_size,1,10,
+        procedure(mx,ms);
+            lvars mx,ms vb;
+            if INSLIDER_PROC or length(vedbufferlist) = 0 then return() endif;
+            true -> INSLIDER_PROC;
+            max(vedwindowlength,vvedbuffersize) -> vb;
+            slider_size*vedwindowlength/(vb+vedwindowlength) -> ms;
+            max(min(round(ms),slider_size-1),1) -> ms;
+            min(mx,slider_size-ms+1) -> mx;
+            vedjumpto(
+                round(
+                    ( (mx-1)*vb+slider_size -ms-mx )/
+                        (slider_size-ms-1)
+                 )
+                ,vedcolumn
+            );
+            if vedcursorset() then
+                vedsetcursor();
+            else
+                vedcheck();
+            endif;
+            {% mx.round, ms.round %} -> pwmitem_valof(scroll_slider);
+            false -> INSLIDER_PROC;
+        endprocedure,true
+    ) -> scroll_slider;
+
+    ;;; an example of a pwmlistitem.
+    ;;; The current ved buffers are displayed clicking on one will
+    ;;; cause it to become the current ved file.
+
+    define getfilename(path) -> file;
+    lvars l file;
+        length(path) -> l;
+        locchar_back(`/`,l,path) ->l;
+        if l then
+            allbutfirst(l,path) -> file;
+            if issubstring_lim('help',1,false,l,path) then
+                'Help '><file -> file;
+            elseif issubstring_lim('ref',1,false,l,path) then
+                'Ref '><file -> file;
+            elseif issubstring_lim('teach',1,false,l,path) then
+                'Teach '><file -> file;
+            endif;
+        else
+            path -> file;
+        endif;
+    enddefine;
+
+    vars buffer_list;
+    pwmlistitem(cpanel,45,8,
+        maplist(vedbufferlist,
+            procedure(f);
+            lvars f;
+                subscrv(1,f) -> f;
+                [% getfilename(f), f %];
+            endprocedure
+        ),
+        'Editing Files',16,8,
+        procedure(f);
+        lvars ms mx f vb;
+            edit(f);
+            unless vedbufferlist = nil then
+                (slider_size-1)*vedwindowlength/
+                    (vvedbuffersize+vedwindowlength) -> ms;
+                max(min(round(ms),slider_size-1),1) -> ms;
+                max(vedwindowlength,vvedbuffersize) -> vb;
+                round( ( vedline*(slider_size-ms-1) +
+                        vb - slider_size + ms) /
+                            (vb - 1)
+                ) -> mx;
+                {% mx,ms %} -> pwmitem_valof(scroll_slider);
+                vedbreak -> pwmitem_valof(break_toggle);
+            endunless;
+        endprocedure
+    ) -> buffer_list;
+    vedcurrent -> pwmitem_valof(buffer_list);
+
+    vars update_button;
+    pwmexecitem(cpanel,210,8,'  Update  ',
+        procedure();
+            maplist(vedbufferlist,
+                procedure(f);
+                lvars f;
+                    subscrv(1,f) -> f;
+                    [% getfilename(f), f %];
+                endprocedure
+            ) -> pwmlist_contents(buffer_list);
+            if length(vedbufferlist) > 0 then
+                vedcurrent -> pwmitem_valof(buffer_list);
+                vedbreak -> pwmitem_valof(break_toggle);
+            endif;
+        endprocedure, true
+    ) -> update_button;
+
+    lvars help_button help_menu;
+
+    pwmexecitem(cpanel,210,57,'Help Items',
+        pwmexec_chaining_proc(%
+            procedure(file);
+                vededitor(vedhelpdefaults, file);
+                unless vedbufferlist = nil then
+                    vedcurrent -> pwmitem_valof(buffer_list);
+                    vedbreak -> pwmitem_valof(break_toggle);
+                endunless;
+            endprocedure(%vedcurrent%)
+        %),
+    true) -> help_button;
+
+    define findsection(string,file);
+        vededitor(vedhelpdefaults,file);
+        unless vedbufferlist = nil then
+            vedlocate(string);
+            if vedcursorset() then
+                vedsetcursor();
+            else
+                vedcheck();
+            endif;
+            vedcurrent -> pwmitem_valof(buffer_list);
+            vedbreak -> pwmitem_valof(break_toggle)
+         endunless
+    enddefine;
+
+    pwmmenuitem(cpanel,help_button,
+        'Help Items\t'><
+        'Toggle\t'><
+        'Cycle\t'><
+        'Radio\t'><
+        'Exec\t'><
+        'Label\t'><
+        'Slider\t'><
+        'List\t'><
+        'Menu\t',
+        {%  findsection(%'@a-- Toggle-items',vedcurrent%),
+            findsection(%'@a-- Cycle-items',vedcurrent%),
+            findsection(%'@a-- Radio-items',vedcurrent%),
+            findsection(%'@a-- Exec-items',vedcurrent%),
+            findsection(%'@a-- Label-items',vedcurrent%),
+            findsection(%'@a-- Slider-items',vedcurrent%),
+            findsection(%'@a-- List-items',vedcurrent%),
+            findsection(%'@a-- Menu item',vedcurrent%)
+        %}
+    ) -> help_menu;
+
+--- C.all/help/pwmitems ------------------------------------------------
+--- Copyright University of Sussex 1987. All rights reserved. ----------
+--- PWMLABELITEM added ADW. Nov. 1987 ----------------------------------
+--- PWMSLIDERITEM added ADW. Oct. 1988 ---------------------------------
+--- PWMLISTITEM, PWMMENUITEM added, PWMSLIDERITEM revised, example  ----
+--- totally revamped.  ADW. March 1989 ---------------------------------

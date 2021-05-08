@@ -1,0 +1,18 @@
+MENU FILE HEADER (Don't delete)
+MENU FILE NAME: $popcontrib/x/xved/doit_menus/Search
+When prompted in the other window type
+the search string, then press RETURN
+Search forward                              !!      ENTER '/'
+Search forward(unnested)                    !!      ENTER '"'
+Search back                                 !!      ENTER '\\'
+Search back(unnested)                       !!      ENTER '\`'
+
+Search forward again                        !!      ved_re_search
+Search back again                           !!      ved_re_backseaarch
+
+Caseless search                             !!      ENTER 'ss '
+Caseless search (unnested)                  !!      ENTER 'ww '
+
+Get help                                    !!      'help vedsearch'
+Replace menu        ---->                   !!      'menu replace'
+Menu menu           ---->                   !!      'menu menu'

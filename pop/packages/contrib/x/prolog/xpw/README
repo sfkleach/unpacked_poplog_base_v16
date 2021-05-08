@@ -1,0 +1,31 @@
+XPW                                         Robert Duncan, November 1990
+
+Prolog interface to the Poplog Widget Set (Xpw) developed by Andreas
+Schoter at the University of Sussex.
+
+Files in this directory:
+
+    xpw.pl
+        Initialisation file.
+
+    help/
+    teach/
+        Introductory documentation.
+
+    demo/
+        A demonstration program.
+
+    lib/
+        Library code.
+
+    ref/
+        Reference information on predicates and resources.
+
+
+Reconsulting the file "xpw.pl" initialises search lists so that the
+documentation and library files become automatically available.
+
+To find out more, do:
+
+    ?- [-'$popcontrib/x/prolog/xpw/xpw.pl'].
+    ?- teach xprolog

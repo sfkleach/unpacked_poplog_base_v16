@@ -1,0 +1,873 @@
+TEACH CLX                                       Julian Clinton, Dec 1990
+
+                      CLX - Common Lisp X Interface
+
+           (c) 1987, 1988, 1989 Texas Instruments & Franz Inc.
+                  (see below for full Copyright Notice)
+
+
+         CONTENTS - (Use <ENTER> g to access required sections)
+
+  1   Overview
+  2   Poplog To X Interface
+  3   Loading CLX
+  4   Introduction
+  5   The X Window System
+  6   Windows
+  7   Input Events
+  8   A Quick Tour of CLX
+  9   Displaying The Menu
+ 10   Menu Input
+ 11   The Main Program
+ 12   Debugging With CLX
+ 13   Naming and Argument Conventions
+ 14   See Also
+ 15   Trademarks and Full CLX Copyright Notice
+
+
+-----------------------------------------------------------------------
+1  Overview
+-----------------------------------------------------------------------
+
+CLX  is  the  de  facto  standard,  low-level  application   programmers
+interface from Common Lisp to  the X Windows system. The  implementation
+of CLX supplied with  this version of Poplog  was obtained from the  MIT
+distribution tapes of X Windows Version  11 Release 5. This software  is
+public domain and to reflect this, it has been added to the  contributed
+software supplied  with  Poplog.  Please read  ____HELPù*ù_______CONTRIB  for  more
+information on contributed software including the disclaimer notice.
+
+
+-----------------------------------------------------------------------
+2  Poplog To X Interface
+-----------------------------------------------------------------------
+
+Poplog has been extended to provide  a full interface to X Windows  (see
+____HELPù*ù____XPOP  for  further  information).  CLX  makes  no  use  of  these
+facilities: it talks directly to the X server via a socket created  with
+___LIBù*ù____________UNIX_SOCKETS. This  means that  while Poplog  provides  facilities
+such as widget  class manipulation, datatype  conversion, callbacks  and
+asynchronous event handling,  these are not  available using CLX.  Users
+who require these facilities should use the Pop-11 interface.
+
+
+-----------------------------------------------------------------------
+3  Loading CLX
+-----------------------------------------------------------------------
+
+See ____HELPù*ù___CLX.
+
+
+The rest of this file is an extract from Chapter 1 of the CLX  Reference
+Manual. The  whole of  the  Reference Manual  is available  off-line  in
+__________PostScript(tm) format.
+
+
+-----------------------------------------------------------------------
+4  Introduction
+-----------------------------------------------------------------------
+
+This file assumes a basic understanding of window systems and the Common
+Lisp programming language. To provide an introduction to the Common Lisp
+X Interface (CLX) programming, this section discusses the following:
+
+    #   Overview of the X Window System
+    #   Naming and argument conventions
+    #   Programming considerations
+
+
+-----------------------------------------------------------------------
+5  The X Window System
+-----------------------------------------------------------------------
+
+The _X ______Window ______System(tm) was developed at the Massachusetts Institute  of
+Technology (MIT) and first  released in 1985. Since  then, the X  Window
+System has become  an industry-standard product  available on  virtually
+every type of bit-mapped workstation. The current version of X,  Version
+11, has been implemented  for several different computer  architectures,
+for a wide  variety of  display hardware,  and also  for many  different
+operating systems.  X  Version  11 represents  the  fulfillment  of  the
+original design goals proposed by MIT, as follows:
+
+(1) Portable : Support virtually any bitmap display and any  interactive
+input device (including keyboards,  mice, tablets, joysticks, and  touch
+screens). Make  it easy  to  implement the  window system  on  different
+operating systems.
+
+(2) Device-Independent Applications :  Avoid rewriting, recompiling,  or
+even relinking in order to use different display/input hardware. Make it
+easy for an application to work on both monochrome and color hardware.
+
+(3) Network Transparent : Let an  application run on one computer  while
+using another  computer's  display, even  if  the other  computer  has a
+different operating system or hardware architecture.
+
+(4)  Multitasking  :  Support  multiple  applications  being   displayed
+simultaneously.
+
+(5) No User Interface Policy :  Since no one agrees on what  constitutes
+the best user  interface, make  it possible for  a broad  range of  user
+interface styles (or policies) to be implemented, external to the window
+system and to the application programs.
+
+(6) Cheap Windows : Windows should be abundant, and ubiquitous.  Provide
+overlapping windows and a simple mechanism for window hierarchy.
+
+(7)  High-Performance  Graphics  :   Provide  powerful  interfaces   for
+synthesizing 2-D images  (geometric primitives,  high-quality text  with
+multiple typefaces, and scanned images).
+
+(8) Extensible : Include a mechanism for adding new capabilities.  Allow
+separate  sites  to  develop  independent  extensions  without  becoming
+incompatible with remote applications.
+
+Some of these  goals lead  directly to the  basic X  architecture :  the
+client-server model. The  basic window  system is  implemented by  the X
+______server program. An application program (the ______client) sends window  system
+________requests to the X server through a reliable two-way byte-stream.
+
+In general, the server and the client can be executing on separate  host
+computers, in which case the byte-stream is implemented via some network
+protocol (TCP, ______DECnet(tm), Chaosnet, and so forth). The X server,  which
+is connected to several  client programs running concurrently,  executes
+client requests in  round-robin fashion. The  server is responsible  for
+drawing client graphics on the display  screen and for making sure  that
+graphics output to a window stays inside its boundary.
+
+The other primary  job of  the X  server is  to channel  input from  the
+keyboard, pointer,  and  other input  devices  back to  the  appropriate
+client programs. Input arrives at the client asynchronously in the  form
+of input  ______events representing  up/down transitions  of keys  or  pointer
+buttons, changes in the  pointer position, and so  on. In some  cases, a
+request generates a return  value (or _____reply) from  the server, which  is
+another kind of client input. Replies and input events are received  via
+the same byte-stream connecting the client with the server.
+
+
+-----------------------------------------------------------------------
+6  Windows
+-----------------------------------------------------------------------
+
+The X Window System supports one or more screens containing  overlapping
+windows and subwindows.  A ______screen  is a physical  monitor and  hardware,
+which can be  either color  or black and  white. There  can be  multiple
+screens per display  workstation. A  single server  can provide  display
+services for any number of screens. A  set of screens for a single  user
+with one keyboard and one mouse is called a _______display.
+
+All windows in an X  server are arranged in  a strict hierarchy. At  the
+top of  the hierarchy  are the  ____root windows,  which cover  each of  the
+display screens.  Each root  window is  either partially  or  completely
+covered by _____child  windows. All  windows, except for  root windows,  have
+_______parents. Any window can in turn have  its own children. In this way,  an
+application program can create a window ____tree of arbitrary depth on  each
+screen.
+
+A child window can be  larger than its parent. That  is, part or all  of
+the child  window  can  extend  beyond the  boundaries  of  the  parent.
+However, all output  to a  window is clipped  by the  boundaries of  its
+parent  window.  If  several  children  of  a  window  have  overlapping
+locations, one of the children is  considered to be on top of/or  raised
+over the  others, obscuring  them.  Window output  to areas  that  are
+covered by other windows is suppressed.
+
+A window has a border  that is zero or more  pixels in width and can  be
+any pattern (______pixmap) or solid color.  A window usually has a  background
+pattern that  is  drawn  by  the  X server.  Each  window  has  its  own
+coordinate system. Child windows obscure their parents unless the  child
+windows have no background. Graphics operations in the parent window are
+usually clipped by the children.
+
+X also  provides  objects  called  _______pixmaps  for  off-screen  storage  of
+graphics. Single-plane  pixmaps  (that is,  of  depth 1)  are  sometimes
+referred  to  as  _______bitmaps.  Both   pixmaps  and  windows  can  be   used
+interchangeably in most  graphics functions.  Pixmaps are  also used  in
+various graphics operations  to define patterns,  or _____tiles. Windows  and
+pixmaps together are referred to as _________drawables.
+
+
+-----------------------------------------------------------------------
+7  Input Events
+-----------------------------------------------------------------------
+
+The X input mechanism  is conceptually simple  yet quite powerful.  Most
+events are  attached  to  a  particular  window  (that  is,  contain  an
+identifier for the  window receiving  the event). A  client program  can
+receive multiple window input streams,  all multiplexed over the  single
+byte-stream connection to the server.
+
+Clients can tailor their  input by expressing  interest in only  certain
+event types.  The server  uses  special event  types to  send  important
+messages to the client. For example, the client can elect to receive  an
+____________enter-notify event when the pointer cursor moves into a certain  window.
+Another vital message from  the server is an  ________exposure event. This  is a
+signal to the client indicating that at least some portion of the window
+has suddenly become visible (perhaps the user moved another window which
+had been overlapping it). The client is then responsible for doing  what
+is necessary to redisplay  the window's image.  Client programs must  be
+prepared to regenerate the contents of windows in this way on demand.
+
+Input is  also subject  to policy  decisions about  which client  window
+receives keyboard and pointer events. Since the pointer is free to  roam
+between windows, just  clicking on a  window is often  enough to  send a
+pointer event to  that window.  Keyboard events, however,  must go  to a
+keyboard focus window  which has  to be  designated in  some other  way.
+Usually, the arbiter of such input management policy is a program called
+the ______window _______manager.  The window manager  gives the human  user a way  to
+make a window the keyboard focus, to manage the layout of windows on the
+screen, to represent  windows with  icons, and  so forth.  In fact,  the
+window manager client determines most of the so-called look and feel  of
+the X Window System.
+
+
+-----------------------------------------------------------------------
+8  A Quick Tour of CLX
+-----------------------------------------------------------------------
+
+The X  Window  System  is  defined  by  the  _X  ______Window  ______System  ________Protocol
+_____________Specification, a detailed description of the encoding and the meaning of
+requests and events sent  between a client and  a server. This  standard
+protocol does not  depend on any  particular programming language.  As a
+result,  each  programming  language  must  define  its  own  functional
+interface for using  the X protocol.  The standard X  interface used  by
+Common Lisp  programmers is  called ___CLX.  CLX is  a set  of data  types,
+functions, and  macros  which allow  a  Common Lisp  client  program  to
+interact with an X server to  send requests and to receive input  events
+and replies.
+
+For the most  part, CLX  functions are  closely tied  to the  underlying
+requests in the X protocol. Many CLX functions simply add requests to an
+output buffer.  These requests  later  execute asynchronously  on  the X
+display server. However, some functions of CLX lie outside the scope  of
+the protocol: for  example, reading  events and  managing a  client-side
+event queue. CLX is also responsible for important batching and  caching
+tasks that minimize network communication.
+
+The following paragraphs show  an example of a  CLX client program.  All
+CLX functions and macros are shown in upper case. Note that some of  the
+terms used are unique to X, while  other terms that are common to  other
+window systems have different meanings in X. It may be helpful to  refer
+to the  glossary when  you are  uncertain  of a  term's meaning  in  the
+context of the X Window System.
+
+The example client  program creates  and displays a  simple pop-up  menu
+consisting of a column of strings: a title string followed by selectable
+menu item strings. The implementation  uses one window to represent  the
+entire menu, plus a set of subwindows,  one for each menu item. Here  is
+the definition of a structure which represents such a menu.
+
+(defstruct (menu)
+    "A simple menu of text strings."
+    (title "choose an item:")
+    item-alist                    ;((item-window item-string))
+    window
+    gcontext
+    width
+    title-width
+    item-width
+    item-height
+    (geometry-changed-p t))           ;nil iff unchanged since displayed
+
+
+The window slot will contain the ______window object that represents the menu.
+The item-alist represents  the relationship between  the menu items  and
+their associated subwindows. Each  entry in item-alist  is a list  whose
+first element is a  (sub)window object and whose  second element is  the
+corresponding  item  string.  A  ______window  object  is  an  instance   of a
+CLX-defined data  type  which  represents X  windows.  A  window  object
+actually carries two pieces of information: an X window ID integer and a
+display  object.  A  _______display  is  another  CLX-defined  data  type  that
+represents a connection  to a  specific X display  server. The  gcontext
+slot contains  an  instance of  a  CLX data  type  known as  a  ________graphics
+________context. A graphics context is a  set of display attribute values,  such
+as foreground color, fill  style, line style, text  font, and so  forth.
+Each X graphics request (and hence each CLX graphics function call) must
+supply a graphics context to use  in displaying the request. The  menu's
+gcontext will thus  hold all of  the attribute values  used during  menu
+display.
+
+
+(defun create-menu (parent-window text-color background-color text-font)
+    (make-menu
+        ;; Create menu graphics context
+        :gcontext (CREATE-GCONTEXT :drawable   parent-window
+            :foreground text-color
+            :background background-color
+            :font       text-font)
+        ;; Create menu window
+        :window   (CREATE-WINDOW
+            :parent       parent-window
+            :class        :input-output
+            :x            0         ;temporary value
+            :y            0         ;temporary value
+            :width        16        ;temporary value
+            :height       16        ;temporary value
+            :border-width 2
+            :border       text-color
+            :background   background-color
+            :save-under   :on
+            :override-redirect
+                :on                 ;override window mgr positioning
+            :event-mask
+                (MAKE-EVENT-MASK :leave-window :exposure))))
+
+
+create-window is  one of  the  most important  CLX functions,  since  it
+creates and returns a  ______window object. Several of  its options are  shown
+here. The  default window  class is  :input-output, but  X provides  for
+:input-only windows, too. Every window must have a parent window, except
+for a system-defined  ____root ______window,  which represents  an entire  display
+screen. The :event-mask keyword value, a CLX __________event-mask data type,  says
+that an input event will be received for the menu window when the window
+is exposed  and also  when the  pointer cursor  leaves the  window.  The
+window border is a pattern-filled or  (as in this case) a  solid-colored
+boundary which is  maintained automatically  by the X  server; a  client
+cannot draw  in  a window's  border,  since all  graphics  requests  are
+relative to the origin (upper-left corner) of the window's interior  and
+are clipped  by  the  server  to this  inside  region.  Turning  on  the
+:save-under option is a hint to the  X server that, when this window  is
+made visible, it may be more  efficient to save the pixels it  obscures,
+rather than require  several client  programs to  refresh their  windows
+when the  pop-up menu  disappears. This  is  a way  to work  around  X's
+client-managed refresh policy when only  a small amount of screen  space
+is needed temporarily.
+
+Why is  :override-redirect  turned  on  for the  menu  window?  This  is
+actually a little unusual, because it prevents any window manager client
+from "redirecting"  the position  of  the menu  when  it is  popped  up.
+Remember that  the  window  manager represents  the  user's  policy  for
+controlling the positions of his windows, so this kind of redirection is
+ordinarily correct. However, in this case,  as a favor to the user,  the
+menu avoids redirection in order to pop  up the menu at a very  specific
+location; that is, under the pointer cursor.
+
+What about the item subwindows?  The menu-set-item-list function in  the
+following example creates them whenever the menu's item list is changed.
+The upper-left x  and y  coordinates and the  width and  height are  not
+important yet,  because  they  are  computed just  before  the  menu  is
+displayed. This  function also  calls create-window,  demonstrating  the
+equal  treatment  of  parent  and  children  windows  in  the  X  window
+hierarchy.
+
+(defun menu-set-item-list (menu &rest item-strings)
+    ;; Assume the new items will change the menu's width and height
+    (setf (menu-geometry-changed-p menu) t)
+
+    ;; Destroy any existing item windows
+    (dolist (item (menu-item-alist menu))
+        (DESTROY-WINDOW (first item)))
+
+    ;; Add (item-window item-string) elements to item-alist
+    (setf (menu-item-alist menu)
+        (let (alist)
+            (dolist (item item-strings (nreverse alist))
+                (push (list (CREATE-WINDOW
+                            :parent     (menu-window menu)
+                            :x          0         ;temporary value
+                            :y          0         ;temporary value
+                            :width      16        ;temporary value
+                            :height     16        ;temporary value
+                            :background
+                            (GCONTEXT-BACKGROUND (menu-gcontext menu))
+                            :event-mask (MAKE-EVENT-MASK :enter-window
+                                :leave-window
+                                :button-press
+                                :button-release))
+                        item)
+                    alist)))))
+
+
+-----------------------------------------------------------------------
+9  Displaying The Menu
+-----------------------------------------------------------------------
+
+The menu-recompute-geometry function  (shown in  the following  example)
+handles the  job of  calculating the  size  of the  menu, based  on  its
+current item  list and  its current  text font.  CLX provides  a way  to
+inquire the geometrical properties  of a font  object (for example,  its
+ascent and descent from the baseline) and also a text-extents  function.
+text-extents returns the geometry  of a given  string as displayed  in a
+given font.  Notice  the use  of  the with-state  macro  when  setting a
+window's geometry attributes. CLX strives to preserve the familiar  setf
+style  of  accessing  individual  window  attributes,  even  though   an
+attribute access  actually involves  sending a  request to  a  (possibly
+remote) server and/or waiting for a reply. with-state tells CLX to batch
+together all read and  write accesses to a  given window, using a  local
+cache to minimize the  number of server requests.  This CLX feature  can
+result in a dramatic improvement in client performance without burdening
+the programmer interface.
+
+menu-recompute-geometry causes all the item subwindows to become ______mapped.
+Mapping a window  means attempting  to make  it visible  on the  screen.
+However, a subwindow will  not actually be visible  until it and all  of
+its ancestors are mapped. Even then, another window might be covering up
+the subwindow.
+
+
+(defparameter *menu-item-margin* 4
+    "Minimum number of pixels surrounding menu items.")
+
+
+(defun menu-recompute-geometry (menu)
+    (when (menu-geometry-changed-p menu)
+        (let* ((menu-font   (GCONTEXT-FONT (menu-gcontext menu)))
+             (title-width (TEXT-EXTENTS menu-font (menu-title menu)))
+             (item-height
+                 (+ (FONT-ASCENT menu-font) (FONT-DESCENT menu-font)))
+             (item-width  0)
+             (items       (menu-item-alist menu))
+             menu-width)
+
+            ;; Find max item string width
+            (dolist (next-item items)
+                (setf item-width (max item-width
+                        (TEXT-EXTENTS menu-font (second next-item)))))
+
+            ;; Compute final menu width, taking margins into account
+            (setf menu-width (max title-width
+                    (+ item-width *menu-item-margin*
+                       *menu-item-margin*)))
+            (let ((window  (menu-window menu))
+                 (delta-y (+ item-height *menu-item-margin*)))
+
+                ;; Update width and height of menu window
+                (WITH-STATE (window)
+                    (setf (DRAWABLE-WIDTH  window) menu-width
+                        (DRAWABLE-HEIGHT window) (+ *menu-item-margin*
+                           (* (1+ (length items))
+                              delta-y))))
+
+                ;; Update width, height, position of item windows
+                (let ((item-left (round (- menu-width item-width) 2))
+                     (next-item-top delta-y))
+                    (dolist (next-item items)
+                        (let ((window (first next-item)))
+                            (WITH-STATE (window)
+                                (setf
+                                    (DRAWABLE-HEIGHT window) item-height
+                                    (DRAWABLE-WIDTH  window) item-width
+                                    (DRAWABLE-X      window) item-left
+                                    (DRAWABLE-Y
+                                        window) next-item-top)))
+                        (incf next-item-top delta-y))))
+
+            ;; Map all item windows
+            (MAP-SUBWINDOWS (menu-window menu))
+
+            ;; Save item geometry
+            (setf (menu-item-width menu)         item-width
+                (menu-item-height menu)        item-height
+                (menu-width menu)              menu-width
+                (menu-title-width menu)        title-width
+                (menu-geometry-changed-p menu) nil))))
+
+
+Of course, the sample client must  know how to draw/redraw the menu  and
+its items, so the function menu-refresh  is defined next to handle  that
+task (shown in the following example). Note that the location of  window
+output is given relative  to the window  origin. Windows and  subwindows
+have  different  coordinate   systems.  The  location   of  the   origin
+(upper-left corner) of  a subwindow's  coordinate system  is given  with
+respect to its parent  window's coordinate system. Negative  coordinates
+are valid, although  only output  to the  +x/+y quadrant  of a  window's
+coordinate system will ever be visible.
+
+(defun menu-refresh (menu)
+    (let* ((gcontext   (menu-gcontext menu))
+         (baseline-y (FONT-ASCENT (GCONTEXT-FONT gcontext))))
+
+        ;; Show title centered in "reverse-video"
+        (let ((fg (GCONTEXT-BACKGROUND gcontext))
+             (bg (GCONTEXT-FOREGROUND gcontext)))
+            (WITH-GCONTEXT (gcontext :foreground fg :background bg)
+                (DRAW-IMAGE-GLYPHS
+                    (menu-window menu)
+                    gcontext
+                    (round (- (menu-width menu)
+                           (menu-title-width menu)) 2)  ;start x
+                    baseline-y             ;start y
+                    (menu-title menu))))
+
+        ;; Show each menu item (position is relative to item window)
+        (dolist (item (menu-item-alist menu))
+            (DRAW-IMAGE-GLYPHS
+                (first item) gcontext
+                0                    ;start x
+                baseline-y               ;start y
+                (second item)))))
+
+
+with-gcontext is a  CLX macro  that allows you  temporarily to  modify a
+graphics  context  within   the  dynamic  scope   of  the  macro   body.
+draw-image-glyphs is  a  CLX  text  drawing  function  which  produces a
+terminal-like rendering:  foreground character  on a  background  block.
+(More sophisticated text  rendering functions are  also available.)  The
+strange use of "glyphs" instead of "string" here actually highlights  an
+important fact: X and Common  Lisp have totally different concepts  of a
+character. A Common Lisp character is an object whose implementation can
+comprehend a vast universe of text complexities (typefaces, type styles,
+international character sets, symbols, and  so forth). However, to  X, a
+string is just a sequence of  integer indexes into the array of  bitmaps
+represented  by  a  CLX  font  object.  In  general,  draw-image-glyphs,
+text-extents, and other CLX text  functions accept a :translate  keyword
+argument. Its value is a  function which translates the characters  of a
+string argument into the appropriate font-and-index pairs needed by CLX.
+This example relies upon the default translation function, which  simply
+uses char-code to compute an index into the current font.
+
+
+-----------------------------------------------------------------------
+10  Menu Input
+-----------------------------------------------------------------------
+
+Now that a menu can be displayed, the sample client program must  define
+how the menu will process user input. The menu-choose function (shown in
+the following example) has the classic structure of an X client program.
+First, do some initialization (for example, present the menu at a  given
+location). Then, enter an input event loop. Read an input event, process
+it, and  repeat the  loop until  a termination  event is  received.  The
+event-case macro  continues  reading an  event  from the  menu  window's
+display object until one of  its clauses returns non-nil. These  clauses
+specify the action to be taken for each event type and also bind  values
+from the  event report  to  local variables,  such as  the  event-window
+receiving the event. Notice that the :force-output-p option is  enabled,
+causing event-case to begin by sending any client requests which CLX has
+not yet output to the server. To improve performance, CLX quietly queues
+up requests and periodically sends them  off in a batch. However, in  an
+interactive feedback loop  such as  this, it  is important  to keep  the
+display crisply up-to-date.
+
+
+(defun menu-highlight-item (menu position)
+    (let* ((box-margin  (round *menu-item-margin* 2))
+         (left
+             (- (round (- (menu-width menu) (menu-item-width menu)) 2)
+                box-margin))
+         (top
+             (- (* (+ *menu-item-margin* (menu-item-height menu))
+                   (1+ position))
+                box-margin))
+         (width       (+ (menu-item-width menu) box-margin box-margin))
+         (height
+             (+ (menu-item-height menu) box-margin box-margin)))
+
+        ;; Draw a box in menu window around the given item.
+        (DRAW-RECTANGLE (menu-window menu)
+            (menu-gcontext menu)
+            left top
+            width height)))
+
+
+(defun menu-unhighlight-item (menu position)
+    ;; Draw a box in the menu background color
+    (let ((gcontext (menu-gcontext menu)))
+        (WITH-GCONTEXT
+            (gcontext :foreground (gcontext-background gcontext))
+            (menu-highlight-item menu position))))
+
+
+(defun menu-present (menu x y)
+    ;; Make sure menu geometry is up-to-date
+    (menu-recompute-geometry menu)
+
+    ;; Try to center first item at the given location, but
+    ;; make sure menu is completely visible in its parent
+    (let ((menu-window (menu-window menu)))
+        (multiple-value-bind (tree parent) (QUERY-TREE menu-window)
+            (declare (ignore tree))
+            (WITH-STATE (parent)
+                (let* ((parent-width  (DRAWABLE-WIDTH parent))
+                     (parent-height (DRAWABLE-HEIGHT parent))
+                     (menu-height   (+ *menu-item-margin*
+                            (* (1+ (length (menu-item-alist menu)))
+                               (+
+                                  (menu-item-height
+                                      menu)  *menu-item-margin*))))
+                     (menu-x
+                         (max 0 (min (- parent-width (menu-width menu))
+                                 (- x (round (menu-width menu) 2)))))
+                     (menu-y
+                         (max 0 (min (- parent-height menu-height)
+                                 (- y (round (menu-item-height menu)
+                                        2/3)
+                                    *menu-item-margin*)))))
+                    (WITH-STATE (menu-window)
+                        (setf (DRAWABLE-X menu-window) menu-x
+                            (DRAWABLE-Y menu-window) menu-y)))))
+
+        ;; Make menu visible
+        (MAP-WINDOW menu-window)))
+
+
+(defun menu-choose (menu x y)
+    ;; Display the menu so that first item is at x,y.
+    (menu-present menu x y)
+
+    (let ((items (menu-item-alist menu))
+         (mw    (menu-window menu))
+         selected-item)
+
+        ;; Event processing loop
+        (do () (selected-item)
+            (EVENT-CASE ((DRAWABLE-DISPLAY mw) :force-output-p t)
+                (:exposure     (count)
+
+                    ;; Discard all but final :exposure then display menu
+                    (when (zerop count) (menu-refresh menu))
+                    t)
+
+                (:button-release (event-window)
+                    ;;Select an item
+                    (setf
+                        selected-item
+                        (second (assoc event-window items)))
+                    t)
+
+                (:enter-notify (window)
+                    ;;Highlight an item
+                    (let ((position
+                             (position window items :key #'first)))
+                        (when position
+                            (menu-highlight-item menu position)))
+                    t)
+
+                (:leave-notify (window kind)
+                    (if (eql mw window)
+                        ;; Quit if pointer moved out of main menu window
+                        (setf
+                            selected-item
+                            (when (eq kind :ancestor) :none))
+
+                        ;; Otherwise, unhighlight the item window left
+                        (let
+                            ((position
+                                 (position window items :key #'first)))
+                            (when position
+                                (menu-unhighlight-item menu position))))
+                    t)
+
+                (otherwise ()
+                    ;;Ignore and discard any other event
+                    t)))
+
+        ;; Erase the menu
+        (UNMAP-WINDOW mw)
+
+        ;; Return selected item string, if any
+        (unless (eq selected-item :none) selected-item)))
+
+
+The event  loop  in menu-choose  demonstrates  an idiom  used  in  all X
+programs: the  contents of  a window  are displayed  (in this  case,  by
+calling  menu-refresh)  only  when  an  :exposure  event  is   received,
+signaling that the  server has  actually made the  window ________viewable.  The
+handling of :exposure in menu-choose also implements a little trick  for
+improving efficiency. In general, when  a window is exposed after  being
+previously obscured (perhaps only partially), the server is free to send
+several :exposure events, one for  each rectangular tile of the  exposed
+region. For small windows like this menu, it is not worth the trouble to
+redraw the image one tile at a time. So the code above just ignores  all
+but the  last  tile exposure  and  redraws  everything in  one  call  to
+menu-refresh.
+
+
+-----------------------------------------------------------------------
+11  The Main Program
+-----------------------------------------------------------------------
+
+After all the preceding build-up and the other functions referenced (but
+not shown here)  have been  implemented, the  code for  the main  client
+program is very small.
+
+
+(defun just-say-lisp (host &optional (font-name "fixed"))
+    (let* ((display   (OPEN-DISPLAY host))
+         (screen    (first (DISPLAY-ROOTS display)))
+         (fg-color  (SCREEN-BLACK-PIXEL screen))
+         (bg-color  (SCREEN-WHITE-PIXEL screen))
+         (nice-font (OPEN-FONT display font-name))
+         (a-menu
+             (create-menu (screen-root screen)   ;the menu's parent
+                 fg-color bg-color nice-font)))
+
+        (setf (menu-title a-menu) "Please pick your favorite language:")
+        (menu-set-item-list a-menu "Fortran" "APL" "Forth" "Lisp")
+
+        ;; Bedevil the user until he picks a nice programming language
+        (unwind-protect
+            (do (choice)
+                ((and (setf choice (menu-choose a-menu 100 100))
+                     (string-equal "Lisp" choice))))
+
+            (CLOSE-DISPLAY display))))
+
+
+Note  that  the  main  program  event  loop  lies  in  the  body  of  an
+unwind-protect form.  This  is  a good  programming  technique  because,
+without this protection, an unexpected error could cause the program  to
+terminate without freeing  the ______server _________resources  it has created.  Server
+resources are CLX objects which refer to objects actually stored on  the
+X server. Examples of these are ______window, ____font, ______pixmap, ______cursor,  ________colormap,
+and ________gcontext objects. These server  resources are created and  destroyed
+by user  requests.  Server  resources  created  by  a  client  are  also
+destroyed when its display connection is closed. If client resources are
+repeatedly  created  without  being  destroyed,  then  the  server  will
+eventually run out of memory and fail.
+
+Most server resources are potentially sharable between applications.  In
+fact, windows  are manipulated  explicitly by  window manager  programs.
+Fonts and cursors are typically shared automatically since the X  server
+loads and  unloads font  storage  as needed.  gcontext objects  are  not
+ordinarily shared between client applications.
+
+You can now try to run the application with:
+
+    (just-say-lisp "")
+
+
+-----------------------------------------------------------------------
+12  Debugging With CLX
+-----------------------------------------------------------------------
+
+Typically, most CLX  programs do not  need to control  the buffering  of
+output requests directly. However, CLX  programmers need to be aware  of
+the asynchronous  nature  of  client-server  communication.  It  may  be
+convenient to control  the CLX output  buffer more directly,  especially
+during debugging.
+
+A client  that  wants  a  request  to  execute  immediately  instead  of
+asynchronously can follow it with  a call to display-force-output.  This
+function blocks (does not return)  until all previously buffered  output
+requests have been sent. Otherwise, the output buffer is always  flushed
+by a call to any function which returns a value from the server or which
+waits for input (for example, get-property). Certain output requests can
+cause input  events  to  be  sent. For  example,  map-window  can  cause
+:exposure events to  be sent.  Synchronizing output  with the  resulting
+input can be done with the display-finish-output function. This function
+blocks until  all  previously buffered  output  has been  sent  and  all
+resulting input events have been received.
+
+Functions that  return  information  from  the  server  block  until  an
+explicit reply is  received or an  error occurs. If  a nonblocking  call
+results in an error,  the error is generally  not reported until  later.
+All errors (synchronous  and asynchronous) are  processed by calling  an
+error handler defined for the display.  If the handler is a sequence  it
+is expected to  contain handler  functions specific to  each error.  The
+error code  is used  to  index the  sequence, fetching  the  appropriate
+handler. Any results  returned by the  handler are ignored  since it  is
+assumed that the handler either takes  care of the error completely,  or
+else signals.
+
+
+-----------------------------------------------------------------------
+13  Naming and Argument Conventions
+-----------------------------------------------------------------------
+
+Throughout CLX, a number of conventions for naming and syntax of the CLX
+functions have been followed. These conventions are intended to make the
+syntax of the functions more predictable.
+
+The major naming conventions are as follows:
+
+(1) To better  differentiate the  CLX symbols from  other symbols,  they
+have all been  placed in the  package XLIB. External  symbols have  been
+explicitly exported.
+
+(2) The _______display argument,  where used, is always  first in the  argument
+list.
+
+(3) All server resource objects, where  used, occur at the beginning  of
+the argument list, immediately after the display variable.
+
+(4) When a graphics context (________gcontext) is present together with  another
+type of  server  resource  (most commonly,  a  ________drawable),  the  graphics
+context occurs in  the argument  list after the  other server  resource.
+Drawables out rank all other server resources.
+
+(5) Source arguments  always precede  the destination  arguments in  the
+argument list.
+
+(6) The _x argument always precedes the _y argument in the argument list.
+
+(7) The  _____width  argument always  precedes  the ______height  argument  in  the
+argument list.
+
+(8) Where the _x, _y, _____width and ______height arguments are used together,  the _x
+and _y arguments always precede the _____width and ______height arguments.
+
+(9) Where  a ____mask  is  accompanied with  a  _________structure, the  ____mask  always
+precedes the _________structure in the argument list.
+
+
+-- Programming Considerations -----------------------------------------
+
+The major programming considerations are as follows:
+
+(1) Keyboards are the greatest variable between different manufacturer's
+workstations. If you  want your program  to be portable,  you should  be
+particularly conservative here.
+
+(2) Many display systems have  limited amounts of off-screen memory.  If
+you can, you should minimize use of pixmaps and backing store.
+
+(3) The user should have  control of his screen real-estate.  Therefore,
+you should write your applications to react to window management, rather
+than presume control of  the entire screen. What  you do inside of  your
+top level window, however, is up to your application.
+
+(4) Coordinates  and sizes  in X  are actually  16-bit quantities.  They
+usually are declared as an "int16" in the functions. Values larger  than
+16 bits can be truncated silently. Sizes (width and height) are unsigned
+quantities.
+
+(5) The types _____color, ________colormap, ______cursor, _______display, ____font, ________gcontext,  ______pixmap,
+______screen, and ______window are  defined solely by  a functional interface.  Even
+though they are  treated like  structures in  this document,  it is  not
+specified  whether  they  are  implemented  as  structures  or  classes.
+Although some  interfaces  are  described as  functions,  they  are  not
+required to be defined  using defun. (It is  a requirement that they  be
+functions as opposed to macros or special forms.)
+
+
+-----------------------------------------------------------------------
+14  See Also
+-----------------------------------------------------------------------
+
+The complete CLX manual is available in the directory:
+
+    _________________________$popcontrib/lisp/clx/docs
+
+as compressed __________PostScript(tm) files. The sections can be uncompressed and
+printed on any printer that supports PostScript.
+
+
+-----------------------------------------------------------------------
+15  Trademarks and Full CLX Copyright Notice
+-----------------------------------------------------------------------
+
+The _X ______Window ______System is a trademark of MIT.
+
+______DECnet is a trademark of Digital Equipment Corporation.
+
+__________PostScript is a trademark of Adobe Systems Inc.
+
+
+Full CLX Copyright:
+
+;;;          TEXAS INSTRUMENTS INCORPORATED
+;;;               P.O. BOX 2909
+;;;                AUSTIN, TEXAS 78769
+;;;
+;;; Portions Copyright (C) 1987 Texas Instruments Incorporated.
+;;; Portions Copyright (C) 1988, 1989 Franz Inc, Berkeley, Ca.
+;;;
+;;; Permission is granted to any individual or institution to use, copy, modify,
+;;; and distribute this software, provided that this complete copyright and
+;;; permission notice is maintained, intact, in all copies and supporting
+;;; documentation.
+;;;
+;;; Texas Instruments Incorporated provides this software "as is" without
+;;; express or implied warranty.
+;;;
+;;; Franz Incorporated provides this software "as is" without express or
+;;; implied warranty.

@@ -1,0 +1,155 @@
+RCS LOG
+
+$Log:	list_parse,v $
+# Revision 1.1  91/02/22  20:12:30  20:12:30  db (Dave Berry)
+# Initial revision
+# 
+
+
+(* TESTS FOR parseSep *)
+
+(* Empty Integer Lists *)
+ListParse.parseSep "" "" "" IntParse.parse ( "");
+	(* OK ([], "") *)
+ListParse.parseSep "" "" " " IntParse.parse ( " ");
+	(* OK ([], "") *)
+ListParse.parseSep "" "" "" IntParse.parse ( " ");
+	(* Fail (Some [], " ")) *)
+ListParse.parseSep "[" "]" "" IntParse.parse ( "[]");
+	(* OK ([], "") *)
+ListParse.parseSep "[" "]" " " IntParse.parse ( " [ ]1");
+	(* OK ([], "1") *)
+ListParse.parseSep "[" "]" "" IntParse.parse ( " [ ]1");
+	(* Fail (Some [], " ]1") *)
+ListParse.parseSep "[" "]" "," IntParse.parse ( " [ ]1");
+	(* OK ([], "1") *)
+ListParse.parseSep "" "]" "" IntParse.parse ( "]1");
+	(* OK ([], "1") *)
+ListParse.parseSep "" "]" " " IntParse.parse ( " ]1");
+	(* OK ([], "1") *)
+ListParse.parseSep "" "]" "" IntParse.parse ( " ]1");
+	(* Fail (Some [], " ]1") *)
+ListParse.parseSep "[" "" "" IntParse.parse ( "[");
+	(* OK ([], "") *)
+ListParse.parseSep "[" "" " " IntParse.parse ( " [");
+	(* OK ([], "") *)
+ListParse.parseSep "[" "" "" IntParse.parse ( " [");
+	(* OK ([], "") *)
+ListParse.parseSep "[" "" " " IntParse.parse ( "[ ");
+	(* OK ([], "") *)
+ListParse.parseSep "[" "" "" IntParse.parse ( "[ ");
+	(* Fail (Some [], " ") *)
+
+
+(* Non-empty Integer Lists *)
+ListParse.parseSep "" "" "" IntParse.parse ( " 1");
+	(* OK ([1], "") *)
+ListParse.parseSep "" "" "" IntParse.parse ( " 1 2");
+	(* OK ([1 2], "") *)
+ListParse.parseSep "" "" "" IntParse.parse ( " 1 ");
+	(* Fail (Some [1], " ") *)
+ListParse.parseSep "[" "]" "" IntParse.parse ( " [ 1 ]");
+	(* Fail (Some [1], " ]") *)
+ListParse.parseSep "[" "]" "" IntParse.parse ( " [ 1 ");
+	(* Fail (Some [1], " ") *)
+ListParse.parseSep "" "," "," IntParse.parse ( " 1, 2");
+	(* Fail (Some [1 2], "") *)
+ListParse.parseSep "" "," "," IntParse.parse ( " 1, 2,");
+	(* OK ([1 2], "") *)
+ListParse.parseSep "[" "," "," IntParse.parse ( "[ 1, 2,");
+	(* OK ([1 2], "") *)
+ListParse.parseSep "[" "]" "," IntParse.parse ( "[ 1, 2]");
+	(* OK ([1 2], "") *)
+
+
+(* Byte Lists *)
+ListParse.parseSep "" "" " " ByteParse.parse ( " ");
+	(* OK ([], "") *)
+ListParse.parseSep "" "" "" ByteParse.parse ( " ");
+	(* OK ([" "], "") *)
+ListParse.parseSep "[" "]" "" ByteParse.parse ( " [ ]1");
+	(* OK ([" "], "1") *)
+ListParse.parseSep "" "]" "" ByteParse.parse ( " ]1");
+	(* OK ([" "], "1") *)
+ListParse.parseSep "[" "" "" ByteParse.parse ( "[ ");
+	(* OK ([" "], "") *)
+ListParse.parseSep "" "" "" ByteParse.parse ( " 1 ");
+	(* OK ([" ", "1", " "], "") *)
+
+
+(* TESTS FOR parseSepN *)
+
+(* Empty Lists *)
+ListParse.parseSepN "" "" "" IntParse.parse 0 ( "");
+	(* OK ([], "") *)
+ListParse.parseSepN "" "" "" IntParse.parse 0 ( " ");
+	(* OK ([], " ") *)
+ListParse.parseSepN "" "" "" IntParse.parse 0 ( " 1");
+	(* OK ([], " 1") *)
+ListParse.parseSepN "[" "]" "" IntParse.parse 0 ( "[]");
+	(* OK ([], "") *)
+ListParse.parseSepN "[" "]" " " IntParse.parse 0 ( " [ ]1");
+	(* OK ([], "1") *)
+ListParse.parseSepN "[" "]" "" IntParse.parse 0 ( " [ ]1");
+	(* Fail (Some [], " ]1") *)
+ListParse.parseSepN "[" "]" " " IntParse.parse 0 ( " [ 1 ]");
+	(* Fail (Some [], "1 ]") *)
+ListParse.parseSepN "[" "]" "," IntParse.parse 0 ( " [ ]1");
+	(* OK ([], "1") *)
+ListParse.parseSepN "" "]" "" IntParse.parse 0 ( "]1");
+	(* OK ([], "1") *)
+ListParse.parseSepN "" "]" " " IntParse.parse 0 ( " ]1");
+	(* OK ([], "1") *)
+ListParse.parseSepN "" "]" "" IntParse.parse 0 ( " ]1");
+	(* Fail (Some [], " ]1") *)
+ListParse.parseSepN "[" "" "" IntParse.parse 0 ( "[");
+	(* OK ([], "") *)
+ListParse.parseSepN "[" "" "" IntParse.parse 0 ( " [");
+	(* OK ([], "") *)
+ListParse.parseSepN "[" "" "" IntParse.parse 0 ( "[ ");
+	(* OK ([], " ") *)
+ListParse.parseSepN "" "" "" IntParse.parse 1 ( "");
+	(* Fail (Some [], "") *)
+ListParse.parseSepN "[" "" "" IntParse.parse 1 ( "[ ");
+	(* Fail (Some [], " ") *)
+
+
+(* Non-empty Lists *)
+ListParse.parseSepN "" "" "" IntParse.parse 1 ( " 1");
+	(* OK ([1], "") *)
+ListParse.parseSepN "" "" "" IntParse.parse 2 ( " 1");
+	(* Fail (Some [1], "") *)
+ListParse.parseSepN "" "" "" IntParse.parse 2 ( " 1 2");
+	(* OK ([1 2], "") *)
+ListParse.parseSepN "" "" "" IntParse.parse 1 ( " 1 2");
+	(* OK ([1], " 2") *)
+ListParse.parseSepN "[" "]" "" IntParse.parse 1 ( " [ 1 ]");
+	(* Fail (Some [1], " ]") *)
+ListParse.parseSepN "[" "]" "" IntParse.parse 1 ( " [ 1 ");
+	(* Fail (Some [1], " ") *)
+ListParse.parseSepN "" "," "," IntParse.parse 2 ( " 1, 2");
+	(* Fail (Some [1 2], "") *)
+ListParse.parseSepN "" "" "," IntParse.parse 2 ( " 1, 2,");
+	(* OK ([1 2], ",") *)
+ListParse.parseSepN "" "," "," IntParse.parse 2 ( " 1, 2,");
+	(* OK ([1 2], "") *)
+ListParse.parseSepN "[" "]" "," IntParse.parse 2 ( "[ 1, 2]");
+	(* OK ([1 2], "") *)
+
+
+(* Byte Lists *)
+ListParse.parseSepN "" "" " " ByteParse.parse 0 ( " ");
+	(* OK ([], [" "]) *)
+ListParse.parseSepN "" "" " " ByteParse.parse 1 ( " ");
+	(* Fail (Some [], []) *)
+ListParse.parseSepN "" "" "" ByteParse.parse 1 ( " ");
+	(* OK ([" "], []) *)
+ListParse.parseSepN "[" "]" "" ByteParse.parse 1 ( " [ ]1");
+	(* OK ([" "], ["1"]) *)
+ListParse.parseSepN "" "]" "" ByteParse.parse 1 ( " ]1");
+	(* OK ([" "], ["1"]) *)
+ListParse.parseSepN "[" "" "" ByteParse.parse 1 ( "[ ");
+	(* OK ([" "], []) *)
+ListParse.parseSepN "" "" "" ByteParse.parse 2 ( " 1 ");
+	(* OK ([" ", "1"], [" "]) *)
+

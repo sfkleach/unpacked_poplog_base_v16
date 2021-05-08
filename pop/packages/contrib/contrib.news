@@ -1,0 +1,139 @@
+CONTRIB NEWS
+
+
+All additions to "contrib" directories in Poplog should be announced in
+this file, latest first. All contributions should normally be in a
+sub-directory, where each sub-directory contains a README file listing
+the contents and summarising their function. For the more complex
+packages it may be appropriate to provide further subdivision into
+different directories, e.g. doc, src, com, teach, etc., along with a
+single program file that can be run in order to add the directories to
+appropriate search lists.
+
+
+1994
+====
+Nov 23 (Robert Duncan)
+    --- ML-Lex (a lexical analyser generator) and ML-Yacc (an LALR
+        parser generator) have been installed in $popcontrib/pml.
+        See ____HELPù*ù_____MLLEX, *ù______MLYACC.
+
+
+1993
+====
+July 7 (Andy Holyer)
+    --- A package providing an interface to the SPARC audio device has
+        been added, in the file $popcontrib/pop11/lib/audio_device.p.
+        Documentation is in $popcontrib/pop11/ref/audio_device.
+
+Apr 23 (John Williams)
+    --- New directory $popcontrib/ai_through_search added. This contains
+        programs from the book "AI Through Search" by Chris Thornton and
+        Benedict du Boulay, published by Oxford: Intellect, 1992.
+
+
+1992
+====
+Nov 16 (Robert Duncan)
+    --- Installed a later version of Richard Caley's Emacs package in
+        $popcontrib/emacs. This has some bug fixes, and includes an
+        additional command 'pop-apropos' which summarises the help files
+        available for a particular topic. Also, there is now a single
+        "init.el" file which you can load to do all the necessary
+        setting-up: see the README file for details.
+
+        NB: existing users of the package should note that all the files
+        have been moved one directory level down into emacs/rjc.
+        Personal initialisation files may need changing accordingly.
+
+
+1991
+====
+Nov 5 (John Williams)
+    --- New module MIT-LOOP added to $popcontrib/lisp/modules. This
+        software was obtained from MIT, and provides an enhanced version
+        of the Common Lisp LOOP iteration macro. See Lisp's HELP
+        MIT-LOOP for details.
+
+July 16 (Aaron Sloman)
+    --- Added LIB VED_DOIT, a VED based, extendable, menu facility that
+        can be used in XVED across different window managers.
+        Installed in $popcontrib/x/xved/doit_menus
+
+Jun 14  (Robert Duncan)
+    --- The Edinburgh Standard ML Library (Revision 1.16) installed in
+        $popcontrib/pml/smllib. This replaces the previous beta-test
+        version installed in $popcontrib/pml/edinlib. See HELP * SMLLIB.
+
+Jan 28  (Aaron Sloman)
+    --- Added $popcontrib/vision
+        The beginning of a collection of utilities for image processing,
+        using the Poplog X facilities. (Based on part of the Sussex
+        vision teaching library).
+        For details see $popcontrib/vision/README
+
+    --- Added $popcontrib/emacs
+        Files contributed by Richard Cayley, Edinburgh University, to
+        help Emacs users drive Poplog directly from Emacs, instead of
+        using VED.
+        For details see $popcontrib/emacs/ReadMe
+
+Jan 14  (Robert Duncan)
+    --- Programs from the book "ML for the Working Programmer" by
+        Lawrence Paulson installed in $popcontrib/pml/WorkingProgrammer
+
+1990
+====
+
+Dec 12  (Simon Nichols)
+    --- Installed library xpw_draw in $popcontrib/x/prolog/xpw/lib.
+        This provides a higher level interface to the drawing predicates
+        in the Xpw library (Prolog interface to the Poplog Widget Set).
+        See $popcontrib/x/prolog/xpw/help/xpw_draw.
+
+Nov 28  (Robert Duncan)
+    --- The Edinburgh Standard ML Program Library, Version 0.1 (Beta)
+        installed in $popcontrib/pml/edinlib
+
+Nov 19  (John Williams and Julian Clinton)
+    --- Two Public Domain extensions to LISP added, CLX and the PCL
+        version of CLOS. See the files in the following directories
+            $popcontrib/lisp/clx
+            $popcontrib/lisp/pcl
+            $popcontrib/lisp/modules
+
+Nov 19  (Aaron Sloman)
+    --- A VED utility "ENTER so" enables you to treat a file or marked
+        range as a "so(urce)" of VED ENTER commands. I.e. all the
+        commands will be obeyed. See $popcontrib/ved/ved_so.p
+
+    --- Installed a VED utility, "ENTER auto_mins", that allows you to
+        specify that VED should write changed files at timed intervals
+        rather than simply comparing number of characters changed with
+        -vedautowrite-. Draft HELP file is part of the library file:
+            $popcontrib/ved/ved_auto_mins.p
+
+Nov 14  (R.Duncan)
+    --- Installed Andreas Schoter's Prolog interface to the Poplog
+        Widget Set in $popcontrib/x/prolog/xpw.
+        See $popcontrib/x/prolog/xpw/README.
+
+Oct 30  (A.Sloman)
+    --- Put a few examples of Xpop graphics programs using
+        LIB RC_GRAPHICS into the directory $popcontrib/x/demos
+
+Sept 14 (A.Sloman)
+    --- Added the pwm subdirectory with C sources and Pop-11 files
+        provided by Anthony Worrall Reading University.
+
+June 3  (A.Sloman)
+    --- Updated and extended the AREADME file
+    --- Added TEACH PROGSTYLE to the pop11/teach directory
+
+May 30  (A.Sloman)
+    --- The first two contributions have been installed, namely
+        the nlp_book directory and the pop11/ct_book directory.
+
+
+--- ____________________contrib/contrib.news
+--- _________Copyright __________University __of ______Sussex _____1994. ___All ______rights _________reserved.

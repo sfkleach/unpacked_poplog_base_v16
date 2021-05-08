@@ -1,0 +1,45 @@
+SMLLIB
+
+The Edinburgh Standard ML Library, Revision 1.16.
+Installed by R. J. Duncan, June 1991.
+
+This software is contributed by the University of Edinburgh.
+Please read the copyright notice in library/COPYRIGHT.
+
+Documentation on the library is in the directory library/doc.
+
+
+Files in this directory:
+
+
+    library/
+        The library as distributed from Edinburgh, and installed
+        with option '-poplog'.
+
+
+    load.ml
+        Loads the complete library: just type to the top-level prompt:
+
+            load load.ml
+
+        or alternatively, from the command line
+
+            pml -load load.ml
+
+
+    make.ml
+        Makes a saved image of the library in
+
+            $poplocalbin/smllib.psv
+
+        This is best done with the command:
+
+            pml -noinit -nostdin -load make.ml
+
+        The image can then be run with the command:
+
+            pml +smllib
+
+
+--- contrib/pml/smllib/README
+--- Copyright University of Sussex 1991. All rights reserved. ----------

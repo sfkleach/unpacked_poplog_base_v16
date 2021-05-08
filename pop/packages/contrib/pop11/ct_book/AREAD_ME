@@ -1,0 +1,46 @@
+The Following Directories and Files are provided on the tape.
+
+AREAD_ME
+    (This file)
+
+BOOK.NOTE
+    (A note by Mike Sharples on the material supplied to go with the
+     Computers and Thought book)
+
+DIR lib
+    (The Pop-11 library programs for the Computers and Thought Book)
+    lib/connect.output
+    lib/connect.p
+    lib/eliza.p
+    lib/mini_eliza.p
+    lib/nl.p
+    lib/prodsys.p
+    lib/route.p
+    lib/semnet.p
+    lib/tourist_guide.p
+    lib/vision.p
+    lib/wineo.p
+
+DIR doc
+    (Overview documentation for the Computers and Thought Book)
+    doc/course.outline
+    doc/reading.list
+    doc/tpop.guide
+
+DIR help
+    (Help files for the Computers and Thought Book)
+    help/doctor
+    help/semnet
+
+DIR teach
+    (Teach files for the Computers and Thought Book)
+    teach/eliza
+    teach/london
+    teach/prodsys
+    teach/psys1
+    teach/psys2
+    teach/respond
+    teach/route
+    teach/semnet1
+    teach/semnet2
+    teach/syntax

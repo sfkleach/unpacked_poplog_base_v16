@@ -1,0 +1,9 @@
+MENU FILE HEADER (Don't delete)
+MENU FILE NAME: $popcontrib/x/xved/doit_menus/menus/scroll_menu
+Scroll up one line                          !! RETURNAFTER vedscrollup
+Scroll down one line                        !! RETURNAFTER vedscrolldown
+Scroll left one column                      !! RETURNAFTER vedscrollleft
+Scroll right one column                     !! RETURNAFTER vedscrollright
+
+Move menu        ----->                     !!      'menu move'
+Menu menu        ----->                     !!      'menu menu'

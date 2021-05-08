@@ -1,0 +1,441 @@
+HELP PWM_TRACKMOUSE                         Ben Rubinstein, Sep 1986
+                                            Revised: Nic Ford, Apr 1987
+
+    Following a moving mouse cursor in the Poplog Window Manager.
+
+    pwm_trackmouse(<false:M>, <boolean:R>);
+
+    pwm_trackmouse(<list|false:L>,
+                   <integer:X>, <integer:Y>,
+                   <integer:I>, <integer:J>,
+                   <word|integer:M>, <boolean:R>);
+
+    Keywords: PWM, mouse, input
+
+
+== CONTENTS - (Use <ENTER> g to access sections) ==
+
+ -- Introduction
+ -- pwm_trackmouse
+ -- Visual feedback modes
+ -- "rubber_line" ("rline")
+ -- "sketch_line" ("sline")
+ -- "window_crosshairs" ("crossw") / "box_crosshairs" ("crossb")
+ -- "rubber_box" ("rbox") / "rubber_sheet" ("rsheet")
+ -- "bouncy_box" ("bbox") / "bouncy_sheet" ("bsheet")
+ -- "bouncy_xor_ras" ("xorras") / "bouncy_src_ras" ("srcras")
+ -- "marktext_lines" ("mtextl") / "marktext_window" ("mtextw")
+ -- Tracking the mouse in POPLOG
+ -- WARNING
+ -- Examples
+
+-- Introduction -------------------------------------------------------
+
+IMPORTANT: this file describes some very powerful, but quite complex,
+facilities provided by the Poplog Window Manager.  It assumes that you
+have read, and are comfortable with the contents of, the help files
+HELP *PWM, *PWMGENERAL, *PWMWINDOWS, *PWMGRAPHICS, and *PWMINPUT.  You
+may find it confusing if you have not yet familiaried yourself with
+these files.
+
+Normally, information about the position of the mouse cursor is only
+sent to POPLOG by the PWM when a mouse button is pressed or released.
+In these cases, a message is sent of the form
+
+        "press" <button> <x> <y>
+
+For example, the message that would be sent if the third mouse button is
+released at coordinates 35, 267 is
+
+        "release" 3 35 267
+
+HELP *PWMINPUT describes how these messages can be passed on to your own
+procedures.
+
+For many user interfaces, these two messages will be sufficient.  But
+some applications may additionally want to react to the position of the
+mouse in the interval between the user pressing a button and the user
+releasing it.  The procedure -pwm_trackmouse- can be used for this
+purpose: it instructs the PWM to take certain actions when the mouse is
+moved with one of its buttons down.  There are two kinds of action the
+PWM can take: one of these is to send a report to POPLOG each time it
+notices the mouse having been moved.  POPLOG can then take appropriate
+action, which might be merely storing the position, or might involve
+giving some kind of visual feedback to the user.
+
+The problem with using this facility is that it involves a great deal of
+communication between POPLOG and the PWM; and if POPLOG is incapable
+of reading these messages swiftly, or more particularly if it needs
+to give complex instructions to the PWM each time the mouse is moved, it
+is possible to block up the communications channel.  In many cases, the
+application only needs to know the points at which the mouse button is
+pressed and released, and only requires the points in between to achieve
+some form of visual feedback to be given to the user.  Further, this
+feedback is often of a fairly common type.
+
+This is the motivation behind the other kind of action that the PWM can
+be instructed, through -pwm_trackmouse-, to take.  Several common kinds
+of visual feedback are built into the PWM, and it can be instructed to
+use one of these to follow the moving mouse.  In many applications this
+may remove entirely the need to receive messsages about the mouse's
+travel between the points where the mouse button is pressed and
+released.  In others at may at least reduce it so that POPLOG can simply
+store the points, without processing them or taking any further action
+until the interaction is completed.
+
+-- pwm_trackmouse -----------------------------------------------------
+
+The procedure -pwm_trackmouse- can be used after a mouse button has been
+pressed, and before it has been released (using it at any other time
+will be ignored). It instructs the PWM to take various actions every
+time it notices that the mouse has moved, until either the mouse exits
+the window or the mouse button is released.  Note that this cannot be
+done on a permanent basis: next time the user presses a mouse button, no
+special action will be taken in response to mouse movement unless
+-pwm_trackmouse- is called again.  There are two call forms.
+
+    pwm_trackmouse(<false:M>, <boolean:R>);
+
+The two compulsory arguments to -pwm_trackmouse- are a boolean:R to
+indicate whether or not reporting of each mouse movement is required,
+and an integer:M to indicate the kind of visual feedback required.
+
+If the boolean:R is true, the position of the mouse will be be reported
+whenever it changes; otherwise only its final position will be reported
+in the usual way.  The nature of the reports is described below, in the
+section "Tracking the mouse in POPLOG".
+
+If the argument:M, indicating the mode of visual feedback required, is
+either false or zero it specifies that no visual feedback is required
+(presumably, in this case the boolean:R will be true, since otherwise
+the call is pointless).  If visual feedback is required (the argument M
+is not false) then the additional arguments must be supplied to provide
+details for the feedback mechanism.  The other possible values of M and
+their meaning are discussed below; as are the details and signifigance
+of the other arguments that must be supplied for these modes.
+
+Note that you should only make a call to this procedure in event-handler
+for a mouse "press" event (see HELP *PWMINPUT) - calling it from
+top-level will normally be ignored, but if you happen to have be holding
+a mouse-button down when you call it, then POPLOG might confuse the
+issue by making various other system calls with potentially catastrophic
+results.
+
+-- Visual feedback modes ----------------------------------------------
+attached to the mouse cursor.  It is the movement of this point that is
+assumed to be of interest, and the various forms of feedback are
+designed to support this.  Three points should be noted.  Firstly,
+although the moving point that is being tracked is concieved of as being
+"attached" to the mouse cursor, it need not lie directly under it.  The
+mechanism provided allows a constant two-dimensional offset to be
+specified, effectively "attaching" the moving point to the mouse cursor
+at a distance.
+
+Secondly, although the movement of the mouse cursor itself cannot be
+restricted, the movement of the moving point that follows it can be.
+A rectangular area of the window can be specified, and the moving
+point will then be restricted to travelling within that area.  It will
+in effect be attached to the mouse cursor by a piece of strong elastic:
+if the mouse cursor moves out of the limiting box, but remains in the
+window, the moving point will be as close as it can to the mouse cursor
+without itself going outside the limiting box.
+
+Thirdly, the position that is reported in the final "mouse button
+released at ..." message is not necessarily that of the mouse cursor (as
+the position given in the initial "mouse button pressed at ..." message
+is); it is the position of the moving point, and in consequence of the
+two points made above these are not necessarily the same.
+
+A final point before considering the arguments to -pwm_trackmouse- in
+more detail: from POPLOG's point of view, all ordinates are in a mode
+appropriate to the type of window.  Thus in a text window, the original
+report of a mouse button being pressed gives the mouse's location in
+character coordinates, with 0, 0 indicating the first character in the
+top row: the arguments to a responding call of -pwm_trackmouse- would be
+based in the same coordinate system.
+
+If visual feedback is required, the following kind of call must be made:
+
+    pwm_trackmouse(<list|false:L>,
+                   <integer:X>, <integer:Y>,
+                   <integer:I>, <integer:J>,
+                   <word|integer:M>, <boolean:R>);
+
+The argument L specifies the limiting box within which the moving point
+is to be contained.  False indicates that it can be moved anywhere
+within the window, while a list defines the limit box as four integers,
+respectively the left, top, right and bottom.
+
+The integers X and Y specify the initial position of the moving point.
+This will be compared against the position the mouse cursor had at the
+time the button depression was reported, in order to calculate a fixed
+two-dimensional offset.  Subsequent positions of the moving point will
+be found by adding this offset to the mouse position.
+
+Most of the available forms of feedback make use of the two integer
+arguments I and J, to provide either a fixed point or a fixed pair of
+dimensions used in the visual feedback.  Their signifigance will be
+discussed in relation to each mode below.  They must be specified in all
+cases: zero will be a convenient value to give in the cases where they
+are ignored.
+
+The possible values of the word or integer:M are described in detail
+below. All but two of the possible modes can conveniently be grouped
+into pairs as a normal and alternate version of the same mode.
+
+The mode is specified by a word (each mode has a short name and a
+longer, more descriptive name).  The procedure -pwm_trackmouse- actually
+has to translate this mode name into a number; so to get a little more
+efficiency, the macro TRKMODE can be used to make the conversion at
+compile-time.  The actual numbers should never be used directly in code,
+since they may be changed without notice.  See the examples at the end
+of this file for more details.
+
+-- "rubber_line" ("rline") --------------------------------------------
+
+A line is drawn in inverting paint from the fixed point (I, J) to the
+moving point (initially (X, Y)).  There is no alternate version of this
+mode.
+
+-- "sketch_line" ("sline") --------------------------------------------
+
+A line is drawn starting from the initial value of the moving point to
+successive locations of it, using the current graphics drawing mode and
+paint (set by -pwm_grafparams-: see HELP * PWMGRAPHICS).  There is no
+alternative version of this mode; the argument specifying the fixed
+point is ignored.  Note that this is the only mode in which contents of
+the window will be changed at the end of the interaction.  It is most
+likely to be useful with the reporting argument (R) switched on,
+enabling POPLOG to record the points between which the line was drawn.
+
+-- "window_crosshairs" ("crossw") / "box_crosshairs" ("crossb") -------
+
+In this mode the fixed point argument is ignored.  The mouse cursor
+(which is hidden during the interaction) is tracked by a horizontal and
+a vertical line drawn in inverting paint, which pass through the moving
+point.  In the normal mode ("window_crosshairs") the lines extend to the
+edges of the window; in the alternate mode ("box_crosshairs") they
+extend only to the boundaries of the limit box.  (Note: if the alternate
+modes is specified with no limit box, the crosshairs will be invisible.)
+
+-- "rubber_box" ("rbox") / "rubber_sheet" ("rsheet") ------------------
+
+A box is drawn with one corner at the fixed point (I, J) and the
+diagonally opposing corner at the moving point.  In the normal mode
+("rubber_box") only the outline of the box is drawn, in inverting paint;
+in the alternate mode ("rubber_sheet") the entire area of the window
+lying within the box is inverted.
+
+-- "bouncy_box" ("bbox") / "bouncy_sheet" ("bsheet") ------------------
+
+A box is drawn with top left corner at the moving point, and widht and
+height specified by I and J respectively.  In the normal mode
+("bouncy_box") only the outline of the box is drawn, in inverting paint;
+in the alternate mode ("bouncy_sheet") the entire area of the window
+lying within the box is inverted.  Note that the offset which connects
+the moving point to the mouse cursor, in this mode, is not simply the
+difference between the initial value specified for the moving point and
+the position of the mouse when the button was depressed, but is
+calculated so as to "snap" the box, by nearest side or corner, to the
+mouse cursor, in a manner which should make this kind of feedback more
+intuitive.
+
+-- "bouncy_xor_ras" ("xorras") / "bouncy_src_ras" ("srcras") ----------
+
+With these modes, you can instruct the PWM to follow the mouse cursor
+with an arbitrary bit-image (raster) taken either from the window in
+which the interaction is occuring, or from another window or page.
+
+The image can be overlaid on the window in either of two ways: with the
+"bouncy_src_ras" mode the SRC raster-op is used, which means that
+nothing from the window will show through the moving image: with the
+"bouncy_xor_ras" mode the XOR raster-op is used, and in this case
+wherever a pixel is set in the image that is being used to follow the
+cursor, the corresponding pixel from the window will be inverted; and
+wherever a pixel is not set in the moving image, the corresponding pixel
+from the window  will show through unchanged.  In either case, as with
+all the feedback modes except "sketch_line", the initial state of
+the window will be restored at the end of the interaction.
+
+This mode requires two extra arguments to -pwm_trackmouse-, to specify
+the surface from which the moving image is to be taken and the
+coordinate on that surface of the top-left corner of the image.  These
+extra arguments precede the mode argument, thus:
+
+    pwm_trackmouse(<list|false:L>,
+                   <integer:X>, <integer:Y>,
+                   <integer:I>, <integer:J>,
+                   <integer:Sx>, <integer:Sy>, <window-id|page-id:S>,
+                   <word|integer:M>, <boolean:R>);
+
+The arguments I and J are used to specify the width and height of the
+moving image.  Note that the arguments I, J, Sx and Sy are always
+interpreted as pixel values, regardless of whether the input window is a
+text or graphics window.
+
+To summarise a rather complex function: a rectangular bit-image width
+and height I, J is copied from a surface S starting from the point X, Y.
+This image is continuously copied onto the window in which interaction
+is occurring so that its top-left corner bears the same relationship to
+the mouse cursor as the point (X, Y) has to the position the mouse
+cursor was at when the button was pressed, until the mouse button is
+released or the mouse exits the window.  Both the surface from which the
+image was taken and the window in which interaction is occuring (if
+different) are left unchanged at the end of the interaction.
+
+Finally, note that in the "bouncy_src_ras" mode, if the window from
+which the image is taken is the one in which the interaction is taking
+place, and the initial position given for it is its original position
+(i.e. Sx = X and Sy = Y) then it will be removed from the original
+position before the feedback starts (and later put back).  That is, the
+effect is of the raster having been picked up and moved, rather than
+copied.
+
+-- "marktext_lines" ("mtextl") / "marktext_window" ("mtextw") ---------
+
+This mode can only be used in a text (including VED) window: if it
+is requested in any other kind of window the entire request (including a
+reporting requirement if any) will be ignored.  All the text in the
+window, from the fixed point (I,J) in either direction to the moving
+point will be inverted.  That is, the characters from the first of these
+two points, to the end of the row or the second point if it is on the
+same row, will be inverted; on each row between the two points, every
+character from the first character on the row to the last wil be
+inverted; and if the second point is not on the same row as the first
+point, all the characters from the first character on the row to the
+second point (inclusive) will be inverted.
+
+The 'first character on the row' is the character in column 0 for a text
+window, and the character in column 1 for a VED window.  In the normal
+mode ("marktext_lines") the 'last character on the row' is the character
+after the last non-space character; in the alternate mode
+("marktext_window") it is the character in the right-most column.
+
+-- Tracking the mouse in POPLOG ---------------------------------------
+
+If -pwm_trackmouse- is called with the boolean:R true, then a message
+will be sent by the PWM to POPLOG each time it notices that the mouse
+has been moved.  These messages have the same form as the messages
+described in the introduction above and in HELP PWMINPUT, but the word
+"move" replaces "press" or "release".  Thus a sequence of messages from
+the PWM to POPLOG might be as follows
+
+        {"press" 1 12 34}   - indicates button 1 down at (12, 34)
+
+                        (-pwm_trackmouse- called here)
+
+        {"move" 1 12 35}    - mouse moved to (12, 35) with button 1 down
+        {"move" 1 13 37}    - mouse moved to (13, 37) with button 1 down
+
+        ...          (more messages of the same type)
+
+        {"release" 1 45 10} - button 1 released at (45, 10)
+                    OR
+        {"mousexit" 1 0 0}  - mouse exited window with a button pressed
+
+
+    Note that the coordinates will be in pixels if the window in which
+the input occured is a graphics window, in characters otherwise.  The
+file HELP *PWMINPUT describes how you can trap these messages.
+
+-- WARNING ------------------------------------------------------------
+
+It is possible for the release event to occur before you get a chance to
+call pwm_trackmouse. This can cause one of two problems
+
+1).     The release event is reported with the coordinates of the release
+    point and not the coordinates of the moving point. This is a particular
+    problem if a constraining box is being used. The release point may be
+    outside the box!
+
+2).     The release event is NOT REPORTED! So pwm reports two consecutive
+    press events. Your press handler should note this and take appropriate
+    actions. A press event while "tracking" should probably be treated as
+    a mousexit event.
+
+-- Examples -----------------------------------------------------------
+
+    pwm_trackmouse(false, 23, 45, 50, 50, "rubber_line", false);
+
+This requests that the mouse cursor be followed by a "rubber line"
+between it and the point (50, 50).  If it is sent in response to a
+report that a mouse button had been pushed at (23, 45) then the moving
+end of the line will be exactly on the mouse cursor; otherwise it will
+be somewhat offset.  The moving end of the line will be allowed to ravel
+anywhere within the window.
+
+    pwm_trackmouse(false, 50, 50, 0, 0, "sketch_line", true);
+
+This requests that the mouse be tracked by a continuous line, and that
+POPLOG be sent a report each time that the PWM notices the mouse having
+been moved, until the mouse button is released.  At the end of the
+interaction the line will have been left on screen; and the POPLOG
+program may have a list of the all the points between which the line was
+drawn.
+
+    pwm_trackmouse([50 50 50 150], 50, 100, 0, 0, TRKMODE rbox, false);
+
+This requests that a "rubber box" full of inverting paint be drawn
+between the points (0,0) and (50, 100), and that the latter corner then
+be adjust to follow the mouse.  The mouse following corner will not be
+moved out of the area defined by the box with opposing corners (50, 50)
+and (50, 100): which is to say that it will not be allowed to move
+horizontally, but only allowed to slide up and down an imaginary line
+from the point (50, 50) to the point (50, 150).
+
+Finally, this extended example creates a window and allows the user to
+draw lines in it.  The left button allows the user to draw freehand
+lines; any other button first allows the start-point of a line to be
+specified using crosshairs, and the next time it is pressed allows the
+end-point to be specified using a "rubber line" from the start-point.
+You can load it by marking both ends and typing <CTRL>-D.  You might
+like to try extending it - for example by specifying a limit box for the
+lines.  Or if you have read HELP *PWMMENUS, you could change it so that
+the right button brings up a menu, for example offering to clear or
+invert the window.
+
+    vars limitbox = false;    ;;; you can try assigning a list to this
+    vars startx = false, starty = false;    ;;; save start of line here
+
+    ;;; make a window
+    vars mywin = pwm_makegfxwin('trackmouse-test', 200, 200);
+
+    ;;; assign event catchers
+    "catchpress" -> pwmeventhandler(mywin, "press");
+    "catchrelease" -> pwmeventhandler(mywin, "release");
+
+    define catchpress(event);
+        lvars event button x y;
+        ;;; get the button, x and y out of the event vector
+        event.destvector.erase -> y -> x -> button ->;
+
+        if button == 1 then
+            pwm_trackmouse(limitbox, x, y, x, y, "sketch_line", false);
+        elseif startx and starty then
+            pwm_trackmouse(limitbox, x, y, startx, starty,
+                                                    "rubber_line", false);
+        else
+            pwm_trackmouse(limitbox, x, y, x, y, "window_crosshairs", false);
+        endif;
+    enddefine;
+
+    define catchrelease(event);
+        lvars event button x y;
+        dlocal pwmgfxsurface, pwmgfxrasterop = PWM_SRC;
+        ;;; get the button, x and y out of the event vector
+        event.destvector.erase -> y -> x -> button ->;
+
+        if button == 1 then
+            ;;; do nothing for release - all done by trackmouse
+        elseif startx and starty then
+            pwminputsource -> pwmgfxsurface;            ;;; set the window
+            pwm_gfxdrawline(startx, starty, x, y, 2);   ;;; draw the line
+            false ->> startx -> starty;      ;;; clear line-start record
+        else
+            x -> startx;        ;;; save this position for start of line
+            y -> starty;
+        endif
+    enddefine;
+
+--- C.all/help/pwm_trackmouse ------------------------------------------
+--- Copyright University of Sussex 1987. All rights reserved. ----------

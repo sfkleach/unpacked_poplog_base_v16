@@ -1,0 +1,472 @@
+HELP PWMGRAPHICS                                Ben Rubinstein, Jan 1987
+                                             Revised: Nic Ford, Mar 1987
+
+Overview of graphics facilities for the Poplog Window Manager.
+
+Keywords: PWM, graphics, gfx, raster, page, windows.
+
+    pwm_maketxtwin(<string>, <integer:C>, <integer:R>) -> <window-id|false>
+    pwm_makegfxwin(<string>, <integer:W>, <integer:H>) -> <window-id|false>
+    pwm_gfxnewpage(<integer:W>, <integer:H>) -> <page-id|false>
+    pwm_gfxkillpage(<page-id>)
+    <window-id|page-id> -> pwmgfxsurface
+    pwmgfxsurface -> <window-id|page-id>
+    pwm_gfxpixel(<integer:X>, <integer:Y>) -> <integer|false:P>
+    <integer:P> -> pwm_gfxpixel(<integer:X>, <integer:Y>)
+    <integer> -> pwmgfxpaintnum
+    pwmgfxpaintnum -> <integer>
+    <integer> -> pwmgfxrasterop
+    pwmgfxrasterop -> <integer>
+    pwm_gfxwipearea(<integer:X>, <integer:Y>, <integer:W>, <integer:H>)
+    pwm_gfxwipearea(<false>)
+    pwm_gfxwipearea(<integer:X>, <integer:Y>, <string:T>)
+    pwm_gfxdrawline(<integer:X1>, <integer:Y1>, .... , <integer:N>)
+    pwm_gfxfillpoly(<integer:X1>, <integer:Y1>, .... , <integer:N>)
+    pwm_gfxdrawellipse(<integer:X>, <integer:Y>, <boolean>,
+                                [<number:S>,] <number:Rh>, <number:Rv>)
+    pwm_gfxdrawellipse(<integer:X>, <integer:Y>, <boolean>, <number:R>)
+    pwm_gfxdrawarc(<integer:Cx>, <integer:Cy>,
+                    <number:Rh>, <number: Rv>,
+                    <integer:A1>, <integer: A2>)
+    pwm_gfxcopyraster(<window-id|page-id:S>, <integer:Xs>, <integer:Ys>,
+                      <integer:W>, <integer:H>,
+                      <integer:Op>,
+                      <window-id|page-id:D>, <integer:Xd>, <integer:Yd>)
+
+This file introduces the graphics facilities provided by the POPLOG
+Window Manager (PWM).  It assumes that you have already read the
+files HELP *PWM, *PWMGENERAL and *PWMWINDOWS.
+
+== CONTENTS - (Use <ENTER> g to access required sections) ==
+
+ -- Introduction: windows and pages
+ -- Selecting a window for graphics
+ -- Setting and reading pixels
+ -- Setting raster-op and logical colour
+ -- Applying raster-op and paint to rectangular areas
+ -- Drawing lines
+ -- Filling Closed Polygons
+ -- Drawing circles, ellipses and arcs
+ -- Copying or moving an image around a window or between windows
+ -- Further commands
+
+-- Introduction: windows and pages --------------------------------------
+
+The POPLOG Window Manager provides a limited set of graphics facilities
+which can be applied to any of its windows.  For information on making
+these windows please see HELP *PWMWINDOWS: here we will just give a
+reminder of how they can be made:
+
+    pwm_maketxtwin(<string>, <integer:C>, <integer:R>) -> <window-id|false>
+    pwm_makegfxwin(<string>, <integer:W>, <integer:H>) -> <window-id|false>
+
+The first function makes a text window, and the integer arguments
+specify the size in terms of characters that can be displayed (rows and
+columns); the second makes a graphics window, and specifies the size
+in pixels.  Text windows are just like graphic windows except that they
+additionally support terminal emulation facilities: thus graphics
+functions can be applied to either kind of window, and indeed from the
+point of view of the graphics functions there is no difference between
+the two.  All points and dimensions given as arguments to the graphics
+functions are given in pixel units, regardless of the type of the
+window.
+
+In addition to windows, there is another kind of graphics surface
+on which some of the graphics functions can operate: a "page" is a
+rectangular array of pixels stored in the PWM's memory.  It cannot be
+made visible on screen, cannot recieve input, and none of the window
+operations described in HELP *PWMWINDOWS can be used with it.  It is
+basically useful for storing images so that they are offscreen but can
+be copied onto a visible window very fast when needed.
+
+You can make a page with
+
+    pwm_gfxnewpage(<integer:W>, <integer:H>) -> <page-id|false>
+
+which takes the width (W) and height (H) in pixels, and returns an
+identifier record by which the page can be referenced if the call was
+sucessful, or false if for some reason the page could not be made.
+
+You can destroy a page with
+
+    pwm_gfxkillpage(<page-id>)
+
+This informs the PWM that you have no further use for the page; the PWM
+can then reclaim the memory and other resources tied up in it, and
+POPLOG will not allow you to invoke any functions on it.  There is a
+limit to the number of pages that a PWM can maintain at one time (this
+differs between PWMs), and the total amount of memory available to the
+PWM for use in pages, windows, menus, etc. is limited; so it is worth
+killing a page when you have finished with it.  You can only reference a
+page by the identifier record returned by -pwm_gfxnewpage-, so if you
+lose all pointers to this object you will not be able to do anything
+with the page (including kill it).  Therefore if you lose all pointers
+to the identifier, POPLOG will instruct the PWM to kill the page at the
+next garbage collection (see HELP *PWMGENERAL).
+
+-- Selecting a window for graphics ------------------------------------
+
+With one exception, all the graphics functions work on a notional
+"current graphics surface" (where a surface can be either a window or a
+page).  This can be inspected or changed through the active variable
+-pwmgfxsurface-:
+
+    <window-id|page-id> -> pwmgfxsurface
+    pwmgfxsurface -> <window-id|page-id>
+
+At startup, the "current graphics surface" is the base window
+(-pwmbasewindow-).  If you kill the window which is the current
+value of -pwmgfxsurface- the base window will again be selected for
+graphics, until you assign some other window to the variable.
+
+Note that although you can assign a page-id to this variable, not all
+the graphics functions work on pages: if you invoke a function which
+doesn't work on pages when the selected surface is a page, the function
+will be ignored.
+
+-- Setting and reading pixels -----------------------------------------
+
+The colour of an individual pixel on the current graphics surface (that
+is, the surface whose identifier -pwmgfxsurface- points to) can be
+inspected with the function:
+
+    pwm_gfxpixel(<integer:X>, <integer:Y>) -> <integer|false:P>
+
+This takes the coordinate of the pixel within the surface (all
+coordinates in the PWM use an origin of 0,0 in the top-left corner of
+the surface) and returns the colour number of the pixel, or false it
+there was some problem  (see HELP *PWMGENERAL).  On a monochrome system
+the number will be 0 or 1: see HELP *PWMCOLOURS for details of colour
+graphics.
+
+    <integer:P> -> pwm_gfxpixel(<integer:X>, <integer:Y>)
+
+This sets the referenced pixel to P (on a monochrome system, 0 or 1 for
+white or black respectively).
+
+-- Setting raster-op and logical colour -------------------------------
+
+The majority of the graphics operations which the PWM makes available
+work or the notion of a source image and a destination image - the
+destination image will be the window (or some part thereof) to which the
+graphics operation is being applied (normally this is denoted by
+-pwmgfxsurface-), and the source image will be defined by the operation
+in question. Thus when drawing a line, there is a notional source line
+which is combined with the destination image to produce the line printed
+on the window.
+
+The active variable -pwmgfxpaintnum- holds the number of the logical
+colour in which the source image of the next graphics operation will be
+'drawn' before it is applied to the destination image (see HELP
+*PWMCOLOURS for a fuller discussion of logical colours).
+
+    <integer> -> pwmgfxpaintnum
+    pwmgfxpaintnum -> <integer>
+
+On a monochrome system this will either be 1 (denoting black, the
+foreground colour) or 0 (the background colour, white) On a colour
+workstation there will be a number of logical colours available (this
+number differing between workstations). In all cases -pwmgfxpaintnum-
+defaults to 1 at startup.
+
+The variable -pwmgfxrasterop- holds an integer which describes how the
+source image of graphics operations will be applied to the destination
+image to produce its result on the surface.
+
+    <integer> -> pwmgfxrasterop
+    pwmgfxrasterop -> <integer>
+
+The following integer constants have been defined for use with
+-pwmgfxrasterop-:
+
+    PWM_SRC      ;;; use the pixels of the "source"
+    PWM_DST      ;;; use the pixels of the "destination"
+
+    PWM_SET      ;;; set pixels to foreground colour (black usually)
+    PWM_CLR      ;;; set pixels to background colour (white usually)
+
+    PWM_NOTSRC    ;;; use the pixels of the "source", inverted
+    PWM_NOTDST    ;;; invert pixels in the destination
+
+    PWM_OR        ;;; source OR destination (paint)
+    PWM_AND      ;;; source AND destination (mask)
+    PWM_XOR      ;;; source XOR destination  (inverting paint)
+    PWM_ERASE      ;;; not source OR destination (erasing paint)
+
+(To make these constants available for use it is best to add the line
+
+    uses pwmgfxrasterop;
+
+to the start of your program file - this makes sure the constants are
+present, and avoids those annoying little "DECLARING VARIABLE..."
+statements!)
+
+As an example of the above raster operations: PWM_SET means "for every
+pixel in the source image, set or otherwise, plot a pixel in the colour
+from -pwmgfxpaintnum- into the destination image". Thus, a line drawn
+using PWM_SET will force a straight copy of itself onto the surface of
+the destination image, giving the same result as would the use of
+PWM_SRC (which means "copy every pixel in the source image over to the
+destination image without changing it in any way"). However, these two
+raster operations will produce the same result in line drawing only
+because the source image will be totally made up of set pixels. Text
+written using -pwmgfxtext- (see below) will have a source image made up
+of rectangles of set and reset pixels - in this case PWM_SET will result
+in solid rectangles of -pwmgfxpaintnum- appearing in the result image,
+whilst PWM_SRC will write the set pixels from the text in
+-pwmgfxpaintnum-, and the reset pixels in the background colour, thus
+making the result legible. PWM_DST means "for every pixel in the
+destination image, copy it accross to the destination image!" In other
+words, do nothing. This may seem useless, but it can be useful in some
+cases - see -pwmgfxcopyraster- below.
+
+Using PWM_NOTSRC and PWM_NOTDST simply results in an inversion of the
+appropriate iamge, while the raster ops with logical names will only
+plot a point in -pwmgfxpaintnum- if that logic function applied to the
+appropriate pixels from the source and destination images results in a
+set pixel. The defined raster operations can be combined using the
+standard POP11 bit manipulation procedures (see HELP *BITWISE) to
+produce new raster ops.
+
+You should never assign numbers directly with -pwmgfxrasterop-; always
+use the constants defined in the library, or some combination of them.
+In that way your code will be protected in case it becomes necessary to
+change the numbers in a later release of the software.  Because
+-pwmgfxrasterop- is an autoloadable library, but the constants
+defined with it are not, you may wish to insert the line
+
+The differences between the different raster operations are difficult to
+explain on paper - the best way to understand what each op does is to
+experiment.
+
+-- Applying raster-op and paint to rectangular areas ------------------
+
+You can "wipe" a raster-op over a whole window, or a rectangular
+portion of it, with the procedure -pwm_gfxwipearea-.
+
+    pwm_gfxwipearea(<integer:X>, <integer:Y>, <integer:W>, <integer:H>)
+    pwm_gfxwipearea(<false>)
+    pwm_gfxwipearea(<integer:X>, <integer:Y>, <string:T>)
+
+The rectangle is specified as having its top-left corner at the
+coordinate X, Y in the current graphics window (-pwmgfxsurface-) and
+width and height W and H (pixel units in each case).  If the width
+argument is zero, the rectangle will extend to the right edge of the
+window; if the height argument is zero, the rectangle will extend to the
+bottom edge of the window.  The second call form (with just the one
+argument -false-) specifies the whole window: it is exactly equivalent
+to calling the function with all four arguments zero.
+The third form can be used to prepare an area in which the text T is to be
+written using pwm_gfxtext (HELP * PWMFONTS).
+
+The function applies -pwmgfxrasterop- to each pixel within the rectangle
+(each pixel within the window, in the second form).  Because there is no
+source image involved in this function, the only sensible raster-ops
+to use with are PWM_CLR, PWM_SET, and PWM_NOTDST.  A special case is
+made if the raster-op is PWM_SRC, however; in this case every pixel
+within the rectangle is set to the value of -pwmgfxpaintnum-.  On
+monochrome machines this is equivalent to (and fractionally slower than)
+PWM_CLR or PWM_SET: but it can be useful on a colour workstation.
+
+For example, this useful procedure will clear a window entirely to the
+background colour (see HELP *DLOCAL):
+
+    define clearwin(window);
+        dlocal pwmgfxsurface = window,    ;;; locally set the window
+                pwmgfxrasterop = PWM_CLR;   ;;; locally set a raster-op
+        pwm_gfxwipearea(false);          ;;; apply the raster-op to
+    enddefine;                            ;;;    the whole window
+
+-- Drawing lines ------------------------------------------------------
+
+The procedure for drawing lines on the current graphics surface is
+-pwm_gfxdrawline-.  The basic syntax of this procedure is that it takes
+a number of points, and draws a line in the current raster-op and colour
+(i.e. -pwmgfxpaintnum- and -pwmgfxrasterop-) between each pair of
+points.  Thus if given three points A, B and C, it will draw a line
+between A and B, and another line between B and C.
+
+A point can be given as two integers (X-ordinate first) or as a vector
+containing two integers (again, the first integer is the X-ordinate, the
+second the Y-ordinate).  There are two ways to call the procedure;
+either with a list containing all the points, or with all the points on
+the stack, and a number specifying how many points you are passing:
+
+    pwm_gfxdrawline(<integer:X1>, <integer:Y1>, .... , <integer:N>)
+    pwm_gfxdrawline(<vector:P1>, <vector:P2>, ... , <integer:N>)
+    pwm_gfxdrawline(<list>)
+
+Thus any of the following will have the same effect (namely to draw a
+triangle):
+
+    pwm_gfxdrawline([5 5 5 20 30 20 5 5]);
+    pwm_gfxdrawline(5, 5, 5, 20, 30, 20, 5, 5, 4);
+    pwm_gfxdrawline([{5 5} {5 20} {30 20} {5 5}]);
+    pwm_gfxdrawline({5 5}, {5 20}, {30 20}, {5 5}, 4);
+
+Note that if you use a list, then all the points must be specified in
+the same way (i.e. either as two integers or as a vector); you can't mix
+the two representations within the list. This restriction does not
+apply to the other form of the proecedure.
+
+-- Filling Closed Polygons ---------------------------------------------------
+
+The procedure for filling closed polygons on the current graphics
+surface is -pwm_gfxfillpoly-.  The basic syntax of this procedure is it
+take a number of points which are the vertices of a closed polygon and
+fills the polygon using the current raster-op and colour (i.e.
+-pwmgfxpaintnum- and -pwmgfxrasterop-).  Thus if given three points A, B
+and C, it will draw a fill a triangle which has A,B and C as it
+vertices.
+
+A point can be given as two integers (X-ordinate first) or as a vector
+containing two integers (again, the first integer is the X-ordinate, the
+second the Y-ordinate).  There are two ways to call the procedure;
+either with a list containing all the points, or with all the points on
+the stack, and a number specifying how many points you are passing:
+
+    pwm_gfxfillpoly(<integer:X1>, <integer:Y1>, .... , <integer:N>)
+    pwm_gfxfillpoly(<vector:P1>, <vector:P2>, ... , <integer:N>)
+    pwm_gfxfillpoly(<list>)
+
+Thus any of the following will have the same effect (namely to fill a
+triangle):
+
+    pwm_gfxfillpoly([5 5 5 20 30 20 ]);
+    pwm_gfxfillpoly(5, 5, 5, 20, 30, 20, 3);
+    pwm_gfxfillpoly([{5 5} {5 20} {30 20} ]);
+    pwm_gfxfillpoly({5 5}, {5 20}, {30 20}, 3);
+
+Note that if you use a list, then all the points must be specified in
+the same way (i.e. either as two integers or as a vector); you can't mix
+the two representations within the list. This restriction does not
+apply to the other form of the proecedure.
+
+-- Drawing circles, ellipses and arcs ---------------------------------
+
+The PWM does not at the moment support any circular functions directly.
+However, the library includes some routines which use the line and area
+functions of the PWM to draw circles, ellipses, and arcs.  From the
+user's point of view the distinction is irrelevant, and if at some
+future date the PWM is extended to support such features the only
+noticeable difference should be an increase in speed.
+
+The main procedure is -pwm_gfxdrawellipse-:
+
+    pwm_gfxdrawellipse(<integer:X>, <integer:Y>, <boolean>,
+                                [<number:S>,] <number:Rh>, <number:Rv>)
+    pwm_gfxdrawellipse(<integer:X>, <integer:Y>, <boolean>, <number:R>)
+
+The first two arguments define the coordinate of the centre point of an
+ellipse; the last two define the horizontal and vertical radii of it. If
+the boolean is false, the ellipse is drawn using -pwm_gfxdrawline- (and
+thus using -pwmgfxpaintnum- and -pwmgfxrasterop-) on the current
+graphics surface: i.e. it draws the ellipse as an outline.  If the
+boolean argument is true, then the ellipse is drawn as a solid
+figure, using -pwm_gfxwipearea- (thus with the boolean true, only some
+values of -pwmgfxrasterop- will produce an image - the use of any raster
+ops other than the "sensible" ones mentioned above will result in the
+procedure being ignored).
+
+By making the horizontal and vertical radii equal, a circle is drawn.
+Since this is quite a common requirement, the second call form can be
+used, in which only one radius is specified.
+
+The procedure uses a simple formula to decide by how much to step round
+the ellipse between each line.  This generally provides a reasonable
+compromise between resolution and speed.  Occasionally however, you may
+want to specify a different stepping angle, perhaps because you require
+higher resolution and aren't so worried about speed, or because you want
+speed and don't need so much resolution.  In this case, you can
+specify a stepping angle (in degrees) immediately after the boolean
+argument; but note that you must give two radii, even if they are equal
+(otherwise the procedure will interpret the stepping angle as the
+horizontal radius).
+
+You can also draw a segment of an ellipse:
+
+    pwm_gfxdrawarc(<integer:Cx>, <integer:Cy>,
+                    <number:Rh>, <number: Rv>,
+                    <integer:A1>, <integer: A2>)
+
+The ellipse is described by having centre at (Cx,Cy) and horizontal and
+vertical radii Rh and Rv.  The segment drawn starts at A1 (in degrees
+clockwise from 0 at the top) and is drawn clockwise to A2.  To draw
+a circular arc you should give the same value for Rh and Rv.
+
+-- Copying or moving an image around a window or between windows -------
+
+A rectangular portion in a PWM window (known as a raster) can be copied
+to another area of the same window or another window, with the
+procedure:
+
+    pwm_gfxcopyraster(<window-id|page-id:S>, <integer:Xs>, <integer:Ys>,
+                      <integer:W>, <integer:H>,
+                      <integer:Op>,
+                      <window-id|page-id:D>, <integer:Xd>, <integer:Yd>)
+
+This defines a source surface (either a window or a page) S, and
+specifies a rectangular portion of it with top-left corner at Xs,Ys and
+width and height W and H.  As with -pwm_gfxwipearea-, if W is zero the
+rectangle extends to the right-hand edge of the surface, and if H is zero
+it extends to the bottom edge.  If the specified rectangle extends
+beyond the edges of the surface W and H will be clipped accordingly.
+
+The image within the rectangle is saved somehere, and the raster-op Op
+is applied to the rectangle (as if in a call of -pwm_gfxwipearea-).  The
+saved image is then copied to the surface D, with top-left corner at Xd,
+Yd, using the raster-op -pwmgfxrasterop-.  For example, this piece of
+code will take a 50 by 50 portion of a window, starting at -left-,
+-top-, and "move" it 10 pixels along and 5 pixels down, by using
+PWM_CLR as the Op argument applied to the source rectangle, and the
+PWM_SRC as the raster-op for the destination.
+
+    vars left = 0, top = 0;
+
+    define move_raster(window);
+        dlocal pwmgfxrasterop = PWM_SRC;
+        pwm_gfxcopyraster(window, left, top, 50, 50, PWM_CLR,
+                            window, left + 10, top + 5);
+        left + 10 -> left;
+        top + 5 -> top;
+    enddefine;
+
+You might like to load this code (mark the range from "vars" to
+"enddefine", and do <CTRL>D), open the base window, and then load this
+line:
+
+    repeat 30 times move_raster(pwmbasewindow) endrepeat;
+
+You can remove the effect by refreshing the base window, either with
+the mouse or by using the function -pwm_refresh_window- (see HELP
+*PWMWINDOWS).  Don't forget to reset the initial values of -left- and
+-top- if you want to do it again!
+
+This function is especially useful with pages.  If you want to make an
+image appear rapidly or repeatedly in a window at some point in your
+program, you can store the image in a page (either by first drawing it
+on a window, and then using -pwm_gfxcopyraster-, or by dumping or
+loading an image directly to the page - see HELP *PWMRASTERS).  Then
+when you want it to appear, call -pwm_gfxcopyraster- (with the Op
+argument set to PWM_DST, so that the image stored in the page is not
+affected) to copy the image to a window with -pwmgfxrasterop-.  This can
+also be used, for example, to invert odd-shaped areas - get the shape
+you want to invert in a page, set -pwmgfxrasterop- to PWM_XOR, and then
+use -pwm_gfxcopyraster- to copy the rectangle enclosing the shape onto
+the window.   Repeating the call will then un-invert the area (providing
+you haven't drawn anything else there in the meantime).  If you repeat
+the call rapidly (an even number of times!) you can flash an odd-shaped
+area.
+
+Bear in mind that unlike most of the graphics functions, this function
+takes no account of -pwmgfxsurface-: both the windows involved have to
+be given explicitly as arguments to the function.
+
+-- Further commands ---------------------------------------------------
+
+The file HELP *PWMRASTERS gives details of some more commands for
+dealing bit-images or rasters.  The file HELP *PWMCOLOURS describes
+the facilites available for use with colour workstations.
+
+--- C.all/help/pwmgraphics ---------------------------------------------
+--- Copyright University of Sussex 1987. All rights reserved. ----------

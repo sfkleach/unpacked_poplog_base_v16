@@ -1,0 +1,109 @@
+REF XWIDGETS                                Andreas Schoter, August 1990
+
+        COPYRIGHT University of Sussex 1990. All Rights Reserved.
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+<<<<<<<<<<<<<<<<<<<<<<<<<                       >>>>>>>>>>>>>>>>>>>>>>>>
+<<<<<<<<<<<<<<<<<<<<<<<<<    XWIDGETS LIBRARY   >>>>>>>>>>>>>>>>>>>>>>>>
+<<<<<<<<<<<<<<<<<<<<<<<<<                       >>>>>>>>>>>>>>>>>>>>>>>>
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+         CONTENTS - (Use <ENTER> g to access required sections)
+
+ --  Overview
+ --  Prolog Predicates
+ --  Pop11 Identifiers
+
+
+Overview
+--------
+This library defines those procedures and predicates that are needed  by
+all parts of the XProlog system. These consist of a Pop11 procedure  for
+manipulating the table mapping prolog atoms to X resource name  strings,
+Pop11 procedures for manipulating widget IDs, and a small set of  Prolog
+predicates.
+
+
+
+Prolog Predicates
+-----------------
+
+xpw_current_window(?WIDGETID)                                [predicate]
+        Returns  or  sets  the  current  WIDGETID.  If  WIDGETID  is  an
+        uninstantiated variable then it is unified with the ID number of
+        the current widget, if  no widget is set  as current then it  is
+        unified with 0.  If WIDGETID  is instantiated to  an integer  on
+        calling then the current widget is set to the integer ID number.
+        If the ID refers to a dead widget, or is higher than the highest
+        ID so far created then a mishap is caused.
+
+
+xpw_active_windows(-LIST)                                    [predicate]
+        Returns a  LIST  of the  ID  numbers  of all  widgets  that  are
+        currently active.
+
+
+xpw_destroy_window(+WIDGETID)                                [predicate]
+        Destroys the widget  specified by  the WIDGETID  and removes  it
+        entry from  the  ID  table.  If  the ID  refers  to  a  dead  or
+        non-existent widget then a mishap is caused.
+
+
+xpw_set_window_name(+WIDGETID,+NAME)                         [predicate]
+        Sets the  title of  the specified  widget, as  displayed on  the
+        title bar of  the widget and  on the icon  manager to the  value
+        specified in NAME.  WIDGETID is  a valid Prolog  widget ID,  and
+        NAME is a Prolog atom or string.
+
+
+
+Pop11 Identifiers
+-----------------
+
+plxt_add_resources(RESOURCES)                                [procedure]
+        RESOURCES is a LIST containing 2*N elements where the first item
+        in each of the N is a  word corresponding to the Prolog atom  to
+        be associated with  the X resource  and the second  item of  the
+        pair is a STRING corresponding to  the X name for the  resource.
+        This procedure  adds the  N pairs  to Prolog's  internal set  of
+        associations, enabling the  user to refer  to X resources  using
+        Prolog atoms corresponding to the resource's logical name.
+
+
+plxt_create_widget_id(WIDGET) -> ID                          [procedure]
+        WIDGET is a widget structure and ID is an INT used by Prolog  to
+        reference the widget. In order  to avoid having to pass  complex
+        structures  around  Prolog  references  widgets  indirectly  via
+        integer keys  (see HELP  *XPROLOG for  details). This  procedure
+        takes a WIDGET  and generates  a new  unique ID  number for  it,
+        adding it to Prolog's internal table of ID - WIDGET mappings.
+
+
+plxt_id_to_widget(ID) -> WIDGET                              [procedure]
+        ID is an INT  corresponding to a given  WIDGET, as generated  by
+        plxt_create_widget_id. This procedure takes  an integer key  and
+        returns the unique WIDGET  associated with that  key. If the  ID
+        does not refer to a WIDGET then a mishap is generated.
+
+
+plxt_string_translation(NAME) -> STRING                      [procedure]
+        This takes NAME, which must be,  either a Prolog string (a  list
+        of characters), a Prolog atom (a Pop11 word), or a Pop11 string,
+        and returns  a  null terminated  STRING  suitable for  use  by X
+        routines.
+
+
+plxt_window(NAME,SIZE,CLASS) -> WIDGET                       [procedure]
+        NAME is a STRING  used by the X  Server to identify the  WIDGET,
+        SIZE is a LIST containing 2 or 4 elements. If only two  elements
+        are in the  LIST then  these are  interpreted as  the width  and
+        height of the WIDGET (in pixels), if 4 elements are in the  list
+        then the last two are interpreted as the x,y position in  pixels
+        on the screen  where the WIDGET  is to be  placed. CLASS is  the
+        class of the WIDGET to be created and must refer to a valid  Xpw
+        widget class, such as XpwGraphic.  WIDGET is the widget  created
+        by the procedure.
+
+
+--- C.all/x/plog/ref/xwidgets
+--- Copyright University of Sussex 1990. All rights reserved. ----------

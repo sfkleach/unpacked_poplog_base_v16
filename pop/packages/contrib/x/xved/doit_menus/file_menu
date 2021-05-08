@@ -1,0 +1,27 @@
+MENU FILE HEADER (Don't delete)
+MENU FILE NAME: $popcontrib/x/xved/doit_menus/menus/file_menu
+SOME OF THESE COMMANDS WILL REQUIRE A FILE
+NAME TO BE TYPED THEN "RETURN"
+Select VED file (vedfileselect)             !!      RETURNTHEN menu_fileselect
+List VED files                              !!      menu_all_files
+Save the current file on disk               !!      ved_w1
+Save all files                              !!      ved_w
+Start a new file                            !!      ENTER 'ved '
+Save this file as                           !!      ENTER 'w '
+
+Read in a file (give name)                  !!      ENTER 'r '
+Read a file in "protected" mode             !!      ENTER 'pved '
+
+Clear this file                             !!      ved_clear
+Refresh this window                         !!      vedrefresh
+Refresh all VED windows                     !!      vedappfiles(%vedrefresh%)
+
+Turn on "autosave"                          !!      ved_autosave
+Get help on "autosave"                      !!      'help ved_autosave'
+
+Quit last non-menu file                     !!      RETURNAFTER ved_q
+Write all files and leave Poplog            !!      ved_xx
+Quit all files and leave Poplog             !!      ved_qq
+
+Get information on VED                      !!      'help ved'
+Menu menu            ----->                 !!      'menu menu'

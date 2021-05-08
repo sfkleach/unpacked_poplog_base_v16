@@ -1,0 +1,1998 @@
+head     1.5;
+branch   ;
+access   ;
+symbols  ;
+locks    ; strict;
+comment  @ * @;
+
+
+1.5
+date     89.10.19.19.29.51;  author pop;  state Exp;
+branches ;
+next     1.4;
+
+1.4
+date     89.08.23.17.53.51;  author pop;  state Exp;
+branches ;
+next     1.3;
+
+1.3
+date     89.08.23.17.07.30;  author pop;  state Exp;
+branches ;
+next     1.2;
+
+1.2
+date     89.08.23.15.31.12;  author pop;  state Exp;
+branches ;
+next     1.1;
+
+1.1
+date     89.08.23.13.20.27;  author pop;  state Exp;
+branches ;
+next     ;
+
+
+desc
+@Modified to version 1.78RU2 (See CHANGE_NOTES)
+@
+
+
+1.5
+log
+@pages  now default to SCREENDEPTH depth
+@
+text
+@/* --- Copyright University of Sussex 1989.  All rights reserved. ---------
+ * File:    C.sun/pwm/pwgraster.c
+ * Purpose: saving loading dumping reading and copying rasters
+ * Author:  Ben Rubinstein (+ bitconversion by Aled Morris), Jan  8 1987 (see revisions)
+ * $Header: /tmp_mnt/poplog/pop/pwm/RCS/pwgraster.c,v 1.4 89/08/23 17:53:51 pop Exp Locker: pop $
+ */
+
+#include "pwdec.h"
+#include "pwrepseq.h"
+#include <errno.h>
+#include <sgtty.h>
+#include <sys/ioctl.h>
+
+#define RDUMPALRM 20000 /* how long to set timer for to stop us locking up */
+#define MAXALARMS 3     /* how many times to left the timer go off before we
+                        * give up */
+
+static int errno;
+
+struct timeval dump_timeout = {10, 10};
+
+struct pixrect *pr_load();
+
+colormap_t comap_t = {RMT_EQUAL_RGB, 0, (unsigned char *)NULL};
+extern int gfx_mapsizes[];
+
+
+/*****
+ * bit masks for retrieving low-order bits from input stream,
+ * this array is indexed by the number of significant bits, and
+ * it gives the bitmask (ie all ones) to use
+ *****/
+int signib_masks[9] = { 0, 1, 3, 0, 15, 0, 0, 0, 255 };
+
+/* -- checking the width of the communication channel--------------- */
+
+static int com_width;
+
+get_comms_width()
+{
+    unsigned int i, j;
+
+    i = ((unsigned char)(com_charargs[0]) ^ (unsigned char)(com_charargs[1]))
+            & 255;
+
+    for (j = 0; ((i & 1 == 1) && (j < 9)) ; j++)
+    {
+        i = i >> 1;
+    }
+
+    sprintf(report_buffer, REPcomswidth, j);
+    send_report_to_poplog(strlen(report_buffer));
+#ifdef DeBug
+    printf("GCW: com width appears to be %d (%d, %d)\n",
+                        j, com_charargs[0], com_charargs[1]);
+#endif
+}
+
+set_comms_width()
+{
+    com_width = com_numargs[0];
+#ifdef DeBug
+    printf("SCW: setting com width to %d\n", com_width);
+#endif
+}
+
+/*--- dumping, reading and copying rasters --------------------------- */
+
+/*--------------------------------------------------------------------
+*   read a raster description from poplog, returning a pointer to a
+*   pixrect filled with the data, or a pointer to NULL if something
+*   went wrong.  It is assumed that parts of the standard arg tables
+*   have meanings as follows:
+*       charargs[0] = bits per byte
+*                       (number of bits in each byte sent which have
+*                       signifigance: it is assumed that these are the lower
+*                       order bits in each byte)
+*       charargs[1] = bits per pixel
+*                       (how many of the signifigant bits sent
+*                       are consumed by each pixel)
+*        numargs[0] = width (in pixels)
+*        numargs[1] = height (in pixels)
+*        numargs[2] = bytes per row (actual bytes sent for each row)
+*
+* (23/4/87) There are actually three "depth" (i.e. bits/pixel) values to
+* be played around with:
+*   the data sent down from the line gives some data per pixel (depth_i)
+*   the output pixrect must have a certain depth, 1 or 8 (depth_r)
+*   the colour-map may have a size in the range 1,2,4 or 8 (mapsize)
+*
+* So, the image data sent must be adjusted for the map size, by zero padding
+* on left or by shifting right; then it must expanded if necessary to suit
+* the depth of the output pixrect (always expanded, because if depth_r is
+* 1 then mapsize will be 1: mapsize is always <=  depth_r.
+*
+*   If the data sent is packed into eight-bit, we can read a row directly into
+*       a buffer pixrect's data area, and either rop it to the output pixrect;
+*       or use sun's pixel-get routines to extract each pixel, for shifting,
+*       and then use sun's pixel-put routines to pack the pixel into the output
+*       pixrect (clipping)
+*
+*   If the data sent is packed, but into nibbles, we can read a row into our own
+*       buffer, and then repack it into bytes into a buffer pixrect's data
+*       area, and either rop it to the output pixrect; or use sun's pixel-get
+*       routines to extract each pixel, for shifting, and then use sun's
+*       pixel-put routines to pack the pixel into the output pixrect (clipping)
+*
+*   Otherwise, we require that the data is sent as one pixel in each byte (in the
+*       low end) and then we read a row into our own buffer, extract each pixel
+*       (no problem, 'cos it's just a byte) shift as necessary and then use
+*       sun's pixel-put routines to pack the pixel into the output pixrect
+*       (clipping as it does so).
+*/
+struct pixrect *
+grph_readraster(depth_r, mapsize)
+int depth_r;            /* depth of required output pixrect */
+int mapsize;            /* depth of a pixel                 */
+{
+    int row, width, height,
+        bits_pb,        /* bits per byte    */
+        depth_i,        /* depth of image   */
+        bytes_pr,       /* bytes being sent per row     */
+        bytes_tr,       /* bytes to read from clientfd  */
+        combytes;       /* bytes already in com_buffer  */
+
+    char
+        *databuffer,    /* buffer to read data into - may = rowbuffer   */
+        *dbufadd,       /* used as a pointer into buffer                */
+        *rowbuffer,     /* pointer to data in buffer pr                 */
+        signibmask,     /* mask to get SIGNIfigant Bits out of a byte   */
+        shiftcnt,       /* how many times to shift pixels               */
+        onepixpb_no8,   /* true if one pixel per byte, not full 8-bit   */
+        usedatabuf;     /* if we need to read data into a buffer of our own */
+
+    struct pixrect *result_pr, *rowbuffer_pr;
+
+    bytes_pr    = com_numargs[0];
+    width       = com_numargs[1];
+    height      = com_numargs[2];
+    depth_i     = com_charargs[0] - 32;
+    bits_pb     = com_charargs[1] - 32;
+
+    onepixpb_no8 = (((bits_pb != 8) && (bits_pb == depth_i)) ? TRUE : FALSE);
+    usedatabuf = ((bits_pb == 8) ? FALSE : TRUE);
+
+    if ((!onepixpb_no8) && (bits_pb != 8) && (bits_pb != 4))
+    {   /* unless one pixel per byte, must be in byte or nibble *
+        *  mode, because we can't handle any other combination  */
+#ifdef DeBug
+    printf("bpb=%d, dpthI=%d, dpthr=%d.  Stop\n", bits_pb, depth_i, depth_r);
+#endif
+        misprint(bits_pb,
+                "PWM: ignoring raster dump with strange (%d) bits per byte\n");
+        goto rrfail1;
+    }
+
+    signibmask = signib_masks[bits_pb];
+    shiftcnt = ((mapsize < depth_i) ? (depth_i - mapsize) : 0);
+
+#ifdef DeBug
+    printf("GRR: %dx%d, bytes/row=%d, bits/byte=%d\n\
+\tDpthI=%d, DpthR=%d, MapS=%d, shift=%d, 1ppb=%d, udbuf=%d\n",
+                width, height, bytes_pr, bits_pb, depth_i,
+                depth_r, mapsize, shiftcnt, onepixpb_no8, usedatabuf);
+#endif
+
+    /* make a pixrect for the output raster */
+    if ((result_pr = mem_create(width, height, depth_r))
+                    == (struct pixrect *)NULL)
+    {
+        misprint(-1, "PWM: cannot create result pixrect for raster-dump");
+        goto rrfail1;
+    }
+
+    if (!onepixpb_no8)
+    {   /* make a pixrect for one row of the input raster */
+        if ((rowbuffer_pr = mem_create(width, 1, depth_i))
+                                        == (struct pixrect *)NULL)
+        {
+            misprint(-1, "PWM: cannot create buffer pixrect for raster-dump");
+            onepixpb_no8 = TRUE;    /* so we don't try to destroy rowbuffer_pr */
+            usedatabuf = FALSE;     /* so we don't try to free databuffer */
+            goto rrfail2;
+        }
+
+        rowbuffer = (char *)
+                    ((struct mpr_data *)rowbuffer_pr->pr_data)->md_image;
+#ifdef DeBug
+    printf("GRR: rowbuffer_pr made: $%x ($%x), %dx%dx%d\n",
+                        rowbuffer_pr, rowbuffer,
+                        rowbuffer_pr->pr_width, rowbuffer_pr->pr_height,
+                        rowbuffer_pr->pr_depth);
+#endif
+    }
+
+/*  if ((bits_pb !=  8) || (depth_r < depth_i))*/
+    if (usedatabuf)
+    {   /* make a buffer that can hold one row's-worth of raw data from POPLOG */
+        if ((databuffer = (char *)malloc(bytes_pr)) == (char *)NULL)
+        {
+            misprint(bytes_pr, "PWM: cannot allocate databuffer %d for raster-dump");
+            usedatabuf = FALSE;     /* so we don't try and free databuffer */
+            goto rrfail2;
+        }
+    }
+    else
+    {   /* use the row pixrect's memory directly */
+         databuffer = (char *)
+                    (((struct mpr_data *)rowbuffer_pr->pr_data)->md_image);
+    }
+
+#ifdef DeBug
+    printf("GRR: rowbuffer=$%x, databuffer=$%x\n", rowbuffer, databuffer);
+#endif
+
+    if ((combytes = com_buflen - com_bufnext) < 0) combytes = 0;
+
+    /* now, here we go: for each row... */
+    for (row = 0; row < height; row++)
+    {
+        register int i;
+
+        /* ... set bytes-to-read to bytes-per-row ... */
+        bytes_tr = bytes_pr;
+
+        if (combytes != 0)
+        {   /* at least some of the data for this line has already been
+            *   read off the device and into com_buffer: so copy it out
+            *   and adjust variables.
+            */
+            bytes_tr = bytes_tr - (i = min(bytes_pr, combytes));
+            for (; i >= 0; i--) databuffer[i] = com_buffer[com_bufnext++];
+
+            if ((combytes = com_buflen - com_bufnext) < 0) combytes = 0;
+        }
+
+        dbufadd = (char *) databuffer + bytes_pr - bytes_tr;
+
+        /* it may be zero if we got enough out of com_buffer above */
+        while (bytes_tr != 0)
+        {
+            register int tries = 0;
+            int tablesize;
+
+            FD_ZERO(&fdset);
+            FD_SET(client_ifd,&fdset);
+
+            tablesize = getdtablesize();
+
+            while ((i = select(tablesize, &fdset, 0, 0, &dump_timeout)) < 1)
+            {
+                if  (errno == EINTR)
+                {
+#ifdef DeBug
+printf("GRR: select INTR (%d:%d) on row %d. Stop.\n", i, errno, row);
+#endif
+                    ioctl(client_ifd, TIOCFLUSH, (struct sgttyb *)NULL);
+                    goto rrfail2;
+                }
+                else if (++tries > 2)
+                {
+#ifdef DeBug
+printf("GRR: select failed (%d:%d) %d times on row %d. Stop.\n", i, errno, tries, row);
+#endif
+                    ioctl(client_ifd, TIOCFLUSH, (struct sgttyb *)NULL);
+                    goto rrfail2;
+                }
+                else
+                {
+#ifdef DeBug
+printf("GRR: select failed (%d:%d,i=%d) %d times on row %d.\n",
+                                i, errno, client_ifd, tries, row);
+#endif
+                    FD_ZERO(&fdset);
+                    FD_SET(client_ifd,&fdset);
+                }
+            }
+            i = read(client_ifd, dbufadd, bytes_tr);
+            bytes_tr = bytes_tr - i;
+            dbufadd = dbufadd + i;
+/*
+#ifdef DeBug
+    if (bytes_tr != 0)
+        printf("going again in row %d: %d / %d\n", row, bytes_tr, bytes_pr);
+    else if (shift_escape)
+        printf("read row %d ok\n", row);
+#endif
+*/
+        }
+
+#ifdef DeBug
+    if (row == 50)
+        printf("-- %d, %d, %d\n", databuffer[23], databuffer[24], databuffer[25]);
+#endif
+
+        /* now transfer this row of data into the "result_pr", converting   *
+        *   if necessary for different depths and for less than 8-bit data  */
+        if (onepixpb_no8)
+        {   /* exactly one pixel in each byte, at the low end of it */
+
+            if (shiftcnt == 0) /* sent pixels same size or less than req. */
+            {
+                for (i = 0; i < bytes_pr; i++)
+                    pr_put(result_pr, i, row, ((databuffer[i]) & signibmask));
+            }
+            else
+            {
+                for (i = 0; i < bytes_pr; i++)
+                    pr_put(result_pr, i, row,
+                        (((databuffer[i]) & signibmask) >>  shiftcnt));
+            }
+        }
+        else
+        {
+            if (bits_pb == 4)
+            {   /* nibble mode - whack it into byte mode, in the buffer_pr */
+                register int j;
+
+                for (i = j = 0; i < (bytes_pr - 1); j++)
+                {
+                    rowbuffer[j] = ((databuffer[i] & 15)
+                                    | ((databuffer[i + 1] << 4) & 240));
+                    i += 2;
+                }
+            }
+
+            if ((depth_i == depth_r) && (depth_i == mapsize))
+            {   /* no conversion necessary - just copy it in */
+                pr_rop(result_pr, 0, row, width, 1, PIX_SRC,
+                            rowbuffer_pr, 0, 0);
+            }
+            else if (shiftcnt == 0) /* bits in sent pixels <= req. */
+            {
+                for (i = 0; i < width; i++)
+                    pr_put(result_pr, i, row, pr_get(rowbuffer_pr, i, 0));
+            }
+            else /* bits in sent pixels > req. depth: shift down */
+            {
+                for (i = 0; i < width; i++)
+                    pr_put(result_pr, i, row,
+                            ((pr_get(rowbuffer_pr, i, 0)) >> shiftcnt));
+#ifdef DeBug
+    if (row == 50)
+    {
+        int j;
+
+        if (depth_i == 4) j = 2; else j = 1;
+
+        printf("++ %d, %d, %d\n",
+                pr_get(rowbuffer_pr, 23 * j, 0),
+                pr_get(rowbuffer_pr, 24 * j, 0),
+                pr_get(rowbuffer_pr, 25 * j, 0));
+        printf("^^ %d, %d, %d\n",
+                ((char *)
+            ((struct mpr_data *)rowbuffer_pr->pr_data)->md_image)[23],
+                ((char *)
+            ((struct mpr_data *)rowbuffer_pr->pr_data)->md_image)[24],
+                ((char *)
+            ((struct mpr_data *)rowbuffer_pr->pr_data)->md_image)[25]);
+
+    pr_put(rowbuffer_pr, 23 * j, 0, 1);
+    pr_put(rowbuffer_pr, 24 * j, 0, 0);
+    pr_put(rowbuffer_pr, 25 * j, 0, 1);
+        printf("++ %d, %d, %d\n",
+                pr_get(rowbuffer_pr, 23 * j, 0),
+                pr_get(rowbuffer_pr, 24 * j, 0),
+                pr_get(rowbuffer_pr, 25 * j, 0));
+        printf("^^ %d, %d, %d\n",
+                ((char *)
+            ((struct mpr_data *)rowbuffer_pr->pr_data)->md_image)[23],
+                ((char *)
+            ((struct mpr_data *)rowbuffer_pr->pr_data)->md_image)[24],
+                ((char *)
+            ((struct mpr_data *)rowbuffer_pr->pr_data)->md_image)[25]);
+    }
+#endif
+            }
+        }
+    }
+
+    goto rrexit;    /* clean up temporary buffers, return result pr */
+
+rrfail2:
+    pr_destroy(result_pr);
+rrfail1:
+    result_pr = (struct pixrect *)NULL;
+rrexit:
+    if (usedatabuf) free(databuffer);
+
+    if (!onepixpb_no8) pr_destroy(rowbuffer_pr);
+
+    return(result_pr);
+}
+
+/*--------------------------------------------------------------------
+*   Read a raster from the line, dump it to the screen.
+*
+*/
+grph_rasterdump()
+{
+    int top, left, width, height, dpth_r, msiz;
+    struct pixrect *temp_pr;
+
+    width   = com_numargs[1];
+    height  = com_numargs[2];
+    left    = com_numargs[3];
+    top     = com_numargs[4];
+
+    dpth_r = cg_pixrectp->pr_depth;
+
+#ifdef DeBug
+    printf("GRD: dpth_r=%d\n", dpth_r);
+#endif
+
+/* IR 23/2/89: SFR 4185 - replaced the following with msiz = dpth_r
+ *
+ *  if ((cg_winisframe) || (dpth_r == 1))
+ *      msiz = dpth_r;
+ *  else
+ *  {
+ *      int i;
+ *
+ *      i = gfx_mapsizes[(wt_colmap[current_graf])];
+ *
+ *      for (msiz = 1; i >> msiz != 1 ; msiz++) {};
+ *  }
+ */
+
+    msiz = dpth_r;
+
+
+#ifdef DeBug
+    printf("GRD: msiz=%d\n", msiz);
+#endif
+
+    if ((temp_pr = grph_readraster(dpth_r, msiz)) != (struct pixrect *)NULL)
+    {
+        if (cg_winisframe)
+            pr_rop(cg_pixrectp, left, top, width, height,
+                                        graphic_op, temp_pr, 0, 0);
+        else
+            pw_rop(cg_pixwinp, left, top, width, height,
+                                        graphic_op, temp_pr, 0, 0);
+
+        pr_destroy(temp_pr);
+    }
+#ifdef DeBug
+    else
+        printf("GDR: read raster returned failure\n");
+#endif
+}
+
+/*--------------------------------------------------------------------
+*   read a raster from the screen, send it up the line.
+*/
+grph_rasterread()
+{
+    int x, y, ylim, i, depth, width, height, bytes_pl;
+    short *rowbuffer;
+    struct pixrect *rowbuffer_pr;
+
+    x = com_numargs[0];
+    y = com_numargs[1];
+    width = com_numargs[2];
+    height = com_numargs[3];
+    ylim = com_numargs[1] + height;
+
+    depth = cg_pixrectp->pr_depth;
+
+    if ((x + width) > cg_pixrectp->pr_width)
+        width = cg_pixrectp->pr_width - x;
+    if ((y + height) > cg_pixrectp->pr_height)
+        height = cg_pixrectp->pr_height - y;
+
+#ifdef DeBug
+    printf("-- grb: (%d,%d) %dx%d (%dx%d), d=%d\n", x, y, width, height,
+                    com_numargs[2], com_numargs[3], depth);
+#endif
+
+    rowbuffer_pr = mem_create(width, 1, depth);
+    bytes_pl = ((struct mpr_data *)rowbuffer_pr->pr_data)->md_linebytes;
+    rowbuffer = ((struct mpr_data *)rowbuffer_pr->pr_data)->md_image;
+
+    sprintf(report_buffer, REPrastercome, 8 + 32, depth + 32,
+                            width, height, bytes_pl);
+    send_report_to_poplog(strlen(report_buffer));
+
+    ioctl(client_ofd, TIOCFLUSH, (struct sgttyb *)NULL);
+    set_rawmode();
+
+    for (y = com_numargs[1]; y < ylim; y++)
+    {
+        pr_rop(rowbuffer_pr, 0, 0, width, 1, PIX_SRC, cg_pixrectp, x, y);
+        write(client_ofd, rowbuffer, bytes_pl);
+#ifdef DeBug
+        printf("--- grb: sent another %d bytes\n", bytes_pl);
+#endif
+    }
+
+    ioctl(client_ofd, TIOCFLUSH, (struct sgttyb *)NULL);
+    pr_destroy(rowbuffer_pr);
+    reset_rawmode();
+}
+
+grph_copyraster()
+{
+    int swin, sx, sy, width, height, op, val, dwin, dx, dy;
+    register int xdiff, ydiff, depth;
+    struct pixrect *spr, *dpr, *tmp_pr;
+
+    swin = com_charargs[0] - 32;
+    op = ropconvert[(com_charargs[1] & 15)];
+    dwin = com_charargs[2] - 32;
+
+    sx = com_numargs[0];    sy = com_numargs[1];
+    width = com_numargs[2]; height = com_numargs[3];
+    dx = com_numargs[4];    dy = com_numargs[5];
+
+    if ((dpr = get_gfx_surface_pr(dwin)) == (struct pixrect *)NULL)
+        return(0);
+
+    if ((spr = get_gfx_surface_pr(swin)) == (struct pixrect *)NULL)
+        return(0);
+
+    if (dpr->pr_depth != spr->pr_depth)
+    {
+#ifdef DeBug
+    printf("GCR: different depths: (%d=%d, %d=%d)\n",
+                                swin, spr->pr_depth, dwin, dpr->pr_depth);
+#endif
+        misprint(-1, "PWM: can't copy raster: windows of different depth\n");
+        return(0);
+    }
+#ifdef DeBug
+    printf("GCR: d=%d,pr=$%x, s=%d,pr=$%x\n", dwin, dpr, swin, spr);
+#endif
+
+    if (width == 0) width = spr->pr_width;
+    if (height == 0) height = spr->pr_height;
+
+    if (wt_active[dwin] == WT_FRAMEW)
+    {
+#ifdef DeBug
+    printf("GCR- type 1, %d is frame\n", dwin);
+#endif
+        pr_rop(dpr, dx, dy, width, height, graphic_op, spr, sx, sy);
+
+        if ((op != PIX_DST) && (wt_active[swin] != WT_FRAMEW))
+            pw_writebackground(wt_pixwinp[swin], sx, sy, width, height, op);
+    }
+    else if  ((dwin != swin) || (op == PIX_DST) ||
+            (abs(sx - dx) >= width) || (abs(sy - dy) >= height))
+    {   /* then we don't have to anything fancy about the clear up */
+        pw_rop(wt_pixwinp[dwin], dx, dy, width, height, graphic_op, spr, sx, sy);
+
+        if ((op != PIX_DST) && (wt_active[swin] != WT_FRAMEW))
+            pw_writebackground(wt_pixwinp[swin], sx, sy, width, height, op);
+    }
+    else
+    {
+        tmp_pr = mem_create(width, height, spr->pr_depth);
+        pr_rop(tmp_pr, 0, 0, width, height, graphic_op, spr, sx, sy);
+
+        if (sx < dx)
+            pw_writebackground(wt_pixwinp[swin], sx, sy,
+                                    min(dx - sx, width), height, op);
+        else if (sx > dx)
+            pw_writebackground(wt_pixwinp[swin], dx + width, sy,
+                                    sx - dx, height, op);
+
+        if (sy < dy)
+            pw_writebackground(wt_pixwinp[swin], max(sx, dx), sy,
+                                    width - abs(sx - dx),
+                                    min(dy - sy, height), op);
+        else if ((sy > dy) && ((sy - dy) < height))
+            pw_writebackground(wt_pixwinp[swin], max(sx, dx), dy + height,
+                                    width - abs(sx - dx), sy - dy, op);
+
+        pw_rop(wt_pixwinp[dwin], dx, dy, width, height, graphic_op, tmp_pr, 0, 0);
+        pr_destroy(tmp_pr);
+    }
+}
+
+/*--- filing windows ------------------------------------------------------*/
+
+/*--------------------------------------------------------------------
+*   args are left, top, width, height, and filename
+*/
+grph_writerasfile()
+{
+    FILE *output_file;
+    int res, w, h, x, y;
+    colormap_t *cmap_tp;                /* pointer to a colourmap thing*/
+    unsigned char *cmap_map[3];     /* array of pointers to colmap entries*/
+
+    if ((output_file = fopen(com_stringarg, "w")) == (FILE *)NULL)
+    {
+        misprint(-1, "PWM: couldn't open file\n");
+        report_status(2);
+    }
+    else
+    {
+        x = com_numargs[0];
+        y = com_numargs[1];
+        w = com_numargs[2];
+        h = com_numargs[3];
+
+/*      cmap_tp = (colormap_t *)NULL;*/
+        if (cg_winisframe || (cg_pixrectp->pr_depth == 1))
+        {
+#ifdef DeBug
+    printf("--- gwr: depth 1, using null cmap\n");
+#endif
+            cmap_tp = (colormap_t *)NULL;
+        }
+        else if (wt_colmap[current_graf] == -1)
+        {
+#ifdef DeBug
+    printf("--- gwr: depth >1 but no cms, using null cmap\n");
+#endif
+            comap_t.type = RMT_NONE;
+            comap_t.length = 0;
+            comap_t.map[0] = (unsigned char *)NULL;
+            comap_t.map[1] = (unsigned char *)NULL;
+            comap_t.map[2] = (unsigned char *)NULL;
+            cmap_tp = &comap_t;
+        }
+        else
+        {
+#ifdef DeBug
+    printf("--- gwr: win %d, depth >1, using our cms %d\n",
+                             current_graf, wt_colmap[current_graf]);
+#endif
+            comap_t.type = RMT_EQUAL_RGB;
+            comap_t.length = gfx_mapsizes[wt_colmap[current_graf]];
+#ifdef DeBug
+    printf("--- gwr: depth >1, using our cms length %d\n", comap_t.length);
+#endif
+            pw_getcolormap(cg_pixwinp, 0, comap_t.length,
+                                    big_red, big_green, big_blue);
+
+#ifdef DeBug
+    printf("--- gwr: read cms values\n");
+#endif
+/*
+            cmap_map[0] = big_red;
+            cmap_map[1] = big_blue;
+            cmap_map[2] = big_green;
+            comap_t.map[0] = cmap_map[0];
+            comap_t.map[1] = cmap_map[1];
+            comap_t.map[2] = cmap_map[2];
+*/
+            comap_t.map[0] = big_red;
+            comap_t.map[1] = big_blue;
+            comap_t.map[2] = big_green;
+#ifdef DeBug
+    printf("--- gwr: cms 0 = %d, %d, %d\n",
+                comap_t.map[0][0],
+                comap_t.map[1][0],
+                comap_t.map[2][0]);
+    printf("--- gwr: cms 1 = %d, %d, %d\n",
+                comap_t.map[0][1],
+                comap_t.map[1][1],
+                comap_t.map[2][1]);
+#endif
+            cmap_tp = &comap_t;
+        }
+
+        if (x == 0 && y == 0 && w == 0 && h == 0)
+        {   /* the whole window */
+#ifdef DeBug
+    printf("--- gwr: writing whole window (%dx%d)\n",
+                    cg_pixrectp->pr_width, cg_pixrectp->pr_height);
+#endif
+            res = pr_dump(cg_pixrectp,
+                            output_file,
+/*                          (colormap_t *)NULL,*/
+                            cmap_tp,
+                            RT_STANDARD,
+                            0);
+        }
+        else
+        {
+            struct pixrect *tmp_pr;
+
+            if (w == 0) w = cg_pixrectp->pr_width - x;
+            if (h == 0) h = cg_pixrectp->pr_height - y;
+            tmp_pr = mem_create(w, h, cg_pixrectp->pr_depth);
+            pr_rop(tmp_pr, 0, 0, w, h, PIX_SRC, cg_pixrectp, x, y);
+/* pr_dump doesn't seem to be able to handle region pixrects */
+/*          tmp_pr = pr_region(cg_pixrectp, x, y, w, h);*/
+#ifdef DeBug
+    printf("--- gwr: temp_pr made (%d, %d), depth=%d, $%x\n",
+                            w, h, tmp_pr->pr_depth, tmp_pr);
+#endif
+            res = pr_dump(tmp_pr,
+                            output_file,
+/*                          (colormap_t *)NULL,*/
+                            cmap_tp,
+                            RT_STANDARD,
+                            0);
+
+            pr_destroy(tmp_pr);
+        }
+        fclose(output_file);
+#ifdef DeBug
+    printf("--- gwr: pr_dump returned %d\n", res);
+#endif
+        if (res > 1) res = 1;
+        report_status(res);
+    }
+}
+
+/*--------------------------------------------------------------------
+*   args are filename, x, y, w, h to define a rectangular portion of the
+*   image to restore, and x,y of where in the window the top left corner
+*   of restored image should go:
+*
+*               com_numargs[0] - dest.left
+*               com_numargs[1] - dest.top
+*               com_numargs[2] - source.left
+*               com_numargs[3] - source.top
+*               com_numargs[4] - width
+*               com_numargs[5] - height
+*               com_stringarg - filename
+*/
+grph_readrasfile()
+{
+    FILE *input_file;
+    struct pixrect *input_pr;
+    int width, height;
+
+    if ((input_file = fopen(com_stringarg, "r")) == (FILE *)NULL)
+        misprint(-1, "PWM: couldn't open rasterfile\n");
+    else
+    {
+        input_pr = pr_load(input_file, (colormap_t *)NULL);
+        fclose(input_file);
+
+        if (input_pr == (struct pixrect *)NULL)
+        {
+            misprint(-1, "PWM: couldn't load rasterfile\n");
+        }
+        else
+        {
+            width = input_pr->pr_size.x;
+            if (com_numargs[4] != 0 && com_numargs[4] < width)
+                width = com_numargs[4];
+
+            height = input_pr->pr_size.y;
+            if (com_numargs[5] != 0 && com_numargs[5] < height)
+                height = com_numargs[5];
+
+            if (cg_winisframe)
+                pr_rop(cg_pixrectp,
+                        com_numargs[0],
+                        com_numargs[1],
+                        width, height,
+                        graphic_op, input_pr, com_numargs[2], com_numargs[3]);
+            else
+                pw_rop(cg_pixwinp,
+                        com_numargs[0],
+                        com_numargs[1],
+                        width, height,
+                        graphic_op, input_pr, com_numargs[2], com_numargs[3]);
+
+            pr_destroy(input_pr);
+        }
+        fclose(input_file);
+    }
+}
+
+
+/* -- pages--------------------------------------------------------- */
+
+grph_new_page()
+{
+    register int i;
+
+    for (i = FT_FIRSTFRAME; i < FT_LASTFRAME ; i++)
+        if (wt_active[i] == FALSE) break;
+
+    if (i < FT_LASTFRAME)
+    {
+        if  ((gfx_frames[i - FT_FIRSTFRAME]
+                = mem_create(com_numargs[0], com_numargs[1],SCREENDEPTH)) == NULL)
+        {
+            misprint(i, "PWM: can't create invisible win %d\n");
+            wt_active[i] = FALSE;
+        }
+        else
+        {
+            wt_active[i] = WT_FRAMEW;
+        }
+    }
+    else
+    {
+        misprint(-1, "PWM: can't make invisible window - no room at table\n");
+    }
+    report_status(i);
+}
+
+grph_kill_page()
+{
+    register int i;
+
+    if (((i = com_charargs[0] - 32) < FT_FIRSTFRAME) || (i >= FT_LASTFRAME))
+        misprint(i, "PWM: can't kill surface %d - no such surface\n");
+    else if (wt_active[i] != WT_FRAMEW)
+        misprint(i, "PWM: can't kill surface %d - not live surface\n");
+    else
+    {
+        pr_destroy(gfx_frames[i - FT_FIRSTFRAME]);
+        wt_active[i] = FALSE;
+        if (current_graf == i) select_graphic_window(0);
+    }
+}
+
+/* -- utilities----------------------------------------------------- */
+
+/*--------------------------------------------------------------------
+* takes id num of supposed page or window, and checks that it is either
+* a live page or a live window; complaining if not.  Returns a pointer
+* to the pixrect for the page/backup pixrect for the window, NULL if there
+* was an error.
+*/
+struct pixrect *
+get_gfx_surface_pr(win)
+int win;
+{
+    if ((win >= WT_FIRSTWIN)
+        && (win <= WT_LASTWIN)
+        && (wt_active[win] >= WT_ACTIVE))
+    {
+        return(wt_pixwinp[win]->pw_prretained);
+    }
+    else if ((win >= FT_FIRSTFRAME)
+        && (win < FT_LASTFRAME)
+        && (wt_active[win] != FALSE))
+    {
+        return(gfx_frames[win - FT_FIRSTFRAME]);
+    }
+    else
+    {
+        misprint(win, "PWM: can't do graphics on #%d, no such surface\n");
+        return((struct pixrect *)NULL);
+    }
+}
+
+/*--------------------------------------------------------------------
+*   takes index to supposed surface-id in array of character args, and
+*   returns the win-id if there is one, WT_NOWIN else (and complains
+*   in the else case)
+*/
+check_surface_id(i)
+register int i;
+{
+    i = com_charargs[i] - 32;
+
+    if ((i < WT_FIRSTWIN) || (i >= FT_LASTFRAME))
+    {
+        misprint(i, "PWM: can't do graphics on %d, no such surface\n");
+        return(WT_NOWIN);
+    }
+    else if (i < FT_FIRSTFRAME)
+    {
+        if (wt_active[i] < WT_ACTIVE)
+        {
+            misprint(i, "PWM: can't do graphics on %d, not live window\n");
+            return(WT_NOWIN);
+        }
+        else
+            return(i);
+    }
+    else
+    {
+        if (wt_active[i] == FALSE)
+        {
+            misprint(i, "PWM: can't do graphics on %d, not live surface\n");
+            return(WT_NOWIN);
+        }
+        else
+            return(i);
+    }
+}
+
+set_rawmode()
+{
+    int wasraw;
+    struct sgttyb sg;
+
+    ioctl(client_ofd, TIOCGETP, &sg);
+
+    wasraw = sg.sg_flags & ECHO;
+
+    if (wasraw == 0)
+    {
+        sg.sg_flags = sg.sg_flags | RAW;
+        ioctl(client_ofd, TIOCSETP, &sg);
+    }
+
+    return(wasraw);
+}
+
+reset_rawmode()
+{
+    struct sgttyb sg;
+
+    ioctl(client_ofd, TIOCGETP, &sg);
+    sg.sg_flags = sg.sg_flags ^ RAW;
+    ioctl(client_ofd, TIOCSETP, &sg);
+}
+
+
+/* ::::::::::::::::::: Index :::::::::::::::::::::::
+::
+:: ----1---Copyright University of Sussex 1987.  All rights reserved. ------
+:: ---34---checking the width of the communication channel------
+::    38:  get_comms_width()
+::    58:  set_comms_width()
+:: ---66---dumping, reading and copying rasters ------
+::   114:  grph_readraster(depth_r, mapsize)
+::   392:  grph_rasterdump()
+::   437:  grph_rasterread()
+::   486:  grph_copyraster()
+:: --565---filing windows ------
+::   570:  grph_writerasfile()
+::   708:  grph_readrasfile()
+:: --755---pages------
+::   757:  grph_new_page()
+::   785:  grph_kill_page()
+:: --801---utilities------
+::   810:  get_gfx_surface_pr(win)
+::   837:  check_surface_id(i)
+::   869:  set_rawmode()
+::   887:  reset_rawmode()
+::
+::::::::::::::::::::::::::::::::::::::::::::::::::::: */
+
+/* --- Revision History ---------------------------------------------------
+--- Ian Rogers, Feb 23 1989
+    Implemented changes according to SFR 4185
+$Log:	pwgraster.c,v $
+ * Revision 1.4  89/08/23  17:53:51  pop
+ * depth removed from new_page
+ * 
+ * Revision 1.3  89/08/23  17:07:30  pop
+ * made depth of new page allways one, the depth can be controlled by
+ * use of colourmaps (sic)
+ * 
+ * Revision 1.2  89/08/23  15:31:12  pop
+ * modified select for BSD4.3 fd_set
+ * 
+ * Revision 1.1  89/08/23  13:20:27  pop
+ * Initial revision
+ * 
+ */
+@
+
+
+1.4
+log
+@depth removed from new_page
+@
+text
+@d5 1
+a5 1
+ * $Header: /popv13.5/pop/pwm/RCS/pwgraster.c,v 1.3 89/08/23 17:07:30 pop Exp Locker: pop $
+d786 1
+a786 1
+                = mem_create(com_numargs[0], com_numargs[1],1)) == NULL)
+d944 3
+@
+
+
+1.3
+log
+@made depth of new page allways one, the depth can be controlled by
+use of colourmaps (sic)
+@
+text
+@d5 1
+a5 1
+ * $Header: /popv13.5/pop/pwm/RCS/pwgraster.c,v 1.2 89/08/23 15:31:12 pop Exp Locker: pop $
+a778 1
+    depth = wt_pixwinp[0]->pw_pixrect->pr_depth;
+d944 4
+@
+
+
+1.2
+log
+@modified select for BSD4.3 fd_set
+@
+text
+@d5 1
+a5 1
+ * $Header: /popv13.5/pop/pwm/RCS/pwgraster.c,v 1.1 89/08/23 13:20:27 pop Exp $
+d778 1
+a778 1
+    register int i, depth;
+d787 1
+a787 1
+                = mem_create(com_numargs[0], com_numargs[1], depth)) == NULL)
+d944 4
+a947 1
+$Log:   pwgraster.c,v $
+@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@d2 1
+a2 1
+ * File:	C.sun/pwm/pwgraster.c
+d5 1
+a5 1
+ * $Header$
+d14 3
+a16 3
+#define RDUMPALRM 20000	/* how long to set timer for to stop us locking up */
+#define MAXALARMS 3 	/* how many times to left the timer go off before we
+						* give up */
+d41 1
+a41 1
+	unsigned int i, j;
+d43 2
+a44 2
+	i = ((unsigned char)(com_charargs[0]) ^ (unsigned char)(com_charargs[1]))
+			& 255;
+d46 4
+a49 4
+	for (j = 0; ((i & 1 == 1) && (j < 9)) ; j++)
+	{
+		i = i >> 1;
+	}
+d51 2
+a52 2
+	sprintf(report_buffer, REPcomswidth, j);
+	send_report_to_poplog(strlen(report_buffer));
+d54 2
+a55 2
+	printf("GCW: com width appears to be %d (%d, %d)\n",
+						j, com_charargs[0], com_charargs[1]);
+d61 1
+a61 1
+	com_width = com_numargs[0];
+d63 1
+a63 1
+	printf("SCW: setting com width to %d\n", com_width);
+d70 14
+a83 14
+*	read a raster description from poplog, returning a pointer to a
+*	pixrect filled with the data, or a pointer to NULL if something
+*	went wrong.  It is assumed that parts of the standard arg tables
+*	have meanings as follows:
+*		charargs[0] = bits per byte
+*						(number of bits in each byte sent which have
+*						signifigance: it is assumed that these are the lower
+*						order bits in each byte)
+*		charargs[1] = bits per pixel
+*						(how many of the signifigant bits sent
+*						are consumed by each pixel)
+*		 numargs[0]	= width	(in pixels)
+*		 numargs[1]	= height (in pixels)
+*		 numargs[2]	= bytes per row	(actual bytes sent for each row)
+d87 3
+a89 3
+*	the data sent down from the line gives some data per pixel (depth_i)
+*	the output pixrect must have a certain depth, 1 or 8 (depth_r)
+*	the colour-map may have a size in the range 1,2,4 or 8 (mapsize)
+d96 5
+a100 5
+*	If the data sent is packed into eight-bit, we can read a row directly into
+* 		a buffer pixrect's data area, and either rop it to the output pixrect;
+*		or use sun's pixel-get routines to extract each pixel, for shifting,
+*		and then use sun's pixel-put routines to pack the pixel into the output
+*		pixrect (clipping)
+d102 5
+a106 5
+*	If the data sent is packed, but into nibbles, we can read a row into our own
+*		buffer, and then repack it into bytes into a buffer pixrect's data
+*		area, and either rop it to the output pixrect; or use sun's pixel-get
+*		routines to extract each pixel, for shifting, and then use sun's
+*		pixel-put routines to pack the pixel into the output pixrect (clipping)
+d108 5
+a112 5
+*	Otherwise, we require that the data is sent as one pixel in each byte (in the
+*		low end) and then we read a row into our own buffer, extract each pixel
+*		(no problem, 'cos it's just a byte) shift as necessary and then use
+*		sun's pixel-put routines to pack the pixel into the output pixrect
+*		(clipping as it does so).
+d116 2
+a117 2
+int depth_r;			/* depth of required output pixrect */
+int mapsize;			/* depth of a pixel 				*/
+d119 6
+a124 6
+	int row, width, height,
+		bits_pb,		/* bits per byte	*/
+		depth_i,		/* depth of image	*/
+		bytes_pr,		/* bytes being sent per row		*/
+		bytes_tr,		/* bytes to read from clientfd	*/
+		combytes;		/* bytes already in com_buffer	*/
+d126 8
+a133 8
+	char
+		*databuffer,	/* buffer to read data into	- may = rowbuffer	*/
+		*dbufadd,    	/* used as a pointer into buffer				*/
+		*rowbuffer,		/* pointer to data in buffer pr					*/
+		signibmask,		/* mask to get SIGNIfigant Bits out of a byte	*/
+		shiftcnt,		/* how many times to shift pixels				*/
+		onepixpb_no8,	/* true if one pixel per byte, not full 8-bit	*/
+		usedatabuf;		/* if we need to read data into a buffer of our own	*/
+d135 1
+a135 1
+	struct pixrect *result_pr, *rowbuffer_pr;
+d137 5
+a141 5
+	bytes_pr	= com_numargs[0];
+	width		= com_numargs[1];
+	height		= com_numargs[2];
+	depth_i		= com_charargs[0] - 32;
+	bits_pb		= com_charargs[1] - 32;
+d143 2
+a144 2
+	onepixpb_no8 = (((bits_pb != 8) && (bits_pb == depth_i)) ? TRUE : FALSE);
+	usedatabuf = ((bits_pb == 8) ? FALSE : TRUE);
+d146 3
+a148 3
+	if ((!onepixpb_no8) && (bits_pb != 8) && (bits_pb != 4))
+	{	/* unless one pixel per byte, must be in byte or nibble	*
+		*  mode, because we can't handle any other combination	*/
+d150 1
+a150 1
+	printf("bpb=%d, dpthI=%d, dpthr=%d.  Stop\n", bits_pb, depth_i, depth_r);
+d152 4
+a155 4
+		misprint(bits_pb,
+				"PWM: ignoring raster dump with strange (%d) bits per byte\n");
+		goto rrfail1;
+	}
+d157 2
+a158 2
+	signibmask = signib_masks[bits_pb];
+	shiftcnt = ((mapsize < depth_i) ? (depth_i - mapsize) : 0);
+d161 1
+a161 1
+	printf("GRR: %dx%d, bytes/row=%d, bits/byte=%d\n\
+d163 2
+a164 2
+				width, height, bytes_pr, bits_pb, depth_i,
+				depth_r, mapsize, shiftcnt, onepixpb_no8, usedatabuf);
+d167 7
+a173 7
+	/* make	a pixrect for the output raster */
+	if ((result_pr = mem_create(width, height, depth_r))
+					== (struct pixrect *)NULL)
+	{
+		misprint(-1, "PWM: cannot create result pixrect for raster-dump");
+		goto rrfail1;
+	}
+d175 10
+a184 10
+	if (!onepixpb_no8)
+	{	/* make a pixrect for one row of the input raster */
+		if ((rowbuffer_pr = mem_create(width, 1, depth_i))
+										== (struct pixrect *)NULL)
+		{
+			misprint(-1, "PWM: cannot create buffer pixrect for raster-dump");
+			onepixpb_no8 = TRUE;	/* so we don't try to destroy rowbuffer_pr */
+			usedatabuf = FALSE;		/* so we don't try to free databuffer */
+			goto rrfail2;
+		}
+d186 2
+a187 2
+		rowbuffer = (char *)
+					((struct mpr_data *)rowbuffer_pr->pr_data)->md_image;
+d189 4
+a192 4
+	printf("GRR: rowbuffer_pr made: $%x ($%x), %dx%dx%d\n",
+						rowbuffer_pr, rowbuffer,
+						rowbuffer_pr->pr_width, rowbuffer_pr->pr_height,
+						rowbuffer_pr->pr_depth);
+d194 1
+a194 1
+	}
+d196 15
+a210 15
+/*	if ((bits_pb !=  8) || (depth_r < depth_i))*/
+	if (usedatabuf)
+	{ 	/* make a buffer that can hold one row's-worth of raw data from POPLOG */
+		if ((databuffer = (char *)malloc(bytes_pr)) == (char *)NULL)
+		{
+			misprint(bytes_pr, "PWM: cannot allocate databuffer %d for raster-dump");
+			usedatabuf = FALSE;		/* so we don't try and free databuffer */
+			goto rrfail2;
+		}
+	}
+	else
+	{	/* use the row pixrect's memory directly */
+		 databuffer = (char *)
+					(((struct mpr_data *)rowbuffer_pr->pr_data)->md_image);
+	}
+d213 1
+a213 1
+	printf("GRR: rowbuffer=$%x, databuffer=$%x\n", rowbuffer, databuffer);
+d216 1
+a216 1
+	if ((combytes = com_buflen - com_bufnext) < 0) combytes = 0;
+d218 4
+a221 4
+	/* now, here we go: for each row... */
+	for (row = 0; row < height; row++)
+	{
+		register int i;
+d223 2
+a224 2
+		/* ... set bytes-to-read to bytes-per-row ... */
+		bytes_tr = bytes_pr;
+d226 7
+a232 7
+		if (combytes != 0)
+		{	/* at least some of the data for this line has already been
+			*	read off the device and into com_buffer: so copy it out
+			*	and adjust variables.
+			*/
+			bytes_tr = bytes_tr - (i = min(bytes_pr, combytes));
+			for (; i >= 0; i--) databuffer[i] = com_buffer[com_bufnext++];
+d234 2
+a235 2
+			if ((combytes = com_buflen - com_bufnext) < 0) combytes = 0;
+		}
+d237 1
+a237 1
+		dbufadd = (char *) databuffer + bytes_pr - bytes_tr;
+d239 5
+a243 5
+		/* it may be zero if we got enough out of com_buffer above */
+		while (bytes_tr != 0)
+		{
+			register int tries = 0;
+			int ibits;
+d245 9
+a253 5
+			ibits = poplog_ibits;
+			while ((i = select(8 * sizeof(ibits), &ibits, 0, 0, &dump_timeout)) < 1)
+			{
+				if	(errno == EINTR)
+				{
+d257 5
+a261 5
+					ioctl(client_ifd, TIOCFLUSH, (struct sgttyb *)NULL);
+					goto rrfail2;
+				}
+				else if (++tries > 2)
+				{
+d265 5
+a269 5
+					ioctl(client_ifd, TIOCFLUSH, (struct sgttyb *)NULL);
+					goto rrfail2;
+				}
+				else
+				{
+d271 2
+a272 1
+printf("GRR: select failed (%d:%d,i=%d) %d times on row %d.\n", i, errno, ibits, tries, row);
+d274 7
+a280 6
+					ibits = poplog_ibits;
+				}
+			}
+			i = read(client_ifd, dbufadd, bytes_tr);
+			bytes_tr = bytes_tr - i;
+			dbufadd = dbufadd + i;
+d283 4
+a286 4
+	if (bytes_tr != 0)
+		printf("going again in row %d: %d / %d\n", row, bytes_tr, bytes_pr);
+	else if (shift_escape)
+		printf("read row %d ok\n", row);
+d289 1
+a289 1
+		}
+d292 2
+a293 2
+	if (row == 50)
+		printf("-- %d, %d, %d\n", databuffer[23], databuffer[24], databuffer[25]);
+d296 4
+a299 4
+		/* now transfer this row of data into the "result_pr", converting	*
+		*	if necessary for different depths and for less than 8-bit data	*/
+		if (onepixpb_no8)
+		{	/* exactly one pixel in each byte, at the low end of it */
+d301 17
+a317 17
+			if (shiftcnt == 0) /* sent pixels same size or less than req. */
+			{
+				for (i = 0; i < bytes_pr; i++)
+					pr_put(result_pr, i, row, ((databuffer[i]) & signibmask));
+			}
+			else
+			{
+				for (i = 0; i < bytes_pr; i++)
+					pr_put(result_pr, i, row,
+						(((databuffer[i]) & signibmask) >>  shiftcnt));
+			}
+		}
+		else
+		{
+			if (bits_pb == 4)
+			{	/* nibble mode - whack it into byte mode, in the buffer_pr */
+				register int j;
+d319 7
+a325 7
+				for (i = j = 0; i < (bytes_pr - 1); j++)
+				{
+					rowbuffer[j] = ((databuffer[i] & 15)
+									| ((databuffer[i + 1] << 4) & 240));
+					i += 2;
+				}
+			}
+d327 15
+a341 15
+			if ((depth_i == depth_r) && (depth_i == mapsize))
+			{	/* no conversion necessary - just copy it in */
+				pr_rop(result_pr, 0, row, width, 1, PIX_SRC,
+							rowbuffer_pr, 0, 0);
+			}
+			else if (shiftcnt == 0)	/* bits in sent pixels <= req. */
+			{
+				for (i = 0; i < width; i++)
+					pr_put(result_pr, i, row, pr_get(rowbuffer_pr, i, 0));
+			}
+			else /* bits in sent pixels > req. depth: shift down */
+			{
+				for (i = 0; i < width; i++)
+					pr_put(result_pr, i, row,
+							((pr_get(rowbuffer_pr, i, 0)) >> shiftcnt));
+d343 3
+a345 3
+	if (row == 50)
+	{
+		int j;
+d347 1
+a347 1
+		if (depth_i == 4) j = 2; else j = 1;
+d349 11
+a359 11
+		printf("++ %d, %d, %d\n",
+				pr_get(rowbuffer_pr, 23 * j, 0),
+				pr_get(rowbuffer_pr, 24 * j, 0),
+				pr_get(rowbuffer_pr, 25 * j, 0));
+		printf("^^ %d, %d, %d\n",
+				((char *)
+			((struct mpr_data *)rowbuffer_pr->pr_data)->md_image)[23],
+				((char *)
+			((struct mpr_data *)rowbuffer_pr->pr_data)->md_image)[24],
+				((char *)
+			((struct mpr_data *)rowbuffer_pr->pr_data)->md_image)[25]);
+d361 15
+a375 15
+	pr_put(rowbuffer_pr, 23 * j, 0, 1);
+	pr_put(rowbuffer_pr, 24 * j, 0, 0);
+	pr_put(rowbuffer_pr, 25 * j, 0, 1);
+		printf("++ %d, %d, %d\n",
+				pr_get(rowbuffer_pr, 23 * j, 0),
+				pr_get(rowbuffer_pr, 24 * j, 0),
+				pr_get(rowbuffer_pr, 25 * j, 0));
+		printf("^^ %d, %d, %d\n",
+				((char *)
+			((struct mpr_data *)rowbuffer_pr->pr_data)->md_image)[23],
+				((char *)
+			((struct mpr_data *)rowbuffer_pr->pr_data)->md_image)[24],
+				((char *)
+			((struct mpr_data *)rowbuffer_pr->pr_data)->md_image)[25]);
+	}
+d377 3
+a379 3
+			}
+		}
+	}
+d381 1
+a381 1
+	goto rrexit;	/* clean up temporary buffers, return result pr */
+d384 1
+a384 1
+	pr_destroy(result_pr);
+d386 1
+a386 1
+	result_pr = (struct pixrect *)NULL;
+d388 1
+a388 1
+	if (usedatabuf) free(databuffer);
+d390 1
+a390 1
+	if (!onepixpb_no8) pr_destroy(rowbuffer_pr);
+d392 1
+a392 1
+	return(result_pr);
+d396 1
+a396 1
+*	Read a raster from the line, dump it to the screen.
+d401 2
+a402 2
+	int top, left, width, height, dpth_r, msiz;
+	struct pixrect *temp_pr;
+d404 4
+a407 4
+	width	= com_numargs[1];
+	height	= com_numargs[2];
+	left	= com_numargs[3];
+	top		= com_numargs[4];
+d409 1
+a409 1
+	dpth_r = cg_pixrectp->pr_depth;
+d412 1
+a412 1
+	printf("GRD: dpth_r=%d\n", dpth_r);
+d417 5
+a421 5
+ * 	if ((cg_winisframe) || (dpth_r == 1))
+ * 		msiz = dpth_r;
+ * 	else
+ * 	{
+ * 		int i;
+d423 1
+a423 1
+ * 		i = gfx_mapsizes[(wt_colmap[current_graf])];
+d425 2
+a426 2
+ * 		for (msiz = 1; i >> msiz != 1 ; msiz++) {};
+ * 	}
+d429 1
+a429 1
+	msiz = dpth_r;
+d433 1
+a433 1
+	printf("GRD: msiz=%d\n", msiz);
+d436 8
+a443 8
+	if ((temp_pr = grph_readraster(dpth_r, msiz)) != (struct pixrect *)NULL)
+	{
+		if (cg_winisframe)
+			pr_rop(cg_pixrectp, left, top, width, height,
+										graphic_op, temp_pr, 0, 0);
+		else
+			pw_rop(cg_pixwinp, left, top, width, height,
+										graphic_op, temp_pr, 0, 0);
+d445 2
+a446 2
+		pr_destroy(temp_pr);
+	}
+d448 2
+a449 2
+	else
+		printf("GDR: read raster returned failure\n");
+d454 1
+a454 1
+*	read a raster from the screen, send it up the line.
+d458 3
+a460 3
+	int x, y, ylim, i, depth, width, height, bytes_pl;
+	short *rowbuffer;
+	struct pixrect *rowbuffer_pr;
+d462 5
+a466 5
+	x = com_numargs[0];
+	y = com_numargs[1];
+	width = com_numargs[2];
+	height = com_numargs[3];
+	ylim = com_numargs[1] + height;
+d468 1
+a468 1
+	depth = cg_pixrectp->pr_depth;
+d470 4
+a473 4
+	if ((x + width) > cg_pixrectp->pr_width)
+		width = cg_pixrectp->pr_width - x;
+	if ((y + height) > cg_pixrectp->pr_height)
+		height = cg_pixrectp->pr_height - y;
+d476 2
+a477 2
+	printf("-- grb: (%d,%d) %dx%d (%dx%d), d=%d\n", x, y, width, height,
+					com_numargs[2], com_numargs[3], depth);
+d480 3
+a482 3
+	rowbuffer_pr = mem_create(width, 1, depth);
+	bytes_pl = ((struct mpr_data *)rowbuffer_pr->pr_data)->md_linebytes;
+	rowbuffer = ((struct mpr_data *)rowbuffer_pr->pr_data)->md_image;
+d484 3
+a486 3
+	sprintf(report_buffer, REPrastercome, 8 + 32, depth + 32,
+							width, height, bytes_pl);
+	send_report_to_poplog(strlen(report_buffer));
+d488 2
+a489 2
+	ioctl(client_ofd, TIOCFLUSH, (struct sgttyb *)NULL);
+	set_rawmode();
+d491 4
+a494 4
+	for (y = com_numargs[1]; y < ylim; y++)
+	{
+		pr_rop(rowbuffer_pr, 0, 0, width, 1, PIX_SRC, cg_pixrectp, x, y);
+		write(client_ofd, rowbuffer, bytes_pl);
+d496 1
+a496 1
+		printf("--- grb: sent another %d bytes\n", bytes_pl);
+d498 1
+a498 1
+	}
+d500 3
+a502 3
+	ioctl(client_ofd, TIOCFLUSH, (struct sgttyb *)NULL);
+	pr_destroy(rowbuffer_pr);
+	reset_rawmode();
+d507 3
+a509 3
+	int swin, sx, sy, width, height, op, val, dwin, dx, dy;
+	register int xdiff, ydiff, depth;
+	struct pixrect *spr, *dpr, *tmp_pr;
+d511 3
+a513 3
+	swin = com_charargs[0] - 32;
+	op = ropconvert[(com_charargs[1] & 15)];
+	dwin = com_charargs[2] - 32;
+d515 3
+a517 3
+	sx = com_numargs[0]; 	sy = com_numargs[1];
+	width = com_numargs[2]; height = com_numargs[3];
+	dx = com_numargs[4]; 	dy = com_numargs[5];
+d519 2
+a520 2
+	if ((dpr = get_gfx_surface_pr(dwin)) == (struct pixrect *)NULL)
+		return(0);
+d522 2
+a523 2
+	if ((spr = get_gfx_surface_pr(swin)) == (struct pixrect *)NULL)
+		return(0);
+d525 2
+a526 2
+	if (dpr->pr_depth != spr->pr_depth)
+	{
+d528 2
+a529 2
+	printf("GCR: different depths: (%d=%d, %d=%d)\n",
+								swin, spr->pr_depth, dwin, dpr->pr_depth);
+d531 3
+a533 3
+		misprint(-1, "PWM: can't copy raster: windows of different depth\n");
+		return(0);
+	}
+d535 1
+a535 1
+	printf("GCR: d=%d,pr=$%x, s=%d,pr=$%x\n", dwin, dpr, swin, spr);
+d538 2
+a539 2
+	if (width == 0) width = spr->pr_width;
+	if (height == 0) height = spr->pr_height;
+d541 2
+a542 2
+	if (wt_active[dwin] == WT_FRAMEW)
+	{
+d544 1
+a544 1
+	printf("GCR- type 1, %d is frame\n", dwin);
+d546 1
+a546 1
+		pr_rop(dpr, dx, dy, width, height, graphic_op, spr, sx, sy);
+d548 7
+a554 7
+		if ((op != PIX_DST) && (wt_active[swin] != WT_FRAMEW))
+			pw_writebackground(wt_pixwinp[swin], sx, sy, width, height, op);
+	}
+	else if  ((dwin != swin) || (op == PIX_DST) ||
+			(abs(sx - dx) >= width) || (abs(sy - dy) >= height))
+	{	/* then we don't have to anything fancy about the clear up */
+		pw_rop(wt_pixwinp[dwin], dx, dy, width, height, graphic_op, spr, sx, sy);
+d556 7
+a562 7
+		if ((op != PIX_DST) && (wt_active[swin] != WT_FRAMEW))
+			pw_writebackground(wt_pixwinp[swin], sx, sy, width, height, op);
+	}
+	else
+	{
+		tmp_pr = mem_create(width, height, spr->pr_depth);
+		pr_rop(tmp_pr, 0, 0, width, height, graphic_op, spr, sx, sy);
+d564 6
+a569 6
+		if (sx < dx)
+			pw_writebackground(wt_pixwinp[swin], sx, sy,
+									min(dx - sx, width), height, op);
+		else if (sx > dx)
+			pw_writebackground(wt_pixwinp[swin], dx + width, sy,
+									sx - dx, height, op);
+d571 7
+a577 7
+		if (sy < dy)
+			pw_writebackground(wt_pixwinp[swin], max(sx, dx), sy,
+									width - abs(sx - dx),
+									min(dy - sy, height), op);
+		else if ((sy > dy) && ((sy - dy) < height))
+			pw_writebackground(wt_pixwinp[swin], max(sx, dx), dy + height,
+									width - abs(sx - dx), sy - dy, op);
+d579 3
+a581 3
+		pw_rop(wt_pixwinp[dwin], dx, dy, width, height, graphic_op, tmp_pr, 0, 0);
+		pr_destroy(tmp_pr);
+	}
+d587 1
+a587 1
+*	args are left, top, width, height, and filename
+d591 4
+a594 4
+	FILE *output_file;
+	int res, w, h, x, y;
+	colormap_t *cmap_tp;				/* pointer to a colourmap thing*/
+	unsigned char *cmap_map[3];		/* array of pointers to colmap entries*/
+d596 11
+a606 11
+	if ((output_file = fopen(com_stringarg, "w")) == (FILE *)NULL)
+	{
+		misprint(-1, "PWM: couldn't open file\n");
+		report_status(2);
+	}
+	else
+	{
+		x = com_numargs[0];
+		y = com_numargs[1];
+		w = com_numargs[2];
+		h = com_numargs[3];
+d608 3
+a610 3
+/*		cmap_tp = (colormap_t *)NULL;*/
+		if (cg_winisframe || (cg_pixrectp->pr_depth == 1))
+		{
+d612 1
+a612 1
+	printf("--- gwr: depth 1, using null cmap\n");
+d614 4
+a617 4
+			cmap_tp = (colormap_t *)NULL;
+		}
+		else if (wt_colmap[current_graf] == -1)
+		{
+d619 1
+a619 1
+	printf("--- gwr: depth >1 but no cms, using null cmap\n");
+d621 9
+a629 9
+			comap_t.type = RMT_NONE;
+			comap_t.length = 0;
+			comap_t.map[0] = (unsigned char *)NULL;
+			comap_t.map[1] = (unsigned char *)NULL;
+			comap_t.map[2] = (unsigned char *)NULL;
+			cmap_tp = &comap_t;
+		}
+		else
+		{
+d631 2
+a632 2
+	printf("--- gwr: win %d, depth >1, using our cms %d\n",
+							 current_graf, wt_colmap[current_graf]);
+d634 2
+a635 2
+			comap_t.type = RMT_EQUAL_RGB;
+			comap_t.length = gfx_mapsizes[wt_colmap[current_graf]];
+d637 1
+a637 1
+	printf("--- gwr: depth >1, using our cms length %d\n", comap_t.length);
+d639 2
+a640 2
+			pw_getcolormap(cg_pixwinp, 0, comap_t.length,
+									big_red, big_green, big_blue);
+d643 1
+a643 1
+	printf("--- gwr: read cms values\n");
+d646 6
+a651 6
+			cmap_map[0] = big_red;
+			cmap_map[1] = big_blue;
+			cmap_map[2] = big_green;
+			comap_t.map[0] = cmap_map[0];
+			comap_t.map[1] = cmap_map[1];
+			comap_t.map[2] = cmap_map[2];
+d653 3
+a655 3
+			comap_t.map[0] = big_red;
+			comap_t.map[1] = big_blue;
+			comap_t.map[2] = big_green;
+d657 8
+a664 8
+	printf("--- gwr: cms 0 = %d, %d, %d\n",
+				comap_t.map[0][0],
+				comap_t.map[1][0],
+				comap_t.map[2][0]);
+	printf("--- gwr: cms 1 = %d, %d, %d\n",
+				comap_t.map[0][1],
+				comap_t.map[1][1],
+				comap_t.map[2][1]);
+d666 2
+a667 2
+			cmap_tp = &comap_t;
+		}
+d669 2
+a670 2
+		if (x == 0 && y == 0 && w == 0 && h == 0)
+		{	/* the whole window */
+d672 2
+a673 2
+	printf("--- gwr: writing whole window (%dx%d)\n",
+					cg_pixrectp->pr_width, cg_pixrectp->pr_height);
+d675 10
+a684 10
+			res = pr_dump(cg_pixrectp,
+							output_file,
+/*							(colormap_t *)NULL,*/
+							cmap_tp,
+							RT_STANDARD,
+							0);
+		}
+		else
+		{
+			struct pixrect *tmp_pr;
+d686 4
+a689 4
+			if (w == 0) w = cg_pixrectp->pr_width - x;
+			if (h == 0) h = cg_pixrectp->pr_height - y;
+			tmp_pr = mem_create(w, h, cg_pixrectp->pr_depth);
+			pr_rop(tmp_pr, 0, 0, w, h, PIX_SRC, cg_pixrectp, x, y);
+d691 1
+a691 1
+/*			tmp_pr = pr_region(cg_pixrectp, x, y, w, h);*/
+d693 2
+a694 2
+	printf("--- gwr: temp_pr made (%d, %d), depth=%d, $%x\n",
+							w, h, tmp_pr->pr_depth, tmp_pr);
+d696 6
+a701 6
+			res = pr_dump(tmp_pr,
+							output_file,
+/*							(colormap_t *)NULL,*/
+							cmap_tp,
+							RT_STANDARD,
+							0);
+d703 3
+a705 3
+			pr_destroy(tmp_pr);
+		}
+		fclose(output_file);
+d707 1
+a707 1
+	printf("--- gwr: pr_dump returned %d\n", res);
+d709 3
+a711 3
+		if (res > 1) res = 1;
+		report_status(res);
+	}
+d715 3
+a717 3
+*	args are filename, x, y, w, h to define a rectangular portion of the
+*	image to restore, and x,y of where in the window the top left corner
+*	of restored image should go:
+d719 7
+a725 7
+*				com_numargs[0] - dest.left
+*				com_numargs[1] - dest.top
+*				com_numargs[2] - source.left
+*				com_numargs[3] - source.top
+*				com_numargs[4] - width
+*				com_numargs[5] - height
+*				com_stringarg - filename
+d729 3
+a731 3
+	FILE *input_file;
+	struct pixrect *input_pr;
+	int width, height;
+d733 6
+a738 6
+	if ((input_file = fopen(com_stringarg, "r")) == (FILE *)NULL)
+		misprint(-1, "PWM: couldn't open rasterfile\n");
+	else
+	{
+		input_pr = pr_load(input_file, (colormap_t *)NULL);
+		fclose(input_file);
+d740 9
+a748 9
+		if (input_pr == (struct pixrect *)NULL)
+		{
+			misprint(-1, "PWM: couldn't load rasterfile\n");
+		}
+		else
+		{
+			width = input_pr->pr_size.x;
+			if (com_numargs[4] != 0 && com_numargs[4] < width)
+				width = com_numargs[4];
+d750 3
+a752 3
+			height = input_pr->pr_size.y;
+			if (com_numargs[5] != 0 && com_numargs[5] < height)
+				height = com_numargs[5];
+d754 12
+a765 12
+			if (cg_winisframe)
+				pr_rop(cg_pixrectp,
+						com_numargs[0],
+						com_numargs[1],
+						width, height,
+						graphic_op, input_pr, com_numargs[2], com_numargs[3]);
+			else
+				pw_rop(cg_pixwinp,
+						com_numargs[0],
+						com_numargs[1],
+						width, height,
+						graphic_op, input_pr, com_numargs[2], com_numargs[3]);
+d767 4
+a770 4
+			pr_destroy(input_pr);
+		}
+		fclose(input_file);
+	}
+d778 2
+a779 2
+	register int i, depth;
+	depth = wt_pixwinp[0]->pw_pixrect->pr_depth;
+d781 2
+a782 2
+	for (i = FT_FIRSTFRAME; i < FT_LASTFRAME ; i++)
+		if (wt_active[i] == FALSE) break;
+d784 18
+a801 18
+	if (i < FT_LASTFRAME)
+	{
+		if	((gfx_frames[i - FT_FIRSTFRAME]
+				= mem_create(com_numargs[0], com_numargs[1], depth)) == NULL)
+		{
+			misprint(i, "PWM: can't create invisible win %d\n");
+			wt_active[i] = FALSE;
+		}
+		else
+		{
+			wt_active[i] = WT_FRAMEW;
+		}
+	}
+	else
+	{
+		misprint(-1, "PWM: can't make invisible window - no room at table\n");
+	}
+	report_status(i);
+d806 1
+a806 1
+	register int i;
+d808 10
+a817 10
+	if (((i = com_charargs[0] - 32) < FT_FIRSTFRAME) || (i >= FT_LASTFRAME))
+		misprint(i, "PWM: can't kill surface %d - no such surface\n");
+	else if (wt_active[i] != WT_FRAMEW)
+		misprint(i, "PWM: can't kill surface %d - not live surface\n");
+	else
+	{
+		pr_destroy(gfx_frames[i - FT_FIRSTFRAME]);
+		wt_active[i] = FALSE;
+		if (current_graf == i) select_graphic_window(0);
+	}
+d832 17
+a848 17
+	if ((win >= WT_FIRSTWIN)
+		&& (win <= WT_LASTWIN)
+		&& (wt_active[win] >= WT_ACTIVE))
+	{
+		return(wt_pixwinp[win]->pw_prretained);
+	}
+	else if ((win >= FT_FIRSTFRAME)
+		&& (win < FT_LASTFRAME)
+		&& (wt_active[win] != FALSE))
+	{
+		return(gfx_frames[win - FT_FIRSTFRAME]);
+	}
+	else
+	{
+		misprint(win, "PWM: can't do graphics on #%d, no such surface\n");
+		return((struct pixrect *)NULL);
+	}
+d852 3
+a854 3
+*	takes index to supposed surface-id in array of character args, and
+*	returns the win-id if there is one, WT_NOWIN else (and complains
+*	in the else case)
+d859 1
+a859 1
+	i = com_charargs[i] - 32;
+d861 25
+a885 25
+	if ((i < WT_FIRSTWIN) || (i >= FT_LASTFRAME))
+	{
+		misprint(i, "PWM: can't do graphics on %d, no such surface\n");
+		return(WT_NOWIN);
+	}
+	else if (i < FT_FIRSTFRAME)
+	{
+		if (wt_active[i] < WT_ACTIVE)
+		{
+			misprint(i, "PWM: can't do graphics on %d, not live window\n");
+			return(WT_NOWIN);
+		}
+		else
+			return(i);
+	}
+	else
+	{
+		if (wt_active[i] == FALSE)
+		{
+			misprint(i, "PWM: can't do graphics on %d, not live surface\n");
+			return(WT_NOWIN);
+		}
+		else
+			return(i);
+	}
+d890 2
+a891 2
+	int wasraw;
+	struct sgttyb sg;
+d893 1
+a893 1
+	ioctl(client_ofd, TIOCGETP, &sg);
+d895 1
+a895 1
+	wasraw = sg.sg_flags & ECHO;
+d897 5
+a901 5
+	if (wasraw == 0)
+	{
+		sg.sg_flags = sg.sg_flags | RAW;
+		ioctl(client_ofd, TIOCSETP, &sg);
+	}
+d903 1
+a903 1
+	return(wasraw);
+d908 1
+a908 1
+	struct sgttyb sg;
+d910 3
+a912 3
+	ioctl(client_ofd, TIOCGETP, &sg);
+	sg.sg_flags = sg.sg_flags ^ RAW;
+	ioctl(client_ofd, TIOCSETP, &sg);
+d943 5
+a947 2
+	Implemented changes according to SFR 4185
+$Log$
+@

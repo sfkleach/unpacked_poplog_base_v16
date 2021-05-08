@@ -1,0 +1,66 @@
+REF XT_VALUE                                Andreas Schoter, August 1990
+
+        COPYRIGHT University of Sussex 1990. All Rights Reserved.
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+<<<<<<<<<<<<<<<<<<<<<<<<<                       >>>>>>>>>>>>>>>>>>>>>>>>
+<<<<<<<<<<<<<<<<<<<<<<<<<    XT_VALUE LIBRARY   >>>>>>>>>>>>>>>>>>>>>>>>
+<<<<<<<<<<<<<<<<<<<<<<<<<                       >>>>>>>>>>>>>>>>>>>>>>>>
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+
+
+Prolog Predicates
+-----------------
+
+xt_value(+WIDGETID,+RESOURCENAME,?VALUE)                     [predicate]
+xt_value_nocheck(+WIDGETID,+RESOURCENAME,?VALUE)             [predicate]
+xt_value(+WIDGETID,+RESOURCENAME,+COERCETYPE,?VALUE)         [predicate]
+xt_value_nocheck(+WIDGETID,+RESOURCENAME,+COERCETYPE,?VALUE) [predicate]
+        Returns or sets the VALUE of the RESOURCENAME for the  WIDGETID.
+        If VALUE is an uninstantiated  variable then it is unified  with
+        the current value of the RESOURCENAME for the WIDGETID. If VALUE
+        is instantiated then the RESOURCENAME for the WIDGETID is set to
+        that VALUE. In the four argument version of xt_value  COERCETYPE
+        must be a valid coercion type. This is useful when the  resource
+        being accessed uses a datatype  other than a simple Poplog  INT.
+        For example to determine the  width of a widget with  WIDGETID 1
+        the following call would be used:
+
+            ?- xt_value(1,width,short,Value).
+
+        Available coercion types are
+
+            decimal
+            float
+            int
+            string
+            word
+            double
+            byte
+            char
+            short
+
+        A call to xt_value/3 is equivalent to a call of xt_value/4  with
+        a coerce type of int.
+
+        The first version of these predicates (ie xt_value/3[4])  uses a
+        property table to  determine, from the  Prolog atom supplied  as
+        RESOURCENAME, the X  resource name string  to use. The  property
+        table is initialised by each Prolog Xpw library as it is  loaded
+        with the most commonly used resources for that widget class (see
+        individual REF files for  a list of  the resources specified  by
+        each library). Not all resources may be put into this table.  If
+        the user wishes to access a resource that is not specified  by a
+        library then  the  predicates  xt_value_nocheck/3[4]  should  be
+        used. These predicates do not check the Prolog atom against  the
+        property table,  but instead  convert the  atom directly  into a
+        Poplog string  and  use this  as  the  X resource  name.  It  is
+        therefore the responsibility of the  user to ensure, when  using
+        the non-checking  versions,  that  the  name  supplied  for  the
+        resource is correct.
+
+
+
+--- C.all/x/plog/ref/xt_value
+--- Copyright University of Sussex 1990. All rights reserved. ----------

@@ -1,0 +1,15 @@
+This directory contains the LaTeX source for the documentation
+of the Edinburgh Standard ML Library.  This documentation is available
+(free) as technical report ECS-LFCS-91-148, from Dorothy Mackie, LFCS,
+University of Edinburgh, King's Buildings, Edinburgh, Scotland EH9 3JZ.
+Dorothy's e-mail address is dam%ecsvax.ed.ac.uk@nsfnet-relay.ac.uk.
+
+To print this report, first run make_entries to generate the descriptions
+of each entry from the signatures.  Then run LaTeX on the file main.tex.
+
+RCS LOG
+
+$Log:	README,v $
+# Revision 1.1  91/04/11  11:20:10  11:20:10  db (Dave Berry)
+# Initial revision
+# 

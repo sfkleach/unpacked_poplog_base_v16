@@ -1,0 +1,1134 @@
+head     1.2;
+branch   ;
+access   ;
+symbols  ;
+locks    ; strict;
+comment  @ * @;
+
+
+1.2
+date     89.08.23.15.27.59;  author pop;  state Exp;
+branches ;
+next     1.1;
+
+1.1
+date     89.08.23.13.20.51;  author pop;  state Exp;
+branches ;
+next     ;
+
+
+desc
+@Modified to version 1.78RU2 (See CHANGE_NOTES)
+@
+
+
+1.2
+log
+@modified select to use BSD4.3 fd_set
+@
+text
+@/* --- Copyright University of Sussex 1989.  All rights reserved. ---------
+ * File:        C.sun/pwm/pwmisc.c
+ * Purpose:     miscellaneous routines for Sun PWM
+ * Author:      Ben Rubinstein, Jan  8 1987 (see revisions)
+ * $Header: /popv13.5/pop/pwm/RCS/pwmisc.c,v 1.1 89/08/23 13:20:51 pop Exp Locker: pop $
+ */
+
+/*
+|       The main program loop (vedwin_select) is in here, and the routines
+|   for selecting, killing, and refreshing (..._sigwinch) windows.
+*/
+
+#include "pwdec.h"
+#include "pwrepseq.h"
+
+#include <errno.h>
+extern int errno;
+int recursing_sigwinch;
+
+/*--------------------------------------------------------------------
+*/
+vedwin_select()
+{
+    int i, nfds, tablesize, fd;
+    char code;
+
+    /* do a refresh on all, to ensure they are visible */
+    do_sigwinches();
+
+    tablesize = getdtablesize();
+
+    while (poplog_proc_died == 0)
+    {
+
+        /* check for sigwinches on all windows */
+        if (sigwinch_pending == 1) do_sigwinches();
+
+        /* get the current input mask */
+        redo_window_masks();
+
+        nfds = select(tablesize, &fdset, 0, 0, 0);
+
+        if  (nfds < 0)
+        {
+            if (errno == EBADF)
+                mishap(-1, "||| select: EBADF (bad fd)\n");
+        /*
+            else if (errno == EINTR)
+                go round again so the signal can be caught */
+        }
+        else
+        {
+#ifdef DeBug
+            if (FD_ISSET(STDIN_FD,&fdset)) {
+                handle_control_input();
+                FD_CLR(STDIN_FD,&fdset);
+            }
+#endif
+
+            /* outer window */
+            for (i = WT_FIRSTWIN; i <= WT_LASTWIN; i++) {
+                if  (wt_active[i] >= WT_ACTIVE) {
+                    fd = wt_wimask[i];
+                    if (FD_ISSET(fd,&fdset)){
+                        user_toolwin_input();
+                        goto next_while;
+                    }
+                }
+            }
+            /* inner window */
+            for (i = WT_FIRSTWIN; i <= WT_LASTWIN; i++) {
+                if  (wt_active[i] >= WT_ACTIVE) {
+                    fd = wt_swimask[i];
+                    if (FD_ISSET(fd,&fdset)){
+                        user_subwin_input();
+                        goto next_while;
+                    }
+                }
+            }
+            if (FD_ISSET(client_ifd,&fdset)){
+                poplog_input();
+                FD_CLR(client_ifd,&fdset);
+                goto next_while;
+            }
+            mishap(-1,"||| utterly naff fdset\n");
+            /* end of if statement */
+        }
+next_while: ;
+    }
+
+    in_escape = com_buflen = com_seq_len = com_termin == 0;
+
+#ifdef DeBug
+    printf("*** signal from child: getting last thoughts ***\n");
+#endif
+
+    while (poll_poplog_process() == 1)
+    {
+        poplog_input();
+    }
+
+#ifdef DeBug
+    printf("*** signal from child: got last thoughts ***\n");
+#endif
+    kill_all_windows();
+}
+
+
+poll_poplog_process()
+{
+    int tablesize;
+
+    FD_ZERO(&fdset);
+    FD_SET(client_ifd,&fdset);
+
+    tablesize = getdtablesize();
+    return(select(tablesize, &fdset, 0, 0, &polling_timeout));
+}
+
+do_sigwinches()
+{
+    int index;
+    struct tool *toolptr;
+
+    for (index = WT_FIRSTWIN; index <= WT_LASTWIN; index++)
+        if  ((wt_active[index]) >= WT_ACTIVE)
+        {
+            toolptr = wt_toolwp[index];
+            ((toolptr->tl_io).tio_handlesigwinch)(toolptr);
+        }
+    /* close for loop */
+    sigwinch_pending = 0;
+}
+
+
+/*--------------------------------------------------------------------
+*/
+refresh_txtwin(pixwinp, rect, screen, curpos)
+struct pixwin *pixwinp;
+struct xypos  *curpos;
+struct screen_record *screen;
+struct rect *rect;
+{
+    int ri, ci;
+    int rows, cols;
+    char **text, *p;
+
+    rows = screen->rows;
+    cols = screen->cols;
+    text = screen->text;
+
+    pw_lock(pixwinp, rect);
+
+    /* clear the pixwin */
+    pw_writebackground(pixwinp, 0, 0, rect->r_width, rect->r_height, PIX_CLR);
+
+    /* draw text */
+    for (ri = 0; ri < rows; ri++)
+    {
+        p = text[ri];
+        pw_text(pixwinp, 0, txtcoord_pix_y(ri),
+                            PIX_SRC ^ PIX_DST, norm_font, p);
+    }
+
+    /* draw the cursor */
+    Paint_cursor;
+
+    pw_unlock(pixwinp);
+}
+
+/*--------------------------------------------------------------------
+*   this is a trap, so that we can spot size changes and round them
+*   down to text sizes (and enusre that window can display at least one
+*   character).  The real sigwinching is done in real_txtwin_sigwinch,
+*   below.
+*/
+txtwin_sigwinch(sw_num)
+int sw_num;
+{
+    int rows, cols;
+    struct tool     *toolptr;
+    struct toolsw   *toolswp;
+    struct pixwin   *pixwinp;
+    struct rect newrect, oldrect;
+
+    toolswp = wt_toolswp[sw_num];
+    oldrect = wt_swrect[sw_num];
+    pixwinp = wt_pixwinp[sw_num];
+
+    /* determine current size of subwindow */
+    win_getsize(toolswp->ts_windowfd, &newrect);
+
+    /* prepare pixwin for damage repair */
+/*  pw_damaged(pixwinp);*/
+
+    if (recursing_sigwinch == 0)
+    {
+        /* if the size has changed */
+        if ((oldrect.r_width != newrect.r_width) ||
+                                (oldrect.r_height != newrect.r_height))
+        {
+            if ((rows = newrect.r_height / fontadv_y) < 1) rows = 1;
+            if ((cols = newrect.r_width / fontadv_x) < 1) cols = 1;
+#ifdef DeBug
+        printf("txsg1: size - h=%d, w=%d\n", rows, cols);
+#endif
+            tool_set_attributes(wt_toolwp[sw_num],
+                            WIN_LINES, rows, WIN_COLUMNS, cols, 0);
+#ifdef DeBug
+        printf("txsg2: size - h=%d, w=%d\n", rows, cols);
+#endif
+            recursing_sigwinch = 1;
+            toolptr = wt_toolwp[sw_num];
+            ((toolptr->tl_io).tio_handlesigwinch)(toolptr);
+            recursing_sigwinch = 0;
+        }
+        else
+            real_txtwin_sigwinch(sw_num);
+    }
+    else
+        real_txtwin_sigwinch(sw_num);
+}
+
+
+/*--------------------------------------------------------------------
+*/
+real_txtwin_sigwinch(sw_num)
+int sw_num;
+{
+    int i, ri, ci, old_co;
+    int rows, cols;
+    char **text, *p;
+
+    struct toolsw *toolswp;
+    struct pixwin *pixwinp;
+    struct xypos  *curpos;
+    struct screen_record *screen;
+    struct rect newrect, oldrect;
+
+    int icflag;
+
+    screen = wt_scrndata[sw_num];
+    toolswp = wt_toolswp[sw_num];
+    oldrect = wt_swrect[sw_num];
+    pixwinp = wt_pixwinp[sw_num];
+
+    /* determine current size of subwindow */
+    win_getsize(toolswp->ts_windowfd, &newrect);
+
+    /* prepare pixwin for damage repair */
+    pw_damaged(pixwinp);
+
+    /* if the size has changed */
+    if (oldrect.r_width != newrect.r_width ||
+                            oldrect.r_height != newrect.r_height)
+    {
+#ifdef DeBug
+        printf("txsg3: size - h=%d, w=%d\n", newrect.r_height, newrect.r_width);
+#endif
+
+        /* make a new screen record */
+        wt_scrndata[sw_num]
+                        = resize_screen_rec(screen, newrect, sw_num);
+        free_screen_record(screen);     /* free memory used by old one */
+        screen = wt_scrndata[sw_num]; /* switch identifiers */
+
+        /* remember new size */
+        wt_swrect[sw_num] = newrect;
+
+        old_co = current_out;
+        select_output_window(sw_num);   /* reset size things */
+        report_win_resized(sw_num, co_widthc, co_heightc);
+
+        /* ensure cursor is on screen */
+        if (co_curposc->x >= co_widthc)
+        {
+            co_curposc->x = co_widthc - 1;
+            co_curposp->x = txtcoord_pix_x(co_curposc->x);
+        }
+        if (co_curposc->y >= co_heightc)
+        {
+            co_curposc->y = co_heightc - 1;
+            co_curposp->y = txtcoord_pix_y(co_curposc->y);
+        }
+
+        if  (sw_num != old_co)
+            select_output_window(old_co);   /* set it back */
+
+        /* destroy the old backup pixrect */
+        pr_destroy(pixwinp->pw_prretained);
+
+        /* make a new backup pixrect */
+        if  ((pixwinp->pw_prretained =
+                    mem_create(newrect.r_width,
+                                newrect.r_height + fontadv_y,
+                               /* IR: SFR 4185 - replaced 1 with following */
+                               pixwinp->pw_pixrect->pr_depth)
+             ) == NULL)
+            mishap(index, "||| Can't create retained rec for win %d\n");
+
+#ifdef DeBug
+    printf("--- refreshing txtwin %d\n", sw_num);
+#endif
+        refresh_txtwin(pixwinp, &newrect, screen, &wt_curposp[sw_num]);
+
+        pw_donedamaged(pixwinp); /* clip on all visible areas */
+    }
+    else /* make sure call pw_donedamaged if haven't above */
+    {
+        pw_repairretained(pixwinp);
+        pw_donedamaged(pixwinp);
+    }
+    if (selectedwin == sw_num) mark_tool_border(sw_num, LOC_WINENTER);
+}
+
+
+/*--------------------------------------------------------------------
+*/
+gfxwin_sigwinch(sw_num)
+int sw_num;
+{
+    int icflag;
+    struct toolsw *toolswp;
+    struct pixwin *pixwinp;
+    struct rect newrect, oldrect;
+
+    toolswp = wt_toolswp[sw_num];
+    oldrect = wt_swrect[sw_num];
+    pixwinp = wt_pixwinp[sw_num];
+
+    /* determine current size of subwindow */
+    win_getsize(toolswp->ts_windowfd, &newrect);
+
+    /* prepare pixwin for damage repair */
+    pw_damaged(pixwinp);
+
+    /* if the size has changed */
+    if  ((oldrect.r_width != newrect.r_width)
+        || (oldrect.r_height != newrect.r_height))
+    {
+
+        wt_swrect[sw_num] = newrect; /* remember new size */
+
+        /* destroy the old backup pixrect */
+        pr_destroy(pixwinp->pw_prretained);
+
+        /* make a new backup pixrect */
+        if  ((pixwinp->pw_prretained =
+                    mem_create(newrect.r_width, newrect.r_height,
+                               /* IR, SFR 4185 - replaced 1 with following */
+                               pixwinp->pw_pixrect->pr_depth)
+             ) == NULL)
+            mishap(index, "||| Can't create retained rec for win %d\n");
+
+        /* clear the pixwin */
+        pw_writebackground(pixwinp, 0, 0,
+                                newrect.r_width,
+                                newrect.r_height,
+                                PIX_CLR);
+
+        pw_donedamaged(pixwinp); /* clip on all visible areas */
+
+        report_win_resized(sw_num, newrect.r_width, newrect.r_height);  /* tell poplog */
+    }
+    else
+    {
+        pw_repairretained(pixwinp);
+        pw_donedamaged(pixwinp);
+    }
+    if (selectedwin == sw_num) mark_tool_border(sw_num, LOC_WINENTER);
+}
+
+
+/*--------------------------------------------------------------------
+*  return the number of windows which are active
+*/
+count_live_windows()
+{
+    int i, liveones;
+    struct tool *toolp;
+
+    liveones = 0;
+    for (i = WT_FIRSTWIN; i <= WT_LASTWIN; i++)
+    {
+        if  ((wt_active[i]) != WT_UNUSED)
+            liveones = liveones + 1;
+    }
+    return(liveones);
+}
+
+/*--------------------------------------------------------------------
+* kills all the windows listed as active. Basically
+* used when the poplog process dies, to clean up nicely.
+*/
+kill_all_windows()
+{
+    int i;
+
+    for (i = WT_LASTWIN; i >= WT_FIRSTWIN; i--)
+        if  ((wt_active[i]) >= WT_ACTIVE)
+        really_kill_window(i);
+}
+
+/*--------------------------------------------------------------------
+*   actually do the killing of a window.
+*/
+really_kill_window(n)
+int n;
+{
+    grph_unsetmap(n);   /* necessary in case it has a cms */
+
+    tool_done(wt_toolwp[n]);    /* this is almost certainly redundant */
+
+    tool_destroy(wt_toolwp[n]);
+
+    close(wt_swfd[n]);
+    close(wt_toolwp[n]->tl_windowfd);
+
+    wt_active[n] = WT_UNUSED;
+    redo_window_masks();
+
+    if (n != 0)
+    {
+        if (current_out == n) select_output_window(0);
+        if (current_graf == n) select_graphic_window(0);
+    }
+}
+
+switch_current_in(new_in)
+{
+    if  (current_in != new_in)
+    {
+        report_input_window(new_in);
+        current_in = new_in;
+
+        ci_mousedown = 0;
+    }
+}
+
+select_output_window(n)
+register int n;
+{
+    /* save gfx and insert mode for old window */
+    if  ((current_out >= WT_FIRSTWIN)
+            && (current_out <= WT_LASTWIN)
+            && (wt_active[current_out] >= WT_ACTIVE)
+            && (wt_active[current_out] < WT_GRAPHW))
+    {
+        wt_flags[current_out] = term_grafmode | term_insrtmode;
+    }
+
+    if  ((n >= WT_FIRSTWIN)
+            && (n <= WT_LASTWIN)
+            && (wt_active[n] >= WT_ACTIVE)
+            && (wt_active[current_out] < WT_GRAPHW))
+    {
+        current_out = n;
+
+        co_toolp = wt_toolwp[n];
+        co_toolfd = co_toolp->tl_windowfd;
+
+        co_pixwinp = wt_pixwinp[n];
+        co_rect = wt_swrect[n];
+
+        co_widthp = co_rect.r_width;
+        co_heightp = co_rect.r_height;
+
+        /* whether to wrap long lines round */
+        co_winiswrap = ((wt_active[n] == WT_TEXTW) ? TRUE : FALSE);
+
+        co_curposp = &wt_curposp[n];
+        co_curposc = &wt_curposc[n];
+
+        co_text = (wt_scrndata[n])->text;
+        co_widthc = (wt_scrndata[n])->cols;
+        co_heightc = (wt_scrndata[n])->rows;
+
+        if (n == 0)     /* base window */
+        {
+            bw_text = co_text;
+            bw_widthc = co_widthc;
+            co_winiswrap = ((!poplog_listening || base_cooked) ? TRUE : FALSE);
+            co_winiscooked = base_cooked;
+        }
+        else if (wt_active[n] == WT_VEDWIN)
+            co_winiscooked = ved_cooked;
+        else
+            co_winiscooked = FALSE;
+
+        co_botlinetop = txtcoord_pix_y(co_heightc - 1) + font_home_y;
+        co_botlineheight = co_widthp - co_botlinetop;
+
+        term_grafmode = wt_flags[n] & TFLG_GRAFMODE;
+        term_insrtmode  = wt_flags[n] & TFLG_INSERTMODE;
+
+        if (term_insrtmode == FALSE)
+        {
+            co_charpr = co_replace_char;
+            co_bufferpr = co_buffer_replace;
+        }
+        else
+        {
+            co_charpr = co_insert_char;
+            co_bufferpr = co_buffer_insert;
+        }
+    }
+    else
+        mishap(n, "PWM: attempt to select invalid window for output: %d\n");
+}
+
+/*--------------------------------------------------------------------
+*   set the global vars twin_ibits and swin_ibits to be input masks,
+*   which can be handed to select, for all the current tool windows,
+*   and all the current subwindows.
+*/
+redo_window_masks()
+{
+    int i;
+
+    FD_ZERO(&fdset);
+    FD_SET(client_ifd,&fdset);
+
+#ifdef DeBug
+    FD_SET(STDIN_FD,&fdset);
+#endif
+
+    for (i = WT_FIRSTWIN; i <= WT_LASTWIN; i++)
+        if (wt_active[i] >= WT_ACTIVE)
+        {
+            FD_SET(wt_wimask[i],&fdset);
+            FD_SET(wt_swimask[i],&fdset);
+        }
+}
+
+/*--------------------------------------------------------------------
+*   stupid function for catching alarm signals, etc
+*/
+identfn()
+{
+}
+
+
+/* ::::::::::::::::::: Index :::::::::::::::::::::::
+::
+::    21:  vedwin_select()
+::    86:  poll_poplog_process()
+::    96:  do_sigwinches()
+::   114:  refresh_txtwin(pixwinp, rect, screen, curpos)
+::   153:  txtwin_sigwinch(sw_num)
+::   203:  real_txtwin_sigwinch(sw_num)
+::   293:  gfxwin_sigwinch(sw_num)
+::   349:  count_live_windows()
+::   367:  kill_all_windows()
+::   379:  really_kill_window(n)
+::   401:  switch_current_in(new_in)
+::   412:  select_output_window(n)
+::   482:  redo_window_masks()
+::   505:  identfn()
+::
+::::::::::::::::::::::::::::::::::::::::::::::::::::: */
+
+/* --- Revision History ---------------------------------------------------
+--- Ian Rogers, Feb 23 1989
+    Implemented changes described in SFR 4185
+$Log:   pwmisc.c,v $
+ * Revision 1.1  89/08/23  13:20:51  pop
+ * Initial revision
+ * 
+ */
+@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@d3 3
+a5 3
+ * Purpose:		miscellaneous routines for Sun PWM
+ * Author:		Ben Rubinstein, Jan  8 1987 (see revisions)
+ * $Header$
+d9 2
+a10 2
+|		The main program loop (vedwin_select) is in here, and the routines
+|	for selecting, killing, and refreshing (..._sigwinch) windows.
+d24 2
+a25 2
+	int i, ibits, nfds;
+	char code;
+d27 2
+a28 2
+	/* do a refresh on all, to ensure they are visible */
+	do_sigwinches();
+d30 1
+a30 2
+	while (poplog_proc_died == 0)
+	{
+d32 2
+a33 2
+		/* check for sigwinches on all windows */
+		if (sigwinch_pending == 1) do_sigwinches();
+d35 2
+a36 2
+		/* get the current input mask */
+		ibits = std_ibits | swin_ibits | twin_ibits;
+d38 2
+a39 1
+		nfds = select(8*sizeof(ibits), &ibits, 0, 0, 0);
+d41 12
+a52 10
+		if	(nfds < 0)
+		{
+			if (errno == EBADF)
+				mishap(-1, "||| select: EBADF (bad fd)\n");
+		/*
+			else if	(errno == EINTR)
+				go round again so the signal can be caught */
+		}
+		else
+		{
+d54 4
+a57 3
+			if	((ibits & 1) != 0) 		/* 1 is "(1 << stdin)" */
+				handle_control_input();
+			else
+d60 30
+a89 11
+			if ((ibits & twin_ibits) != 0)			/* outer window */
+				user_toolwin_input(ibits);
+			else if ((ibits & swin_ibits) != 0)		/* inner window */
+				user_subwin_input(ibits);
+			else if ((ibits & poplog_ibits) != 0)	/* poplog */
+				poplog_input();
+			else
+				mishap(ibits, "||| utterly naff ibits\n");
+			/* end of if statement */
+		}
+	}
+d91 1
+a91 1
+	in_escape = com_buflen = com_seq_len = com_termin == 0;
+d94 1
+a94 1
+	printf("*** signal from child: getting last thoughts ***\n");
+d97 4
+a100 4
+	while (poll_poplog_process() == 1)
+	{
+		poplog_input();
+	}
+d103 1
+a103 1
+	printf("*** signal from child: got last thoughts ***\n");
+d105 1
+a105 1
+	kill_all_windows();
+d111 1
+a111 2
+	int ibits;
+	char code;
+d113 2
+a114 1
+	ibits = poplog_ibits;
+d116 2
+a117 1
+	return(select(8*sizeof(ibits), &ibits, 0, 0, &polling_timeout));
+d122 2
+a123 2
+	int index;
+	struct tool *toolptr;
+d125 8
+a132 8
+	for (index = WT_FIRSTWIN; index <= WT_LASTWIN; index++)
+		if	((wt_active[index]) >= WT_ACTIVE)
+		{
+			toolptr = wt_toolwp[index];
+			((toolptr->tl_io).tio_handlesigwinch)(toolptr);
+		}
+	/* close for loop */
+	sigwinch_pending = 0;
+d144 3
+a146 3
+	int ri, ci;
+	int rows, cols;
+	char **text, *p;
+d148 3
+a150 3
+	rows = screen->rows;
+	cols = screen->cols;
+	text = screen->text;
+d152 1
+a152 1
+	pw_lock(pixwinp, rect);
+d154 2
+a155 2
+	/* clear the pixwin */
+	pw_writebackground(pixwinp, 0, 0, rect->r_width, rect->r_height, PIX_CLR);
+d157 7
+a163 7
+	/* draw text */
+	for (ri = 0; ri < rows; ri++)
+	{
+		p = text[ri];
+		pw_text(pixwinp, 0, txtcoord_pix_y(ri),
+							PIX_SRC ^ PIX_DST, norm_font, p);
+	}
+d165 2
+a166 2
+	/* draw the cursor */
+	Paint_cursor;
+d168 1
+a168 1
+	pw_unlock(pixwinp);
+d172 4
+a175 4
+*	this is a trap, so that we can spot size changes and round them
+*	down to text sizes (and enusre that window can display at least one
+*	character).  The real sigwinching is done in real_txtwin_sigwinch,
+*	below.
+d180 5
+a184 5
+	int rows, cols;
+	struct tool		*toolptr;
+	struct toolsw	*toolswp;
+	struct pixwin	*pixwinp;
+	struct rect newrect, oldrect;
+d186 3
+a188 3
+	toolswp	= wt_toolswp[sw_num];
+	oldrect = wt_swrect[sw_num];
+	pixwinp = wt_pixwinp[sw_num];
+d190 2
+a191 2
+	/* determine current size of subwindow */
+	win_getsize(toolswp->ts_windowfd, &newrect);
+d193 2
+a194 2
+	/* prepare pixwin for damage repair */
+/*	pw_damaged(pixwinp);*/
+d196 8
+a203 8
+	if (recursing_sigwinch == 0)
+	{
+		/* if the size has changed */
+		if ((oldrect.r_width != newrect.r_width) ||
+								(oldrect.r_height != newrect.r_height))
+		{
+			if ((rows = newrect.r_height / fontadv_y) < 1) rows = 1;
+			if ((cols = newrect.r_width / fontadv_x) < 1) cols = 1;
+d205 1
+a205 1
+		printf("txsg1: size - h=%d, w=%d\n", rows, cols);
+d207 2
+a208 2
+			tool_set_attributes(wt_toolwp[sw_num],
+							WIN_LINES, rows, WIN_COLUMNS, cols, 0);
+d210 1
+a210 1
+		printf("txsg2: size - h=%d, w=%d\n", rows, cols);
+d212 10
+a221 10
+			recursing_sigwinch = 1;
+			toolptr = wt_toolwp[sw_num];
+			((toolptr->tl_io).tio_handlesigwinch)(toolptr);
+			recursing_sigwinch = 0;
+		}
+		else
+			real_txtwin_sigwinch(sw_num);
+	}
+	else
+		real_txtwin_sigwinch(sw_num);
+d230 3
+a232 3
+	int i, ri, ci, old_co;
+	int rows, cols;
+	char **text, *p;
+d234 5
+a238 5
+	struct toolsw *toolswp;
+	struct pixwin *pixwinp;
+	struct xypos  *curpos;
+	struct screen_record *screen;
+	struct rect newrect, oldrect;
+d240 1
+a240 1
+	int icflag;
+d242 4
+a245 4
+	screen = wt_scrndata[sw_num];
+	toolswp	= wt_toolswp[sw_num];
+	oldrect = wt_swrect[sw_num];
+	pixwinp = wt_pixwinp[sw_num];
+d247 2
+a248 2
+	/* determine current size of subwindow */
+	win_getsize(toolswp->ts_windowfd, &newrect);
+d250 2
+a251 2
+	/* prepare pixwin for damage repair */
+	pw_damaged(pixwinp);
+d253 4
+a256 4
+	/* if the size has changed */
+	if (oldrect.r_width != newrect.r_width ||
+							oldrect.r_height != newrect.r_height)
+	{
+d258 1
+a258 1
+		printf("txsg3: size - h=%d, w=%d\n", newrect.r_height, newrect.r_width);
+d261 5
+a265 5
+		/* make a new screen record */
+		wt_scrndata[sw_num]
+						= resize_screen_rec(screen, newrect, sw_num);
+		free_screen_record(screen); 	/* free memory used by old one */
+		screen = wt_scrndata[sw_num]; /* switch identifiers */
+d267 2
+a268 2
+		/* remember new size */
+		wt_swrect[sw_num] = newrect;
+d270 3
+a272 3
+		old_co = current_out;
+		select_output_window(sw_num);	/* reset size things */
+		report_win_resized(sw_num, co_widthc, co_heightc);
+d274 11
+a284 11
+		/* ensure cursor is on screen */
+		if (co_curposc->x >= co_widthc)
+		{
+			co_curposc->x = co_widthc - 1;
+			co_curposp->x = txtcoord_pix_x(co_curposc->x);
+		}
+		if (co_curposc->y >= co_heightc)
+		{
+			co_curposc->y = co_heightc - 1;
+			co_curposp->y = txtcoord_pix_y(co_curposc->y);
+		}
+d286 2
+a287 2
+		if	(sw_num != old_co)
+			select_output_window(old_co);	/* set it back */
+d289 2
+a290 2
+		/* destroy the old backup pixrect */
+		pr_destroy(pixwinp->pw_prretained);
+d292 8
+a299 8
+		/* make a new backup pixrect */
+		if	((pixwinp->pw_prretained =
+					mem_create(newrect.r_width,
+								newrect.r_height + fontadv_y,
+							   /* IR: SFR 4185 - replaced 1 with following */
+							   pixwinp->pw_pixrect->pr_depth)
+			 ) == NULL)
+			mishap(index, "||| Can't create retained rec for win %d\n");
+d302 1
+a302 1
+	printf("--- refreshing txtwin %d\n", sw_num);
+d304 1
+a304 1
+		refresh_txtwin(pixwinp, &newrect, screen, &wt_curposp[sw_num]);
+d306 8
+a313 8
+		pw_donedamaged(pixwinp); /* clip on all visible areas */
+	}
+	else /* make sure call pw_donedamaged if haven't above */
+	{
+		pw_repairretained(pixwinp);
+		pw_donedamaged(pixwinp);
+	}
+	if (selectedwin == sw_num) mark_tool_border(sw_num, LOC_WINENTER);
+d322 4
+a325 4
+	int icflag;
+	struct toolsw *toolswp;
+	struct pixwin *pixwinp;
+	struct rect newrect, oldrect;
+d327 3
+a329 3
+	toolswp	= wt_toolswp[sw_num];
+	oldrect = wt_swrect[sw_num];
+	pixwinp = wt_pixwinp[sw_num];
+d331 2
+a332 2
+	/* determine current size of subwindow */
+	win_getsize(toolswp->ts_windowfd, &newrect);
+d334 2
+a335 2
+	/* prepare pixwin for damage repair */
+	pw_damaged(pixwinp);
+d337 4
+a340 4
+	/* if the size has changed */
+	if	((oldrect.r_width != newrect.r_width)
+		|| (oldrect.r_height != newrect.r_height))
+	{
+d342 1
+a342 1
+		wt_swrect[sw_num] = newrect; /* remember new size */
+d344 2
+a345 2
+		/* destroy the old backup pixrect */
+		pr_destroy(pixwinp->pw_prretained);
+d347 7
+a353 7
+		/* make a new backup pixrect */
+		if	((pixwinp->pw_prretained =
+					mem_create(newrect.r_width, newrect.r_height,
+							   /* IR, SFR 4185 - replaced 1 with following */
+							   pixwinp->pw_pixrect->pr_depth)
+			 ) == NULL)
+			mishap(index, "||| Can't create retained rec for win %d\n");
+d355 5
+a359 5
+		/* clear the pixwin */
+		pw_writebackground(pixwinp, 0, 0,
+								newrect.r_width,
+								newrect.r_height,
+								PIX_CLR);
+d361 1
+a361 1
+		pw_donedamaged(pixwinp); /* clip on all visible areas */
+d363 8
+a370 8
+		report_win_resized(sw_num, newrect.r_width, newrect.r_height);	/* tell poplog */
+	}
+	else
+	{
+		pw_repairretained(pixwinp);
+		pw_donedamaged(pixwinp);
+	}
+	if (selectedwin == sw_num) mark_tool_border(sw_num, LOC_WINENTER);
+d379 2
+a380 2
+	int i, liveones;
+	struct tool *toolp;
+d382 7
+a388 7
+	liveones = 0;
+	for (i = WT_FIRSTWIN; i <= WT_LASTWIN; i++)
+	{
+		if	((wt_active[i]) != WT_UNUSED)
+			liveones = liveones + 1;
+	}
+	return(liveones);
+d397 1
+a397 1
+	int i;
+d399 3
+a401 3
+	for (i = WT_LASTWIN; i >= WT_FIRSTWIN; i--)
+		if	((wt_active[i]) >= WT_ACTIVE)
+		really_kill_window(i);
+d405 1
+a405 1
+*	actually do the killing of a window.
+d410 1
+a410 1
+	grph_unsetmap(n);	/* necessary in case it has a cms */
+d412 1
+a412 1
+	tool_done(wt_toolwp[n]);	/* this is almost certainly redundant */
+d414 1
+a414 1
+	tool_destroy(wt_toolwp[n]);
+d416 2
+a417 2
+	close(wt_swfd[n]);
+	close(wt_toolwp[n]->tl_windowfd);
+d419 2
+a420 2
+	wt_active[n] = WT_UNUSED;
+	redo_window_masks();
+d422 5
+a426 5
+	if (n != 0)
+	{
+		if (current_out == n) select_output_window(0);
+		if (current_graf == n) select_graphic_window(0);
+	}
+d431 4
+a434 4
+	if	(current_in != new_in)
+	{
+		report_input_window(new_in);
+		current_in = new_in;
+d436 2
+a437 2
+		ci_mousedown = 0;
+	}
+d443 8
+a450 8
+	/* save gfx and insert mode for old window */
+	if	((current_out >= WT_FIRSTWIN)
+			&& (current_out <= WT_LASTWIN)
+			&& (wt_active[current_out] >= WT_ACTIVE)
+			&& (wt_active[current_out] < WT_GRAPHW))
+	{
+		wt_flags[current_out] = term_grafmode | term_insrtmode;
+	}
+d452 6
+a457 6
+	if	((n >= WT_FIRSTWIN)
+			&& (n <= WT_LASTWIN)
+			&& (wt_active[n] >= WT_ACTIVE)
+			&& (wt_active[current_out] < WT_GRAPHW))
+	{
+		current_out = n;
+d459 2
+a460 2
+		co_toolp = wt_toolwp[n];
+		co_toolfd = co_toolp->tl_windowfd;
+d462 2
+a463 2
+		co_pixwinp = wt_pixwinp[n];
+		co_rect = wt_swrect[n];
+d465 2
+a466 2
+		co_widthp = co_rect.r_width;
+		co_heightp = co_rect.r_height;
+d468 2
+a469 2
+		/* whether to wrap long lines round */
+		co_winiswrap = ((wt_active[n] == WT_TEXTW) ? TRUE : FALSE);
+d471 2
+a472 2
+		co_curposp = &wt_curposp[n];
+		co_curposc = &wt_curposc[n];
+d474 3
+a476 3
+		co_text = (wt_scrndata[n])->text;
+		co_widthc = (wt_scrndata[n])->cols;
+		co_heightc = (wt_scrndata[n])->rows;
+d478 11
+a488 11
+		if (n == 0)		/* base window */
+		{
+			bw_text = co_text;
+			bw_widthc = co_widthc;
+			co_winiswrap = ((!poplog_listening || base_cooked) ? TRUE : FALSE);
+			co_winiscooked = base_cooked;
+		}
+		else if (wt_active[n] == WT_VEDWIN)
+			co_winiscooked = ved_cooked;
+		else
+			co_winiscooked = FALSE;
+d490 2
+a491 2
+		co_botlinetop = txtcoord_pix_y(co_heightc - 1) + font_home_y;
+		co_botlineheight = co_widthp - co_botlinetop;
+d493 2
+a494 2
+		term_grafmode = wt_flags[n] & TFLG_GRAFMODE;
+		term_insrtmode	= wt_flags[n] & TFLG_INSERTMODE;
+d496 13
+a508 13
+		if (term_insrtmode == FALSE)
+		{
+			co_charpr = co_replace_char;
+			co_bufferpr = co_buffer_replace;
+		}
+		else
+		{
+			co_charpr = co_insert_char;
+			co_bufferpr = co_buffer_insert;
+		}
+	}
+	else
+		mishap(n, "PWM: attempt to select invalid window for output: %d\n");
+d512 3
+a514 3
+*	set the global vars twin_ibits and swin_ibits to be input masks,
+*	which can be handed to select, for all the current tool windows,
+*	and all the current subwindows.
+d518 1
+a518 1
+	int i;
+d520 2
+a521 1
+	swin_ibits = twin_ibits = 0;
+a522 4
+	for (i = WT_FIRSTWIN; i <= WT_LASTWIN; i++)
+		if (wt_active[i] >= WT_ACTIVE)
+		{
+/*
+d524 1
+a524 2
+	printf("rwm: adding window %d to input group (active=%d)\n",
+							i, wt_active[i]);
+d526 7
+a532 4
+*/
+			twin_ibits = twin_ibits | (wt_wimask[i]);
+			swin_ibits = swin_ibits | (wt_swimask[i]);
+		}
+d536 1
+a536 1
+*	stupid function for catching alarm signals, etc
+d564 5
+a568 2
+	Implemented changes described in SFR 4185
+$Log$
+@

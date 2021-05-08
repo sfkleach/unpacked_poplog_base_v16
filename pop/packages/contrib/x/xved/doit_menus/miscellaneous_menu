@@ -1,0 +1,27 @@
+MENU FILE HEADER (Don't delete)
+MENU FILE NAME: $popcontrib/x/xved/doit_menus/menus/miscellaneous_menu
+Insert Ruler                                !!      ved_ruler
+
+Make Heading                                !!      RETURNAFTER ved_heading
+Indexify                                    !!      RETURNAFTER ved_indexify
+Goto index or section                       !!      RETURNAFTER ved_g
+
+Toggle static                               !!      RETURNAFTER ved_static
+Toggle break                                !!      RETURNAFTER ved_break
+Toggle tabs                                 !!      RETURNAFTER ved_tabs
+Turn writeability on/off                    !!      RETURNAFTER trysetvalof(% "vedwriteable", 'WRITEABLE', 'NOT WRITEABLE' %)
+Set left margin                             !!      RETURNAFTER ved_lcol
+Set right margin                            !!      RETURNAFTER ved_rcol
+Right justify and align para                !!      'jjp'
+Justify para                                !!      'jp'
+
+Show compiler                               !!      RETURNAFTER procedure; vedputmessage(popcompiler sys_>< '') endprocedure
+Find source file                            !!      'sourcefile'
+Swap words to left of cursor                !!      ved_swl
+Swap characters to left of cursor           !!      ved_sw
+
+Get help for key                            !!      ved_hk
+
+ENTER                                       !!      vedenter
+General information                         !!      'help documentation'
+Menu menu     ----->                        !!      'menu menu_menu'

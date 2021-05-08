@@ -1,0 +1,772 @@
+TEACH XPROLOG                             Andreas Schoter, October 1990
+                                          Revised A. Schoter, July 1991
+
+         CONTENTS - (Use <ENTER> g to access required sections)
+
+ -- Introduction To Prolog
+ -- Introduction To XProlog
+ -- Initialising the Graphics Libraries
+ -- Creating a Graphics Window
+ -- The Current Window
+ -- Basic Graphics Commands
+ -- Drawing Arcs
+ -- Filled Shapes
+ -- Graphics Resources
+ -- Multiple Windows and Copying Regions
+ -- Text and Fonts
+ -- Resources and Raster Operations
+ -- Using the Mouse with Prolog
+ -- Further Documentation
+
+-- Introduction To Prolog ---------------------------------------------
+
+If you are not already familiar with the Poplog Prolog system then it is
+advisable to first read TEACH * PROLOG
+
+This teach file aims only to introduce the user to those elements of the
+Prolog system that are particular to the XWindows environment, it is not
+intended as a general Prolog tutorial.
+
+
+-- Introduction To XProlog --------------------------------------------
+
+You should have started the prolog system by typing
+
+% prolog %x
+
+where the %x flag tells the Poplog system to start up Prolog with a
+connection to the X Server.  If you did not start Prolog in this manner
+then quit back to the shell now and restart Prolog in the described
+manner.
+
+Note that Prolog can only be started in this mode on a system capable of
+supporting X graphics windows - attempting to start the xprolog system
+on an ordinary terminal will cause a mishap.
+
+Once you have started the Prolog system correctly you will be able to
+run through the examples in this file.  For a brief overview of some of
+the conventions using see HELP * xprolog
+
+
+-- Initialising the Graphics Libraries --------------------------------
+
+In addition to starting prolog with the %x flag it is also necessary to
+load some initial library files containing the definitions of the
+graphics predicates if you wish to use the built-in graphics facilities.
+These libraries are described briefly in the file HELP * XPROLOG and in
+more detail in their individual REF files.  The simplest way of loading
+the libraries is with a single call to the library LIB * xploginit as
+shown below:
+
+:- library(xploginit).
+
+Mark and load the above line now.  Since it has to load a large number
+of libraries this may take some time - in order to stop you getting
+bored whilst you are waiting (and to let you know what is going on)
+Prolog should print out a list of libraries as it loads them.  When all
+the libraries are loaded you can continue with this teach file.
+
+
+-- Creating a Graphics Window -----------------------------------------
+
+There is a built in predicate for creating a graphics window.  This
+window is a Poplog widget of class XpwPixmap and it supports the
+standard graphics operations such as drawing lines and shapes.  The
+predicate is xpw_create_window/2 with calling mode {+ +}, and an
+example of its use is:
+
+?- xpw_graphic_window(test,[700,400,400,300]).
+
+If you mark and load this line prolog will create a graphics window on
+the screen with the name 'test' of size 400 pixels wide by 300 pixels
+high at absolute location 700 pixels in from the left horizontally and
+400 pixels down from the top vertically.  The atom 'test' is now your
+handle on the window - For instance if you wished to draw a line across
+the window, say from the top left to the bottom right corners, you would
+use the command
+
+?- xpw_draw_line(test,[5,5,395,295]).
+
+Here the first atom is the identifying name of the window, and the list
+of numbers is structures as follows: the second pair of numbers are the
+coordinates of one end of the line and the second pair of numbers are
+the coordinates of the other end of the line.  Note that the origin of
+the window is taken to be the top left corner of the window.
+
+Use of atoms as handles for widgets is this manner enables you to
+create and use multiple windows without having the large overheads of
+having to pass X structures corresponding to the widget data structure
+around in your programs.
+
+If you issue a command that refers to a window that does not exist then
+you will get a mishap.  For example, try loading the following command:
+
+?- xpw_draw_line(notreally,[5,295,395,5]).
+
+If you should lose track of the names of the windows that you are
+currently working with the system provides a predicate that returns the
+names of all windows that are currently active.
+
+?- xpw_active_windows(L).
+
+L will be instantiated to a list that contains the names of all the
+windows that have been created and that are still active.  To see this
+properly create a couple more windows:
+
+?- xpw_graphic_window(test2,[600,200,150,150]).
+?- xpw_graphic_window(test3,[620,220,250,150]).
+
+And then list the active windows:
+
+?- xpw_active_windows(L).
+
+Now kill a window and list the actives again:
+
+?- xpw_destroy_window(test2).
+?- xpw_active_windows(L).
+
+
+-- The Current Window -------------------------------------------------
+
+The XProlog graphic system has a notion of the current window.  This can
+be useful for writing general purpose code that can then be applied to
+any window as needed.  For example, to draw a line on the windows we
+first created we would need to use separate commands such as
+
+?- xpw_draw_line(test,[5,295,395,5]).
+?- xpw_draw_line(test3,[5,5,245,145]).
+
+Clearly this could become cumbersome in practice - instead it is
+possible to designate a particular window as the `current' window and
+then specify graphics commands as acting on the current window.  For
+example - if we wished to make the first window we created the current
+window then the command:
+
+?- xpw_current_window(test).
+
+would do this.  We could then write a piece of code such as
+
+?- xpw_draw_rectangle(current,[10,10,100,100]).
+
+which as you can see has drawn a rectangle in the first window.  Or,
+even more compactly we could write
+
+?- xpw_draw_rectangle([15,15,100,100]).
+
+When Prolog is passed a graphics command with one fewer argument than
+it would normally expect it assumes that the missing argument is the
+window name and applies the command to the current window.  If we now
+make the other window the current window
+
+?- xpw_current_window(test3).
+
+then we can use exactly the same piece of code as before, only this time
+the window used is the newly selected one:
+
+?- xpw_draw_rectangle([10,10,100,100]).
+
+To find out which window is the current window one can use exactly the
+same predicate as is used to set the current window, only this time
+passing it an uninstantiated variable as its argument
+
+?- xpw_current_window(W).
+
+Note that all the graphics commands can be made to refer to the current
+window by using the special name 'current' but not all commands allow
+the ommission of the window name.  This is the case for commands that
+copy a section of a window to another (see below) or for commands where
+the system is executing a destructive action. For example the command
+
+?- xpw_clear_window.
+
+Is fine with the window name ommited, but
+
+?- xpw_destroy_window.
+
+will fail.  For this command you must specify the name of the window,
+although you can use the special name 'current'
+
+?- xpw_destroy_window(current).
+
+If we now ask which is the current window
+
+?- xpw_current_window(W).
+
+the query will fail, which means that no window is specified as current.
+Load the following two lines and then continue with the teach file:
+
+?- xpw_current_window(test).
+?- xpw_clear_window.
+
+
+-- Basic Graphics Commands --------------------------------------------
+
+The following list of commands demonstrate some of the basic graphics
+commands available in Prolog.  They should be self explanatory but for a
+detailed description of each command see REF * XpwPixmap.
+
+Note that one some systems with only monochrome capacity the calls to
+xpw_set_color/2 may fail.
+
+:- xpw_draw_line([10,10,290,290]).
+:- xpw_draw_point([100,50]).
+:- xpw_draw_points([[150,50],[150,60],
+                    [160,50],[160,60],[155,55]],origin).
+:- xpw_draw_points([[50,150],[0,10],[10,0],[0,-10],
+                    [-5,5]],previous).
+:- xpw_set_color(red,_).
+:- xpw_draw_lines([5,285,15,195,285,5,275,195],origin).
+:- xpw_set_color(green,_).
+:- xpw_draw_lines([10,290,20,200,290,10,280,200],origin).
+:- xpw_set_color(blue,_).
+:- xpw_draw_lines([15,295,10,-90,270,-190,-10,190],previous).
+:- xpw_set_color(orange,_).
+:- xpw_draw_segments([[10,10,150,20],[10,10,20,150],[90,90,200,150]]).
+:- xpw_set_color(black,_).
+:- xpw_draw_rectangle([100,200,70,35]).
+:- xpw_set_color(yellow,_).
+:- xpw_draw_rectangles([[35,100,120,180],[150,10,80,260],
+                        [20,20,20,20]]).
+:- xpw_set_color(black,_).
+
+Note that in general the relation between commands to draw a single item
+and commands to draw multiple items is that the single item command
+takes a list of N arguments specifying the item to be draw, whilst the
+multiple item command takes a LIST of M items where M is the number of
+items to be drawn and each item is a list specifying the N arguments.
+For example, the command to draw a rectangle takes (in addition to the
+window specification) a list of 4 arguments.  These are the X and
+Y coordinates of the top left corner of the rectangle and the width and
+height of the rectangle, for example
+
+:- xpw_clear_window.
+:- xpw_draw_rectangle([200,10,100,200]).
+
+whilst a command to draw two rectangles would be
+
+:- xpw_draw_rectangles([[210,20,100,200],[220,30,100,200]]).
+
+Also you might notice the mode arguments passed to xpw_draw_points/2 and
+xpw_draw_lines/2.  There are two legal modes for these commands 'origin'
+and 'previous'.  If the mode passed in is 'origin' then the line is
+drawn with the stated coordinates all calculated relative to the origin.
+If the mode is 'previous' then the stated coordinates are calculated
+relative to the previous coordinate in the list.  To see the effect of
+this load the following pair of lines of code:
+
+:- xpw_clear_window.
+:- xpw_draw_lines([5,5,100,100,100,150],origin).
+
+Now load these lines, and compare:
+
+:- xpw_clear_window.
+:- xpw_draw_lines([5,5,100,100,100,150],previous).
+
+
+-- Drawing Arcs -------------------------------------------------------
+
+In addition to straight lines XProlog provides drawing primitives for
+curves.  A curve is specified by three sets of arguments - the first set
+consists of four arguments which specify the rectangle into which the
+curve will be placed (the format for these arguments is the same as for
+xpw_draw_rectangle/1), the second set of arguments specifies the place
+at which the curve is started and the amount of curve to be drawn, and
+the final argument specifies the mode of angle measurement.  Some
+examples will make this clearer.
+
+To draw a circle we must first specify the square that the circle is to
+occupy and then specify the angular information.  In the call shown
+below the circle is placed in a square with top left corner at 200,10
+and of width and height 150 by 150 - the curve is started at angle 0
+(the standard 3 o'clock position) and extends for 360 units, where the
+units are specified as degrees.
+
+:- xpw_clear_window.
+:- xpw_draw_arc([200,10,150,150,0,360],deg).
+
+Suppose we only wished to draw a quarter circle -
+
+:- xpw_draw_arc([200,20,140,140,0,90],deg).
+
+Or in the opposite quarter -
+
+:- xpw_draw_arc([210,10,140,140,180,90],deg).
+
+In addition to be able to specify the angle in terms of degrees one can
+use radians.  For example:
+
+:- xpw_draw_arc([10,10,180,180,0,3.14],rad).
+
+Or, at a lower level, one can use the 'raw' mode to specify angles.  On
+most implementations a 'raw' unit corresponds to 1/64 of a degree -
+
+:- xpw_draw_arc([10,100,180,180,1000,12000],raw).
+
+And by specifying some rectangular shape other than a square one can
+draw ellipses -
+
+:- xpw_draw_arc([150,200,80,80,0,360],deg).
+:- xpw_draw_arc([130,200,120,80,0,360],deg).
+:- xpw_draw_arc([110,200,160,80,0,360],deg).
+:- xpw_draw_arc([90,200,200,80,0,360],deg).
+
+Finally, it is possible to draw more than one arc at a time is the same
+way as it was possible to draw multiple rectangles -
+
+:- xpw_draw_arcs([[160,200,60,80,0,360],[170,200,40,80,0,360]],deg).
+
+but note how the angle mode specification is global to all the arcs in
+the command.
+
+
+-- Filled Shapes ------------------------------------------------------
+
+It is possible to draw solid versions of shapes as well as outline
+versions.  For example, the following code draws some nested filled
+ellipses
+
+:- xpw_clear_window.
+:- xpw_fill_arc([25,25,350,250,0,360],deg).
+:- xpw_set_color(red,_).
+:- xpw_fill_arc([50,50,300,200,0,130],deg).
+:- xpw_set_color(green,_).
+:- xpw_fill_arc([50,50,300,200,140,90],deg).
+:- xpw_set_color(blue,_).
+:- xpw_fill_arc([50,50,300,200,240,110],deg).
+
+and similarly for rectangles
+
+:- xpw_clear_window.
+:- xpw_fill_rectangle([10,10,100,280]).
+
+and arbitrary polygons
+
+:- xpw_fill_polygon([120,10,200,280,250,100,350,200]).
+
+See REF *XpwPixmap for a full list of the possible filled shape options
+
+
+-- Graphics Resources -------------------------------------------------
+
+As well as simple drawing to a window it is possible to alter parameters
+such as the line thickness.  These are known collectively as the
+resources of the widget.  For a complete list of all the available
+resources look in the individual REF files.  Here I shall show the
+basics of accessing and updating resources.  The value of a resource is
+accessed through the predicate xt_value/3.  Note that the resource value
+predicates require that you always state the name of the window that you
+wish the command to apply to.  For example:
+
+?- xt_value(current,line_width,X).
+
+should return X=0 this is the default line thickness.  Note that it does
+not mean that the lines have no thickness; rather they have a thickness
+of 1 pixel and the value of 0 tells the X Server that it can use an
+efficient line drawing algorithm.  To see that lines of thickness 0 and
+1 are the same load the following:
+
+:- xpw_set_color(black,_).
+:- xpw_clear_window.
+?- xt_value(current,line_width,X).
+?- xpw_draw_segments([[10,10,200,150],[20,20,20,150]]).
+?- xt_value(current,line_width,1).
+:- xpw_draw_segments([[200,150,390,290],[20,150,20,290]]).
+
+Now draw some thicker lines
+
+:- xpw_clear_window.
+:- xpw_draw_line([10,10,10,290]).
+:- xt_value(current,line_width,5).
+:- xpw_draw_line([20,10,20,290]).
+:- xt_value(current,line_width,10).
+:- xpw_draw_line([35,10,35,290]).
+:- xt_value(current,line_width,15).
+:- xpw_draw_line([55,10,55,290]).
+
+Another resource connected with simple lines is cap_style.  All the
+lines that have so far been drawn have square ends to them.  It is
+possible to make Prolog draw lines with rounded ends by altering the
+cap_style resource.  To find out the default value for square ends do
+
+?- xt_value(current,cap_style,X).
+
+Now draw a line, change the cap_style and draw another line:
+
+:- xpw_draw_line([100,50,350,100]).
+?- xt_value(current,cap_style,2).
+:- xpw_draw_line([100,80,350,130]).
+
+And we get lines with rounded ends.  Similar possibilities exist for
+controlling the look of corners of lines.  For example
+
+:- xpw_clear_window.
+?- xt_value(current,join_style,X).
+:- xpw_draw_lines([20,20,0,80,50,0,150,-50,-50,50],previous).
+:- xt_value(current,join_style,1).
+:- xpw_draw_lines([150,100,0,80,50,0,150,-50,-50,50],previous).
+:- xt_value(current,join_style,2).
+:- xpw_draw_lines([20,180,0,80,50,0,150,-50,-50,50],previous).
+
+Note that some resources require you to specify a special data coersion
+parameter to get a sensible result.  For example the size of the window
+is referenced through the resources 'width' and 'height' but if you try
+the simple
+
+?- xt_value(current,width,W).
+
+You will get a meaningless number.  This is because the width and height
+of the window are not stored as integers but as shorts, so try instead
+
+?- xt_value(current,width,short,W).
+
+and you should get the answer W = 400.  In general, to access the value
+of a resource of this type you will need to know what form the data is
+stored in by the XWindows system.  For more details on this refer to the
+MIT XWindows manuals.
+
+
+-- Multiple Windows and Copying Regions -------------------------------
+
+It is possible, if you have more than one window active, to copy regions
+from one window to another.  To demonstrate this lets put some
+random graphics onto the current window:
+
+:- xpw_set_color(magenta,_).
+:- xpw_fill_polygon([10,10,20,290,290,130,150,150]).
+:- xpw_set_color(red,_).
+:- xpw_draw_rectangle([149,19,101,31]).
+:- xpw_fill_arc([20,20,100,100,315,360],deg).
+:- xpw_set_color(green,_).
+:- xpw_fill_arcs([[20,20,100,100,0,135],[20,20,100,100,140,110],[20,20,100,100,260,90]],deg).
+:- xpw_set_color(cyan,_).
+:- xpw_fill_rectangles([[150,20,100,30],[50,200,50,75],
+                        [100,100,100,100]]).
+:- xpw_set_color(blue,_).
+:- xpw_fill_rectangle([152,22,96,26]).
+:- xpw_fill_arc([250,250,45,45,15,240],deg).
+
+Now create a new window to copy to
+
+?- xpw_graphic_window(test2,[620,220,250,150]).
+
+And copy a region of the current window onto the new window:
+
+:- xpw_copy_to(current,test2,[10,20,200,130],[5,5]).
+
+Here the first argument specifies the source window and the second
+specifies the destination window.  The third argument specifies the
+rectangular shape to be copied from the source to the destination and
+the final argument specifies the x,y position in the destination where
+the rectangle is to be positioned.  For convenience there is a predicate
+to copy in the reverse direction:
+
+:- xpw_copy_from(current,test2,[5,5,100,100],[225,15]).
+
+For details see REF * xpw_copy_to and REF * xpw_copy_from
+
+
+-- Text and Fonts -----------------------------------------------------
+
+Load the following lines to tidy up the display.
+
+:- xpw_destroy_window(test2).
+:- xpw_clear_window.
+:- xpw_set_color(black,_).
+
+In addition to providing facilities for graphics, the X Prolog system
+also provides some useful facilities for writing text to the screen.
+The text maybe either a Prolog atom or a Prolog string.  For example
+
+:- xpw_draw_string(20,20,'a Prolog atom as a string').
+:- xpw_draw_string(20,35,"a Prolog string as a string").
+
+As you can see there is no difference in terms of their appearance on
+the window.  This leaves you free to work with which ever data structure
+you find most convenient.
+
+You also have access to a range of different fonts in which to display
+your text, the exact range available will depend on the installation of
+X that you have.  A few examples are shown below:
+
+?- xpw_set_font(r24,_).
+?- xpw_draw_image_string(15,80,"demonstrating the range").
+?- xpw_set_font('9x15',_).
+?- xpw_draw_image_string(21,111,"of available").
+?- xpw_set_font('lucidasans-bold-24',_).
+?- xpw_draw_image_string(11,141,"Fonts").
+?- xpw_set_font('8x13',_).
+?- xpw_draw_string(10,170,"that X Prolog provides").
+
+If you wish to return to the default font at any time this can be done
+by freeing which ever font is currently set.  At the moment, if the last
+font set action was the one performed by the call of xpw_set_font/2
+above the current font is '8x13' so in order to return to the default
+font this font must be freed
+
+?- xpw_free_font('8x13').
+?- xpw_draw_string(20,200,"and back to the default font").
+
+As you will have noticed from the above examples there are two distinct
+predicates for placing text on the window xpw_draw_string and
+xpw_draw_image_string.  The difference between these will now be
+explained.  Fonts, in this graphics system are really bit mapped images
+just like any other image, so when a piece of text is drawn to the
+screen a pattern of bits is placed corresponding to the body of the
+text's letters.  The difference between the two modes of drawing text is
+explained by referring to the behaviour of the white background of the
+text.  First select a large font to highlight the effect
+
+:- xpw_clear_window.
+:- xpw_set_font('lucidasans-bold-24',_).
+
+Now draw two line of text so close to each other that they overlap
+
+?- xpw_draw_string(10,30,"A line of text").
+?- xpw_draw_string(18,38,"A line of text").
+
+As you can see, using xpw_draw_string the text pattern is simply
+overlayed on whatever is in the window at that point.  Now perform the
+same experiment using xpw_draw_image_string
+
+?- xpw_draw_image_string(10,130,"A line of text").
+?- xpw_draw_image_string(18,138,"A line of text").
+
+As you can see, using xpw_draw_image_string clears the area of the
+window immeadiatly under the text before drawing the bit pattern.
+
+
+-- Resources and Raster Operations ------------------------------------
+
+There is one particular graphics resource that is important enough to
+warrant its own access predicate.  This is the resource that controls
+the raster functions of the window.  These functions determine how the
+commands you give actually appear on the window.  All the graphics
+operations that we have so far been performing have been using the
+default raster mode of 'copy'
+
+?- xpw_graphic_raster_op(O).
+
+in this mode anything that you draw is simply copied to the screen,
+however other modes are available.  One particularly useful mode is
+'xor'.  This is best shown by example:  if we draw a filled rectangle
+and then draw another inside it without changing colour then, obviously
+we will not be able to see it.
+
+:- xpw_clear_window.
+:- xpw_fill_rectangle([100,50,200,200]).
+:- xpw_fill_rectangle([120,70,160,160]).
+
+However if we change the raster mode to 'xor' prior to drawing the inner
+rectangle
+
+:- xpw_clear_window.
+:- xpw_fill_rectangle([100,50,200,200]).
+:- xpw_graphic_raster_op(xor).
+:- xpw_fill_rectangle([120,70,160,160]).
+
+Now the inner rectangle appears in the background colour.  This is
+because in 'xor' mode the pixel colour value of the drawing being done
+is 'xor'ed with the pixel colour value of the background to generate a
+new pixel colour value and it is this new value that is used to draw the
+image.  In the case of black and white, which have the values 1 and 0
+respectively (this may be implementation dependent - please check with
+your X installation if the examples in this section do not work as
+described), this produces the expected effect - draw a bar through the
+square to confirm this.
+
+:- xpw_draw_line([200,15,200,285]).
+
+Whilst this produces sensible effects for black and white, the results
+with colours are not at all predictable.  This is because the colour
+values that are used to perform the comparisons are not the numerical
+values of the RGB value of the colour, but rather are the pixel color
+value, which is an arbitrary number associated with each colour.  The
+pixel value of a colour is returned by xpw_set_color when a color is
+set, so to get the value of the colour red:
+
+:- xpw_graphic_raster_op(copy).
+?- xpw_set_color(red,C).
+
+and we see C = 5 (again this may be implementation dependent), so lets
+draw a red rectangle
+
+:- xpw_clear_window.
+:- xpw_fill_rectangle([180,20,40,260]).
+
+Now lets set the colour to yellow and find its pixel value
+
+?- xpw_set_color(yellow,C).
+
+and we find that C = 11 - now draw a green rectangle with the raster
+mode set to xor.
+
+:- xpw_graphic_raster_op(xor).
+:- xpw_fill_rectangle([20,130,360,40]).
+
+and we see that the overlapping section has been coloured grey.  Now
+what the value of 5 xor 11 is 14 so we would expect the pixel value of
+grey to be 14
+
+?- xpw_set_color(grey,C).
+
+And it is!
+
+To get some idea of how this principle operates across a wide range of
+colours and raster modes run the following lines of code.
+
+:- xpw_graphic_raster_op(copy).
+:- xpw_clear_window.
+:- xpw_set_color(red,X).
+:- xpw_fill_rectangle([5,25,290,50]).
+:- xpw_set_color(blue,_).
+:- xpw_fill_rectangle([5,90,290,50]).
+:- xpw_set_color(green,_).
+:- xpw_fill_rectangle([5,155,290,50]).
+:- xpw_set_color(yellow,_).
+:- xpw_fill_rectangle([5,220,290,50]).
+:- xt_value(current,line_width,10).
+:- xpw_graphic_raster_op(xor).
+:- xpw_set_color(black,_).
+:- xpw_draw_line([25,10,25,290]).
+:- xpw_set_color(red,_).
+:- xpw_draw_line([42,10,42,290]).
+:- xpw_set_color(blue,_).
+:- xpw_draw_line([60,10,60,290]).
+:- xpw_set_color(green,_).
+:- xpw_draw_line([77,10,77,290]).
+:- xpw_set_color(yellow,_).
+:- xpw_draw_line([95,10,95,290]).
+:- xpw_graphic_raster_op(and).
+:- xpw_set_color(black,_).
+:- xpw_draw_line([112,10,112,290]).
+:- xpw_set_color(red,_).
+:- xpw_draw_line([130,10,130,290]).
+:- xpw_set_color(blue,_).
+:- xpw_draw_line([147,10,147,290]).
+:- xpw_set_color(green,_).
+:- xpw_draw_line([165,10,165,290]).
+:- xpw_set_color(yellow,_).
+:- xpw_draw_line([182,10,182,290]).
+:- xpw_graphic_raster_op(or).
+:- xpw_set_color(black,_).
+:- xpw_draw_line([200,10,200,290]).
+:- xpw_set_color(red,_).
+:- xpw_draw_line([217,10,217,290]).
+:- xpw_set_color(blue,_).
+:- xpw_draw_line([235,10,235,290]).
+:- xpw_set_color(green,_).
+:- xpw_draw_line([252,10,252,290]).
+:- xpw_set_color(yellow,_).
+:- xpw_draw_line([270,10,270,290]).
+
+
+-- Using the Mouse with Prolog ----------------------------------------
+
+Poplog Prolog under X allows you to use the mouse to interact with
+graphics windows.  This is done via a mechanism known as callbacks.  I
+shall not explain in detail what these are here, the interested reader
+is referred to REF * xt_callback for an overview of the Pop11 callback
+mechanism and to the MIT X Windows manual for a detailed description of
+callbacks in general.  What I wish to do in this section is introduce
+the use of callbacks through a practical example of their use.  First
+copy the following predicate definitions into a temporary file, say
+temp.pl and then load them
+
+button_colour(X,Y,black):-
+    Y > 10,Y < 60,
+    X > 8, X < 58.
+button_colour(X,Y,red):-
+    Y > 10, Y < 60,
+    X > 66, X < 116.
+button_colour(X,Y,blue):-
+    Y > 10, Y < 60,
+    X > 124, X < 174.
+button_colour(X,Y,green):-
+    Y > 10, Y < 60,
+    X > 182, X < 232.
+button_colour(X,Y,cyan):-
+    Y > 10, Y < 60,
+    X > 240, X < 290.
+button_colour(X,Y,exit):-
+    Y > 10, Y < 60,
+    X > 298, X < 330.
+
+exit_action(exit):-
+    xpw_destroy_window(current).
+
+action(W):-
+    xpw_last_event(N),
+    N > 0,
+    xpw_mouse_xy(current,X,Y),!,
+    button_colour(X,Y,C),
+    (exit_action(C);
+     (xpw_set_color(current,C,_),
+     xpw_draw_image_string(current,10,150,'Prolog Mouse Demo'))
+    ).
+
+These predicates represent the actions to be performed by the X system
+in response to mouse button events.  the predicate xpw_last_event/1
+returns a record of the last mouse event to have been detected by the
+system and xpw_mouse_xy/3 returns the x,y coordinates of this event.
+This information will be used by the predicate action/1 to determine
+where the button was pressed, and from this it will determine what
+colour should be used to redraw the text.  Load the following lines to
+set up the window:
+
+:- xpw_clear_window.
+:- xpw_set_color(black,_).
+:- xt_value(current,line_width,0).
+:- xpw_fill_rectangle([8,10,50,50]).
+:- xpw_set_color(red,_).
+:- xpw_fill_rectangle([66,10,50,50]).
+:- xpw_set_color(blue,_).
+:- xpw_fill_rectangle([124,10,50,50]).
+:- xpw_set_color(green,_).
+:- xpw_fill_rectangle([182,10,50,50]).
+:- xpw_set_color(cyan,_).
+:- xpw_fill_rectangle([240,10,50,50]).
+:- xpw_set_color(black,_).
+:- xpw_set_font('9x15',_).
+:- xpw_draw_string(10,100,'Click to change colour').
+:- xpw_set_font('12x24',_).
+:- xpw_draw_string(10,150,'Prolog Mouse Demo').
+:- xpw_draw_rectangle([298,10,60,48]).
+:- xpw_draw_string(305,45,"EXIT").
+
+Now load the next line of code - this attaches the predicate 'action' to
+mouse button events: whenever a mouse button event is detected in the
+specified window the predicate action/1 will be called.
+
+:- on_button_event(current,action,clear).
+
+Use the mouse to click on one of the coloured squares in the window and
+observe the effect on the text.  If you click on the button marked
+"EXIT" then the window will be destroyed.
+
+For more details on the predicates associated with callbacks and mouse
+events see REF * XpwMouse and REF * xcallbacks
+
+
+-- Further Documentation ----------------------------------------------
+
+Ref files for the main graphics predicates
+------------------------------------------
+REF * XpwCore
+REF * XpwGraphic
+REF * XpwPixmap
+REF * XpwMouse
+
+Ref files for the auxiliary libraries
+--------------------------------------
+REF * xcallbacks
+REF * xresources
+REF * xt_value
+REF * xwidgets
+
+Help files
+----------
+PLOGHELP * xprolog
+
+
+--- /csuna/pop/master/contrib/x/prolog/xpw/teach/xprolog
+--- Copyright University of Sussex 1990. All rights reserved. ----------

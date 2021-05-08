@@ -1,0 +1,27 @@
+MENU FILE HEADER (Don't delete)
+MENU FILE NAME: $popcontrib/x/xved/doit_menus/textblock
+Text block options. See HELP * VEDBLOCKS
+NB You MUST load the utilities first
+Get help                                    !!      'help vedblocks'
+Load utilities                              !!      'lib vedblocks'
+
+Set one corner                              !!      vedpushkey
+Set opp. corner                             !!      vedpushkey
+
+Delete block                                !!      ved_dtb
+Delete static                               !!      ved_sdtb
+
+Copy block                                  !!      ved_ttb
+Yank block                                  !!      ved_ytb
+Yank static                                 !!      ved_sytb
+Yank and overlay                            !!      ved_yotb
+
+Move block                                  !!      ved_mtb
+Move block static                           !!      ved_smtb
+
+Save block (for later yank)                 !!      ved_stb
+
+Insert block of spaces                      !!      ved_itb
+Insert block of spaces static               !!      ved_itb
+
+Menu menu      ----->                       !!      'menu menu'

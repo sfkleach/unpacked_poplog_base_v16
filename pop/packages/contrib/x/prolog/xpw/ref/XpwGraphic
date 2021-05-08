@@ -1,0 +1,110 @@
+REF XPWGRAPHIC                              Andreas Schoter, August 1990
+
+        COPYRIGHT University of Sussex 1990. All Rights Reserved.
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+<<<<<<<<<<<<<<<<<<<<<<<<<                       >>>>>>>>>>>>>>>>>>>>>>>>
+<<<<<<<<<<<<<<<<<<<<<<<<<  XPWGRAPHIC LIBRARY   >>>>>>>>>>>>>>>>>>>>>>>>
+<<<<<<<<<<<<<<<<<<<<<<<<<                       >>>>>>>>>>>>>>>>>>>>>>>>
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+         CONTENTS - (Use <ENTER> g to access required sections)
+
+ --  Predicates
+ --  Resources
+
+
+Predicates
+----------
+
+xpw_alloc_color_range(+WIDGETID,+CELLS,                      [predicate]
+            +R1,+G1,+B1,+R2,+G2,+B2,-BASE)
+        Allocates a  new  colour  range  to  the  existing  colour  map.
+        WIDGETID is the ID of the widget whos map is to be operated  on.
+        The range is to consist of CELLS entries, where CELLS is an INT.
+        The colour range  start at  the RGB value  R1,G1,B1 and  extends
+        linearly to R2,G2,B2 (where each of the RGB values is an INT  in
+        the range  0-255. BASE  is  the logical  pixel value  where  the
+        allocated range starts.
+
+
+xpw_free_color_range(+WIDGETID,+BASE)                        [predicate]
+        WIDGETID  is  a  valid  widget  identifier,  BASE  is  an   INT.
+        Deallocates the colormap  cells for the  range whos first  pixel
+        value starts at BASE.
+
+
+xpw_create_colormap(+WIDGETID)                               [predicate]
+        Creates a new colormap with  no allocated colors for the  widget
+        specified by WIDGETID.
+
+
+xpw_free_colormap(+WIDGETID)                                 [predicate]
+        Calling  this  predicate  frees  the  colormap  for  the  widget
+        specified by WIDGETID  and causes the  default colormap for  the
+        screen to be installed in its place.
+
+
+xpw_alloc_color(+WIDGETID,+R,+G,+B,-P)                       [predicate]
+        Allocates a single colour, specified by the INT R,G,B values  to
+        the colormap for  the widget  specified by  WIDGETID. The  pixel
+        value of the allocated colour is returned in P.
+
+
+xpw_change_color(+WIDGETID,+P,+R,+G,+B)                      [predicate]
+        Calling this predicate causes the colour defined for pixel value
+        P in  the colormap  of  WIDGETID to  be  changed to  the  colour
+        specified by R,G,B where P,R,G, & B are all INT and WIDGETID  is
+        a valid widget ID,
+
+
+
+Resources
+---------
+
+button_event                                                  [resource]
+keyboard_event                                                [resource]
+mouse_event                                                   [resource]
+motion_event                                                  [resource]
+resize_event                                                  [resource]
+        These resources are all callback lists (see HELP  *XT_CALLBACKS)
+        and they should not be  altered directly by applications.  Users
+        wishing to add  callback procedures  to these  lists should  use
+        xpw_add_callback/4, specifying which  event they are  interested
+        in trapping.
+
+mouse_x                                                       [resource]
+mouse_y                                                       [resource]
+        These resources are set by the widget whenever an event  occurs.
+        An  application  can  read  these  resources  to  determine  the
+        location of the mouse.
+
+
+switch_cmaps                                                  [resource]
+        This resource determines  whether the widget should perform  its
+        own colormap  switching. If  the resource  is TRUE  (1) then  on
+        receiving an EnterNotify event it will call XInstallColormap and
+        on   receiving    a    LeaveNotify   event    it    will    call
+        XUninstallColormap. This  should be  performed automatically  by
+        the window manager, but some window managers do not do this, and
+        this can thus be useful resource  to have. The default value  of
+        this resource is FALSE (0).
+
+use_private_gc                                                [resource]
+        This resource  specifies which  of  the two  available  graphics
+        contexts (see REF  *XpwCore/users_gc *XpwPixmap/private_gc)  are
+        used to  restore window  contents after  an exposure  event.  If
+        use_private_gc is  TRUE  (1)  then  the  graphics  context  from
+        XpwPixmap is used, and if  use_private_gc is FALSE (0) then  the
+        context from XpwCore is used. The default value is true.
+
+
+my_gc                                                         [resource]
+        This resource points to the graphics context currently in use by
+        the widget. This is either users_gc or private_gc. This resource
+        should not be altered by applications.
+
+
+
+--- C.all/x/plog/ref/XpwGraphic
+--- Copyright University of Sussex 1990. All rights reserved. ----------

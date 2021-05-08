@@ -1,0 +1,12 @@
+MENU FILE HEADER (Don't delete)
+MENU FILE NAME: $popcontrib/x/xved/doit_menus/command
+ENTER                                       !!          vedenter
+Redo command                                !!          vedredocommand
+Switch to/from command line                 !!          vedstatusswitch
+Refresh command line                        !!          vedrefreshstatus
+Get help                                    !!          'ref vedcomms'
+
+Search menu        ----->                   !!          'menu search'
+Replace menu       ----->                   !!          'menu replace'
+
+Menu menu          ----->                   !!          'menu menu'

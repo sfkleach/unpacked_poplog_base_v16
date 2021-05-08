@@ -1,0 +1,15 @@
+MENU FILE HEADER (Don't delete)
+MENU FILE NAME: $popcontrib/x/xved/doit_menus/replace
+When prompted in the other window, type
+two strings separated by the delimiter.
+Global replace (nested)                     !!      ENTER 'gs/'
+Global replace(unnested = whole words)      !!      ENTER 'gs"'
+Replace in range                            !!      ENTER 'gsr/'
+Replace in range(unnested)                  !!      ENTER 'gsr"'
+Replace in line                             !!      ENTER 'gsl/'
+Replace in line(unnested)                   !!      ENTER 'gsl"'
+Replace in procedure                        !!      ENTER 'gsp/'
+Replace in proc(unnested)                   !!      ENTER 'gsr"'
+Get help                                    !!      'help vedsearch'
+Search menu     ---->                       !!      'menu search'
+Menu menu       ---->                       !!      'menu menu'

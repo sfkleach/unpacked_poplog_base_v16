@@ -1,0 +1,25 @@
+MENU FILE HEADER (Don't delete)
+MENU FILE NAME: $popcontrib/x/xved/doit_menus/menus/dired_menu
+FACILITIES FOR GETING A LIST OF FILES
+POINTING AT THEM AND DOING THINGS
+Start a "dired" file. (Give pattern or *)   !!      ENTER 'dired '
+Get file in "read only" mode (like pved)    !!      'dired -rv'
+
+Get file or expand directory                !!      menu_dired_command(%"ved_dired"%)
+Do so after quitting current file           !!      menu_dired_command(%"ved_qdired"%)
+
+Compile the file                            !!      'dired -load'
+Remove "expanded" directory                 !!      vedchardown <> veddo(%'dired -dcd'%)
+Remove file named on current line           !!      ENTER 'dired -rm'
+Recursive remove                            !!      ENTER 'dired -rm-r'
+Remove directory                            !!      ENTER 'dired -rmdir'
+Rename file (give new full name)            !!      ENTER 'dired -mv '
+Copy file (give new full name)              !!      ENTER 'dired -cp '
+Rename in same directory (give new name)    !!      ENTER 'dired -mvd '
+Copy in same directory (give new name)      !!      ENTER 'dired -cpd '
+Get long listing (ls -l) for files named    !!      'dired -l'
+Get long chronological listing (-lt)        !!      'dired -lt'
+Change mode of the file                     !!      ENTER 'dired -chmod '
+
+INFORMATION on "dired"                      !!      'help ved_dired'
+Menu menu           ---->                   !!      'menu menu_menu'

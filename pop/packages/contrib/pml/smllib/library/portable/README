@@ -1,0 +1,20 @@
+This directory contains the portable implementation of the 
+Edinburgh Standard ML Library.
+
+It has been tested with Standard ML of New Jersey 0.66,
+Poly/ML 1.86, and Poplog ML 2.0  There are slightly more
+efficient implementations for use with each of these systems.
+
+See the documentation for installation details and a user
+guide.
+
+
+RCS LOG
+
+$Log:	README,v $
+# Revision 1.2  91/03/26  17:01:23  17:01:23  db (Dave Berry)
+# Corrected the name of the library, removed some guff.
+# 
+# Revision 1.1  90/12/20  16:02:08  16:02:08  db (Dave Berry)
+# Initial revision
+# 

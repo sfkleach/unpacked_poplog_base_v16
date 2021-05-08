@@ -1,0 +1,14 @@
+MENU FILE HEADER (Don't delete)
+MENU FILE NAME: $popcontrib/x/xved/doit_menus/casechange_menu
+Lower case word                             !!         RETURNAFTER ved_lcw
+Upper case word                             !!         RETURNAFTER ved_ucw
+
+Lower case line                             !!         RETURNAFTER ved_lcl
+Upper case line                             !!         RETURNAFTER ved_ucl
+
+Capitalise word                             !!         RETURNAFTER ved_capword
+
+Change case word                            !!         RETURNAFTER ved_ccw
+Change case character                       !!         RETURNAFTER vedchangecase
+Change case range                           !!         RETURNAFTER ved_ccr
+Menu menu   ----->                          !!         'menu menu_menu'

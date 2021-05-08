@@ -1,0 +1,16 @@
+This directory contains test files for the Edinburgh
+Standard ML Program Library.
+
+list_parse and list_read give some examples of the parse
+and read functions in the ListParse entry.
+
+list_comp gives some examples of the comparison functions
+in the LexOrdList entry.
+
+
+RCS LOG
+
+$Log:	README,v $
+# Revision 1.1  91/02/22  20:11:37  20:11:37  db (Dave Berry)
+# Initial revision
+# 

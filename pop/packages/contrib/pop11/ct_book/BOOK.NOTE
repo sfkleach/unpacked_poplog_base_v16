@@ -1,0 +1,32 @@
+
+                        LIBRARIES AND DOCUMENTATION FOR
+      COMPUTERS AND THOUGHT: A PRACTICAL GUIDE TO ARTIFICIAL INTELLIGENCE
+
+
+This directory contains libraries, help files, teach files and course
+documentation to go with Sharples, M., Hogg, D., Hutchison, C., Torrance, C.
+and Young, D. "Computers and Thought: a Practical Introduction to Artificial
+Intelligence". MIT Press/Bradford Books, 1989. The material is also used in a
+first year undergraduate course for students in the School of Cognitive and
+Computing Sciences, Sussex.
+
+Versions of the programs, help and teach files are available from MIT Press
+for Alphapop on the Apple Macintosh. They differ slightly from the ones in
+this directory. In particular, the version of the Tourist Guide given here is
+the one shown in the Appendix to Computers and Thought. In the Alphapop
+version the London database has been altered slightly to allow a wider range
+of questions. The SEMNET library for Alphpop has been abbreviated.
+
+The "doc" directory contains material describing the Sussex Computers and
+Thought course and may be useful to anyone designing a similar course.
+
+The programs and documentation given in this directory are copyright but may
+be freely copied for educational use. The authors accept no responsibility for
+the accuracy of the programs or documentation. The authors would be happy to
+answer queries about the material. Contact:
+
+Mike Sharples
+School of Cognitive and Computing Sciences
+University of Sussex
+BRIGHTON BN1 9QN
+JANET: mike@uk.ac.sussex.cogs

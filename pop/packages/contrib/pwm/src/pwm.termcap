@@ -1,0 +1,10 @@
+# hybrid between sun and VISUAL 200
+Pw|pwm|PWM on Sun Microsystems :\
+	:cr=^M:nl=^J:bl=^G:\
+	:al=\EL:am:bs:cd=\Ey:ce=\Ex:cl=\Ev:\
+	:cm=\EY%+ %+ :co#80:li#24:dc=\EO:dl=\EM:ho=\EH:\
+	:im=:ei=:ic=\Ei \b\Ej:\
+	:kl=\E[D:kr=\E[C:ku=\E[A:kd=\E[B:kh=\E[H:\
+	:ta=^I:pt:up=\EA:do=\EB:nd=\EC:le=\ED:
+	:k1=\E[224z:k2=\E[225z:k3=\E[226z:k4=\E[227z:k5=\E[228z:\
+	:k6=\E[229z:k7=\E[230z:k8=\E[231z:k9=\E[232z:

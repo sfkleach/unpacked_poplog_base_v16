@@ -1,0 +1,16 @@
+MENU FILE HEADER (Don't delete)
+MENU FILE NAME: $popcontrib/x/xved/doit_menus/menus/programming_menu
+Compile the whole file                      !!      ved_l1
+Compile all current files                   !!      ved_l
+Compile marked range                        !!      ved_lmr
+Compile current procedure                   !!      ved_lcp
+Compile current line                        !!      vedloadline
+
+Compile a named file (give its name)        !!      ENTER 'load '
+Compile a library (give its name)           !!      ENTER 'lib '
+Examine a library (give its name)           !!      ENTER 'showlib '
+
+"Justify" current procedure                 !!      ved_jcp
+Mark current procedure                      !!      ved_mcp
+
+Menu menu            ----->                 !!      'menu menu'

@@ -1,0 +1,49 @@
+WORKING_PROGRAMMER
+
+Source code for examples from the book
+
+    ML for the Working Programmer
+    by Lawrence C. Paulson, Computer Laboratory, University of Cambridge.
+    (Cambridge University Press, 1991)
+
+installed by Robert Duncan, 14th January 1991.
+
+** Please note the copyright notice and disclaimer in each file **
+
+You should compile the file "setup.ml" in this directory before trying
+to load any of the source files; after that, the commands "load",
+"showlib" etc. can be used to access the files without the need for a
+directory pathname. For example,
+
+    load Functions.ML       (* compiles the "Functions" file *)
+    showlib Hal.ML          (* displays the "Hal" file in the editor *)
+
+and so on.
+
+
+Files in this directory:
+
+    setup.ml
+        Initialisation file to set up search paths etc. for the sources.
+
+    src/
+        The source directory:
+
+        src/Lists-Trees.ML
+            Chapter 3 -- LISTS
+            Chapter 4 -- TREES AND CONCRETE DATA
+        src/Functions.ML
+            Chapter 5 -- FUNCTIONS AND INFINITE DATA
+        src/Modules.ML
+            Chapter 7 -- MODULES
+        src/Imperative.ML
+            Chapter 8 -- IMPERATIVE PROGRAMMING IN ML
+        src/ParsePrint.ML
+        src/Lambda.ML
+            Chapter 9 -- WRITING INTERPRETERS FOR THE LAMBDA-CALCULUS
+        src/Hal.ML
+            Chapter 10 -- A TACTICAL THEOREM PROVER
+
+    ORIG/
+        The original sources, as distributed. Some files in the "src"
+        directory may have had minor modifications made for POPLOG ML.

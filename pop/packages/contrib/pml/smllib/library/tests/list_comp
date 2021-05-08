@@ -1,0 +1,112 @@
+RCS LOG
+
+$Log:	list_comp,v $
+# Revision 1.1  91/02/22  20:12:05  20:12:05  db (Dave Berry)
+# Initial revision
+# 
+
+
+LexOrdList.lt Int.lt [] [];
+  (* false *)
+LexOrdList.lt Int.lt [] [2];
+  (* true *)
+LexOrdList.lt Int.lt [2] [];
+  (* false *)
+LexOrdList.lt Int.lt [2] [2];
+  (* false *)
+LexOrdList.lt Int.lt [2] [3];
+  (* true *)
+LexOrdList.lt Int.lt [3] [2];
+  (* false *)
+LexOrdList.lt Int.lt [2] [2, 3];
+  (* true *)
+LexOrdList.lt Int.lt [3, 2] [2];
+  (* false *)
+
+
+LexOrdList.le Int.le [] [];
+  (* true *)
+LexOrdList.le Int.le [] [2];
+  (* true *)
+LexOrdList.le Int.le [2] [];
+  (* false *)
+LexOrdList.le Int.le [2] [2];
+  (* true *)
+LexOrdList.le Int.le [2] [3];
+  (* true *)
+LexOrdList.le Int.le [3] [2];
+  (* false *)
+LexOrdList.le Int.le [2] [2, 3];
+  (* true *)
+LexOrdList.le Int.le [3, 2] [2];
+  (* false *)
+
+
+LexOrdList.gt Int.gt [] [];
+  (* false *)
+LexOrdList.gt Int.gt [] [2];
+  (* false *)
+LexOrdList.gt Int.gt [2] [];
+  (* true *)
+LexOrdList.gt Int.gt [2] [2];
+  (* false *)
+LexOrdList.gt Int.gt [2] [3];
+  (* false *)
+LexOrdList.gt Int.gt [3] [2];
+  (* true *)
+LexOrdList.gt Int.gt [2] [2, 3];
+  (* false *)
+LexOrdList.gt Int.gt [3, 2] [2];
+  (* true *)
+
+LexOrdList.ge Int.ge [] [];
+  (* true *)
+LexOrdList.ge Int.ge [] [2];
+  (* false *)
+LexOrdList.ge Int.ge [2] [];
+  (* true *)
+LexOrdList.ge Int.ge [2] [2];
+  (* true *)
+LexOrdList.ge Int.ge [2] [3];
+  (* false *)
+LexOrdList.ge Int.ge [3] [2];
+  (* true *)
+LexOrdList.ge Int.ge [2] [2, 3];
+  (* false *)
+LexOrdList.ge Int.ge [3, 2] [2];
+  (* true *)
+
+LexOrdList.eq Int.eq [] [];
+  (* true *)
+LexOrdList.eq Int.eq [] [2];
+  (* false *)
+LexOrdList.eq Int.eq [2] [];
+  (* false *)
+LexOrdList.eq Int.eq [2] [2];
+  (* true *)
+LexOrdList.eq Int.eq [2] [3];
+  (* false *)
+LexOrdList.eq Int.eq [3] [2];
+  (* false *)
+LexOrdList.eq Int.eq [2] [2, 3];
+  (* false *)
+LexOrdList.eq Int.eq [3, 2] [2];
+  (* false *)
+
+LexOrdList.ne Int.ne [] [];
+  (* false *)
+LexOrdList.ne Int.ne [] [2];
+  (* true *)
+LexOrdList.ne Int.ne [2] [];
+  (* true *)
+LexOrdList.ne Int.ne [2] [2];
+  (* false *)
+LexOrdList.ne Int.ne [2] [3];
+  (* true *)
+LexOrdList.ne Int.ne [3] [2];
+  (* true *)
+LexOrdList.ne Int.ne [2] [2, 3];
+  (* true *)
+LexOrdList.ne Int.ne [3, 2] [2];
+  (* true *)
+

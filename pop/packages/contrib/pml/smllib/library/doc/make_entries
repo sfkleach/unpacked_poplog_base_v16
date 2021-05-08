@@ -1,0 +1,6 @@
+#!/bin/sh
+
+cd ../signatures
+for i in [A-Z]*.sml; do
+sed -e '/RCS LOG/,/Initial revision/ d' < $i > ../doc/$i
+done

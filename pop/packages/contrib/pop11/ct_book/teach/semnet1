@@ -1,0 +1,929 @@
+TEACH SEMNET1                                               Tom Khabaza
+                                                            12th October 1985.
+
+This is the first of a pair of teach files describing semantic networks.
+Semantic networks are a technique for storing knowledge in a computer; this
+teach file tells you something about the theoretical nature and significance
+of semantic nets; its companion file, TEACH * SEMNET2, shows you how to use
+them in your own POP-11 programs.
+
+To understand this teach file and its companion,, it is helpful if you already
+understand the concept of a "database".
+You will be familiar with this concept if you have already read ANY of the
+following teach files:
+    TEACH * LONDON, TEACH * DATABASE, TEACH * RIVER2.
+
+Contents of this file:
+
+ -- Semantics - brief digression
+ -- Semantic nets are slightly old-fashioned
+ -- Why study Semantic Networks?
+ -- What are Semantic Networks?
+ -- Semantic nets are association-based
+ -- Labelled arcs: different kinds of associations
+ -- Distinguishing the roles in the association
+ -- Structured kinds of association
+ -- Each node represents a concept
+ -- Semantic nets and Logic
+ -- Use of knowledge in Semantic Nets
+ -- Spreading activation
+ -- Problems with spreading activation
+ -- Inference using semantic nets
+ -- ISA links
+ -- ISPART links
+ -- CONNECTS links
+ -- The many uses of semantic nets
+ -- Dangers with semantic nets
+ -- Semantic networks are not a canonical representation scheme
+ -- The meaning of a node
+ -- Type-token confusion
+ -- Readings
+ -- Bibliography
+
+
+-- Semantics - brief digression ---------------------------------------------
+
+Before explaining the idea of a semantic network, I will digress briefly to
+explain the word "semantics".  The term "semantics" refers to the study of
+"meaning",  but various more specific studies come under this heading.  In
+particular, a Linguist might be quite happy to talk about the "meaning", and
+therefore the semantics, of a sentence in English as being some piece of
+logic, whereas a Philosopher might wish to ask about the "semantics" of logic.
+So we can ask about the "meaning" of various different kinds of expression,
+for example expressions of English or expressions of Logic.
+
+This difficulty with the word "semantics" is typical of discussions in
+Cognitive Science.  In a unified discipline most practitioners will agree
+broadly on the meaning of the terms used, but in an inter-disciplinary area
+such as Cognitive Science, the intended meaning for a technical term (like
+"semantics") can depend on which of the related disciplines (e.g. Philosophy
+or Linguistics) one is most familiar with.
+
+However, the use of the term "semantic" in semantic networks is relatively easy
+to explain.  Semantic nets were originally developed (by Quillian, 1968) to
+describe the meaning of words.  Thus, although they form part of the
+repertoire of techniques for knowledge representation in Artificial
+Intelligence, they are related to semantics by their origin.
+
+
+-- Semantic nets are slightly old-fashioned ----------------------------------
+
+The most important work on semantic networks was done in the late '60s and
+early '70s; they have not been the focus of a great deal of research in recent
+years (with the exception of the development of "partitioned" semantic nets,
+not described in this file).
+
+For this reason, most of the original readings on semantic nets are from
+before the "knowledge based" era in AI; they tend to be expressed less in
+terms of knowledge based systems, and more in terms of conceptual structures
+and semantic memory (both terms taken largely from Psychology).
+
+
+-- Why study Semantic Networks? ---------------------------------------------
+
+There are two particularly good reasons for studying semantic nets.  Firstly,
+many classic pieces of theoretical AI were based on semantic nets; Woods'
+(1975) "What's in a link?" paper is a good example of this.
+
+Another important reason for studying semantic networks in an AI course
+is that they provide a simple knowledge representation scheme and inference
+mechanism to start with.  In their simpler forms, semantic nets provide a
+knowledge representation scheme that is easy to understand, and inference on
+this kind of knowledge is a relatively simple process.
+
+It is an important fact that, especially with more complex schemes for
+knowledge representation, the behaviour invoked by a large knowledge base may
+be quite difficult to understand.  In this respect, knowledge "engineering"
+(that is, writing a knowledge base) is rather like computer programming, in
+that the larger and more complex the knowledge base, the less predictable is
+its behaviour.
+
+
+-- What are Semantic Networks? ------------------------------------------------
+
+In the following sections, I will describe the major features of semantic
+nets.  The successive sections develop an example, representing the fact that
+canaries are yellow.  Each section shows a slightly more developed version
+than the previous one, by adding another feature characteristic of semantic
+network representations.
+
+
+-- Semantic nets are association-based ---------------------------------------
+
+The notion of association of ideas is an old one in Psychology.  Semantic nets
+capitalise on this; the basic notion in semantic nets is that of an association
+between two concepts.  Each concept is represented by a "node", shown by an o
+in the figure below.  Different concepts are distinguished by having different
+labels on the nodes; the words "canary" and "yellow" in the figure are the
+labels.  The association of two concepts is shown by drawing a line (or "arc")
+between the relevant nodes; these are shown as a line of hyphens in the
+figure.
+
+Figure 1:
+
+            canary o-------o yellow
+
+
+This network represents the fact that there is some connection between
+canaries and yellow.
+
+This net has five components: two NODES (shown as o), two LABELS, the words
+"canary" and "yellow", and an ARC, shown as a line of hyphens.
+
+
+-- Labelled arcs: different kinds of associations ---------------------------
+
+In addition to simply associating two ideas, we may want to distinguish
+between different KINDS of association.  This is done by labelling, not only
+the nodes, but also the arcs; thus different kinds of association are shown by
+giving the arcs different labels.
+
+Figure 2:
+
+                      colour
+            canary o----------o yellow
+
+
+This network represents the fact that the relation between canaries and yellow
+is something to do with COLOUR.
+
+
+-- Distinguishing the roles in the association -------------------------------
+
+In addition to showing the KIND of association we want to represent, we may
+want to make the associated concepts play different ROLES in the relation.
+For example, we may want to express the fact that "the colour of canaries is
+yellow", rather than that "the colour of yellow is canary".
+
+To do this, we can give an arc a DIRECTION; an arc with a direction is called
+a DIRECTED ARC.  In the figure below, the direction of the arc is shown by an
+arrow symbol ">".
+
+Figure 3:
+
+                      colour
+            canary o---->-----o yellow
+
+
+This network represents the fact that the colour of canaries is yellow.
+
+
+-- Structured kinds of association ------------------------------------------
+
+Finally, in addition to giving an arc a simple word as a label, we may wish to
+show that the concept used to label the arc also has some relations to other
+concepts, and is thus also a node.  For example, we might wish to show that
+there are different ways in which a thing may have a colour; it may have that
+colour only on the surface, such as the yellowness of a canary, or it may have
+that colour all through, such as the greenness of grass.
+
+Figure 3 shows this distinction, by making the label on the arc between
+"canary" and "yellow" be "surface colour", which has the "is a kind of"
+relation to the abstract idea of "colour".
+
+Figure 4:
+
+                      colour o--------<-------+
+                             |                |
+                             ^                ^
+                is a kind of |                | isa
+                             |                |
+                             o                |
+                        surface colour        |
+            canary o---------->---------------o yellow
+
+
+This network represents the fact that the surface colour of canaries is
+yellow, that surface colour is a kind of colour, and that yellow is a colour.
+
+
+-- Each node represents a concept -------------------------------------------
+
+When we draw a semantic net, the intention is that the nodes represent
+CONCEPTS.  (Note that "concept" is being used here as a Psychological term;
+semantic nets have been used by Psychologists as a model of semantic memory,
+for example, Collins & Quillian (1969), Anderson & Bower (1973), Anderson
+(1976)).
+
+So in the above examples, nodes represent CONCEPTS, arcs represent RELATION
+between concepts, and the label on an arc shows you WHAT relation it
+represents.  Finally, the fact that the label on an arc can also be a node
+simply means that a particular relation is also a concept.
+
+
+-- Semantic nets and Logic ---------------------------------------------------
+
+Semantic nets are often compared to logic, for two reasons:
+
+Firstly, because historically, both were intended to relate to the "meaning"
+of language.  (Remember that, as mentioned above, semantic nets were invented
+to describe the meanings of words.)
+
+Secondly, semantic nets are easier to understand than logic.  This is clearly
+true of the simple forms described above; the pictorial representation of
+semantic nets can seem to capture a concept in a very intuitive way.  This
+becames less true with more complex cases, as described below.  In these more
+complex cases, semantic nets have to be extended in a way which makes them
+much less easy to understand.
+
+
+-- Use of knowledge in Semantic Nets -----------------------------------------
+
+In this teach file, I will describe two kinds of use of knowledge represented
+in semantic nets.  The first is very general, and is used more to explore the
+structure of some existing facts than to deduce new facts.  The second is much
+more specific, and can be used, given certain kinds of facts represented as a
+semantic net, to deduce facts not previously given.  In many ways, both
+techniques are only knowledge use of the most elementary kind.  However, they
+do illustrate the general principle that knowledge represented as a semantic
+net can be USED by a program to some specific end.
+
+It is the second, more specific kind of technique, that we will be using for
+programming in TEACH * SEMNET2.
+
+
+-- Spreading activation ------------------------------------------------------
+
+The "spreading activation" technique was first introduced with semantic nets
+by Quillian (1968).  The description below is not exactly like Quillian's
+program; whereas below, I will describe the processing of a whole sentence to
+find its "conceptual structure", Quillian's program worked only on pairs of
+words to find their conceptual similarities or links.  The description below
+is informal, and takes ideas not only from Quillian's work, but also later
+work such as Anderson & Bower's (1973) "Human Associative Memory".
+
+The idea of the spreading activation technique is that, when we hear a
+sentence, the nodes in our "internal semantic net" corresponding to the
+important words in the sentence are "activated".  This simply means that those
+nodes are in some way "marked" as being relevant to the sentence.  The process
+then proceeds as follows: every node that is linked in any way to any active
+node is also activated, in a way that will show, if we examine the node, which
+of the words in the sentence caused it to be activated.  This process is
+repeated until some node is activated by MORE THAN ONE of the original words;
+this indicates that a link between them has been found.  We may continue the
+process until we have found all the links that we can reasonably expect to
+find, or until we can be sure that we have found all the links shorter than a
+certain length.  At whichever point we choose to stop, we should expect to
+have at the end of the process a collection of nodes and the links between
+them, which represent the "conceptual structure" of the sentence.
+
+Let's look at an example:
+
+Suppose that we start with the sentence "The ship sank beneath the sea".  Look
+at the network in figure 5, below; the initial sentence would activate the
+nodes "ship", "sink", and "sea".  (We will not worry here about the difference
+between "sink" and "sank"; also, to simplify the example, we will leave out
+the activation of the "beneath" concept, which labels one of the arcs.)
+
+Figure 5:
+                       float
+                         o
+                       / | \
+                     /   |   \
+               can >     ^     > on
+                 /       |       \
+               /         |         \
+        ship o        opposite       o water
+               \         |         / |
+                 \       |   beneath |
+               can >     V     >     ^ isa
+                     \   |   /       |
+                       \ | /         |  contains
+                         o           o----->------o fish
+                       sink         sea
+
+
+Now, each of these "active" nodes will activate its neighbours.  The "ship"
+node will activate the "float" and "sink" nodes; note that here we have
+already got a node (sink) that has been activated twice; once because it was
+in the sentence, and once because it was linked to "ship" which was in the
+sentence.  The "sink" node will activate the "ship" node (again) and also the
+"water" node, which will also be activated by the "float" node.  The "water"
+node will also be activated again by the "sea" node.
+
+By this time, each of the "float", "sink", "ship", "water" and "sea" nodes has
+been activated several times.  There are also some other nodes (e.g. the
+"fish" node in figure 5) activated, but not as many times.  The "conceptual
+structure" of the sentence is then considered to be the collection of nodes
+that have been most often activated, and the arcs between them.
+
+-- Problems with spreading activation --------------------------------------
+
+Experimenting with this technique can produce interesting results; however, it
+also has a number of problems.  Among them is the fact that identical
+conceptual structures can be formed from completely different sentences;
+the above example would have worked exactly the same way if the sentence had
+been "The sea sank beneath the ship".  From the point of view studying natural
+language, this problem is caused by taking no account of syntax when analysing
+a sentence.
+
+In general, the problems of the spreading activation approach are caused by
+the fact that it is in many ways "unprincipled" - it is an attempt to use
+semantic nets in an ad-hoc way, without worrying too much about what it all
+means.  This has the result that the technique is UNRELIABLE; that is that
+although it can produce correct results, it can also produce incorrect ones.
+
+The techniques described in the next section are of a different kind.
+Although more limited in their application, the are far more reliable. Barring
+various specific pitfalls, some of which will be described later, we can
+assume that if the original net contains only correct information, then using
+these techniques will only ever produce correct results.
+
+
+-- Inference using semantic nets --------------------------------------------
+
+In Artificial Intelligence, when we talk about "inference", we are referring
+to reasoning with some given knowledge.  That is, a person or a program, given
+some knowledge, and the ability to use their knowledge in certain ways, can
+come up with new knowledge that in some sense FOLLOWS from the knowledge
+originally given.
+
+In the domain of semantic nets, there are various kinds of reliable inference.
+The following sections describe three of them, which are summarised in the
+table below.  These are also the kinds which are used in the programming
+examples of TEACH * SEMNET2.  If you are unfamiliar with the technical terms
+(like "transitive" and "commutative") used in the table, don't worry; these
+will be explained in the relevant sections of this file.
+
+
+Table 1:    3 reliable types of inference with semantic nets.
+
+Type of link        Characteristics
+------------        ---------------
+
+isa                 "isa" hierarchies, property inheritance.
+
+ispart              transitive relations.
+
+connects            transitive relations, commutative relations.
+
+
+The next three sections explain and illustrate each of these in turn.
+
+
+-- ISA links -----------------------------------------------------------------
+
+These are arcs in a semantic net marked with the label "isa", for example:
+
+Figure 6:
+            isa
+    bird o--->---o animal
+
+This represents the fact that a bird is a kind of animal.
+
+Links of this kind, that is, links representing that one concept is an
+instance of another concept, can be used to reason in the following way:
+
+    If an A is a kind of B
+    and a B has property P
+
+    then an A also has property P.
+
+Here is an example of this kind of reasoning:
+
+    If a bird is an animal
+    and every animal has a heart
+
+    then a bird also has a heart.
+
+When we make use of our knowledge in this way, we say that we have "made
+an inference".  The above inference would be made using a net like this:
+
+Figure 7:
+            isa
+    bird o--->---o animal
+                 |
+                 V has
+                 |
+                 o heart
+
+
+Here is a more complicated net involving more "isa" links, with more possible
+inferences:
+
+Figure 8:
+
+                     isa   bird    isa   animal  isa
+        canary o------>------o------>------o------>------o organism
+                            | |            |
+                     isa    | |            |
+       pigeon o------>------+ V has        V has
+                              |            |
+                              |            |
+                              o            o
+                            wings        heart
+
+
+>From this net (figure 8) we could infer the following facts:
+
+    Canaries have wings.
+        (because a canary is a bird, and birds have wings)
+    Pigeons have wings.
+        (because a pigeon is a bird, and birds have wings)
+    Birds have hearts.
+        (because a bird is an animal, and animals have hearts)
+
+And also:
+
+    Canaries have hearts.
+        (because a canary is a bird, and birds have hearts)
+    Pigeons have hearts.
+        (because a pigeon is a bird, and birds have hearts)
+
+
+These last two facts, that canaries and pigeons have hearts, were inferred by a
+slightly more complex method form of the same method.  We had to use not only
+facts that we were originally given, but also a fact that we had INFERRED,
+namely that birds have hearts.
+
+When we have a semantic net which has many "isa" links, so that many objects
+are a kind of some other object, we say we are using an ISA HIERARCHY.  Figure
+8 is an example of an isa hierarchy.
+
+We would call things like "having wings", or "having a heart", PROPERTIES of
+birds, canaries etc.  The process of inferring that something has a property
+because it is a kind of something else which has that property is called
+PROPERTY INHERITANCE.  We say that the concept "canary" INHERITS the property
+of having wings from the concept "bird".
+
+Property inheritance is an important concept in AI.  I will not discuss its
+other uses here, but simply note that it is used widely, both in the design of
+knowledge based systems, and in more mundane AI programming.
+
+
+-- ISPART links --------------------------------------------------------------
+
+These are links marked with the "ispart" label, as in:
+
+Figure 9:
+             ispart
+    wheel o---->-----o car
+
+This net represents that fact that a wheel is (or can be) part of a car.
+
+Links of this kind, that is links that represent a fact about one kind of
+object being part of another kind, can be used in the following kind of
+reasoning:
+
+    If A is part of B,
+    and B is part of C,
+
+    then A is part of C.
+
+For example:
+
+    If a hub is a part of a wheel,
+    and a wheel is a part of a car,
+
+    then a hub is also part of a car.
+
+This inference might be made using the following net:
+
+Figure 10:
+
+           ispart             ispart
+    hub o---->-----o wheel o---->-----o car
+
+
+Here is a slightly more complicated net:
+
+Figure 11:
+
+             ispart   wheel   ispart
+    hub o------->-------o------->-------o car
+                        |
+                ispart  |
+    rim o------->-------+
+
+
+Using this net we can infer the following facts:
+
+    A hub is part of a car.
+        (because a hub is part of a wheel, and a wheel is part of a car)
+    A rim is part of a car.
+        (because a rim is part of a wheel, and a wheel is part of a car)
+
+
+This kind of relation, where if A has some relation to B, and B has some
+relation to C, then A has the same relation to C, is called a TRANSITIVE
+relation.  The "ispart" relation is not the only transitive relation; there
+are many other common ones, a good example being "isin":
+
+    If the block is in the box,
+    and the box is in the house,
+
+    then the block is in the house.
+
+However, the main relation of this particular (transitive) kind we will use in
+this teach file and in TEACH * SEMNET2 is the "ispart" relation.
+
+
+-- CONNECTS links ------------------------------------------------------------
+
+These are links marked with the "connects" label, as in:
+
+Figure 12:
+                 connects
+    Victoria o--------------o Green Park
+
+
+This net represents the fact that there is a connection between Victoria (a
+station on the London underground), and Green Park (another station on the
+London Underground).  In this example, and all of those of TEACH * SEMNET2, I
+am talking in the domain of the London Underground system; so if I mention a
+station, I mean an underground station.  I will also talk about "connection",
+which in the example will mean underground train connections.
+
+Links of this kind, that is links which indicate a CONNECTION between two
+objects, allow two kinds of reasoning (or inference).  Firstly, they are
+TRANSITIVE, like "ispart" links.  Thus
+
+    If A is connected to B
+    and B is connected to C
+
+    then A is connected to C.
+
+Secondly, they are COMMUTATIVE, that is:
+
+    If A is connected to B
+
+    then B is connected to A.
+
+A commutative relation is one which "goes both ways".  Many relations are not
+commutative, for example "ispart" - if a wheel is a part of a car, this does
+NOT mean that a car is a part of a wheel.  But with "connects", if A is
+connected to B, then B is connected to A.
+
+Here is a copy of figure 12:
+
+                 connects
+    Victoria o--------------o Green Park
+
+
+Note that there is no arrow on the "connects" arc.  The arc is UNDIRECTED,
+i.e. it has no specific direction.  Commutative relations like "connects" are
+shown either by undirected arcs, or by arcs showing an arrow in BOTH
+directions, as in:
+
+Figure 13:
+
+                 connects
+    Victoria o--<-------->--o Green Park
+
+indicating that the "connects" relation "goes both ways".
+
+Here is a slightly more complex example with connects relations, using
+stations in the London Underground map:
+
+Figure 14:
+
+                connects                  connects
+    Victoria o------------o Green Park o------------o Bond Street
+
+
+In this net we would make inferences to the effect that everything in it
+connects to everything else, that is:
+
+    Victoria is connected to Green Park.
+    Green Park is connected to Victoria.
+        (because Victoria is connected to Green Park)
+    Green Park is connected to Bond Street.
+    Bond Street is connected to Green Park.                     
+        (because Green Park is connected to Bond Street)
+
+
+    Victoria is connected to Bond Street
+        (because Victoria is connected to Green Park and
+            Green Park is connected to Bond Street)
+    Bond Street is connected to Victoria
+        (because Victoria is connected to Bond Street
+         and also because Bond Street is connected to Green Park and
+            Green Park is connected to Victoria).
+
+
+So the "connects" relation has two important properties: it is TRANSITIVE,
+that is it carries over from one object to another, and it is COMMUTATIVE,
+that is it "goes both ways".
+
+
+-- The many uses of semantic nets -------------------------------------------
+
+As mentioned above, semantic nets have been of interest to psychologists as a
+model of "semantic memory", see for example Collins & Quillian (1969),
+Anderson & Bower (1973), Anderson (1976); in fact they were invented by
+Quillian as a model of human semantic processing.
+
+However, semantic nets have been used for a variety of knowledge
+representation tasks.  A famous example of such a use is Winston's learning
+program (see, for example, the last part of Winston's (1977) chapter 2).
+Winston's program was given example descriptions of a type of object build out
+of blocks, and had to learn the distinctive characteristics of the object,
+represented in the form of a semantic network.  The example always used is the
+concept of an ARCH.
+
+Figures 15 and 16 show examples of arches; the kind of characteristic that
+Winston's program had to learn was that the "lintel", that is the object at
+the top of the arch, could be any object (e.g. a pyramid); it did not always
+have to be a rectangular block.
+
+Figure 15: An arch with a block for the lintel.
+
+          ##############
+          ##############
+          ##############
+        @@@@          %%%%
+        @@@@          %%%%
+        @@@@          %%%%
+        @@@@          %%%%
+        @@@@          %%%%
+        @@@@          %%%%
+        @@@@          %%%%
+
+
+Figure 16: An arch with a pyramid for the lintel.
+
+                ##
+             ########
+         ################
+        @@@@          %%%%
+        @@@@          %%%%
+        @@@@          %%%%
+        @@@@          %%%%
+        @@@@          %%%%
+        @@@@          %%%%
+        @@@@          %%%%
+
+
+Figure 17 shows the kind of semantic net that the program had to build as a
+description of the concept "arch".
+
+Figure 17: Semantic net description of an arch.
+
+                            o object1
+                          / | \
+                        /   |   \
+                   on <     V      > on
+                    /       | isa   \
+                  /         |         \
+        object2 o           o object    o object3
+                  \         |         /
+                    \       | isa   /
+                  isa >     ^     < isa
+                        \   |   /
+                          \ | /
+                            o block
+
+
+Figure 17 describes an arch as made of three objects, one of which is any
+object, and resing on two others which are blocks.  Winston's actual networks
+were more complex that this; his book shows a number of examples.
+
+
+-- Dangers with semantic nets ----------------------------------------------
+
+Semantic networks have been important in the history of AI; however their use
+presents problems which to some extent account for their present unfashionable
+status.  The following sections describe some of these problems.
+
+
+-- Semantic networks are not a canonical representation scheme -------------
+
+Some AI workers had hoped that semantic networks would provide a "canonical"
+representation of meaning (for example, for natural language sentences).  The
+idea of a CANONICAL representation is that, for example, if we had two
+different sentences that meant the same thing, they would have the same
+semantic network representation.
+
+For example, if semantic networks were a canonical representation scheme for
+the meaning of English then the sentences:
+
+    John loves Mary
+and
+    Mary is loved by John
+
+(assuming that you believe that these sentences mean the same thing), would
+have EXACTLY THE SAME semantic network representation.
+
+However, it turns out that this is not the case; semantic network
+representation schemes are sufficiently vague that many different networks can
+be found for any given sentence, let alone for two apparently different
+sentences (see Woods, 1975 for a discussion of this issue).  For example, the
+sentence "John loves Mary" might be represented as either of the networks in
+figure 18:
+
+Figure 18: 2 semantic nets for "John loves Mary".
+
+                 loves
+        John o----->-----o Mary
+
+
+                   o Loves
+                  / \
+                 /   \
+         source V     V target
+               /       \
+              /         \
+        John o           o Mary
+
+
+It should be noted here that the same problem is encountered with all
+knowledge representation schemes; it is arguable that a canonical scheme for
+knowledge of any useful sort is impossible.  The problem with semantic
+networks is not simply that they are not canonical, for neither are the
+systems that replaced them.  Rather, the problem is that semantic networks
+were being used as though they WERE canonical; once it was realised that they
+were not, they did not seem so attractive.
+
+The fact that knowledge representation schemes are seldom (if ever) canonical
+has various implications in AI; on the positive side, it means that when using
+a given scheme, there is always hope for finding a better representation of a
+concept than that which you are using.  On the negative side, it means that no
+matter what representation you use, your system may always have the same
+concept in different forms, and never be able to detect the fact.  Arguably,
+this is also true of human beings!
+
+
+-- The meaning of a node -----------------------------------------------------
+
+A semantic networks is a STRUCTURAL description of a concept.  That is, at
+least theoretically, the important part of the net is its structure rather
+than, say, the labels on the nodes and arcs.  However, if it is the structure
+rather than the nodes used that is important, then labels are in some sense
+ARBITRARY; it should be possible to change them without making a significant
+difference to the meaning of the net.
+
+Now clearly, if we change, say the "John" label in figure 18 to be "Jack", the
+network means something different, however we could argue that since the node
+still represents a person, and all we have changed is the name, the concept is
+essentially the same.
+
+But this is not always the case; with some some networks, if we change the
+labels on the nodes, we change the nature of the concept.  Figure 19 shows an
+example.
+
+Figure 19: Changing the meaning by changing the label:
+
+
+                  isa            colour
+        bird o------<------o------>------ yellow
+                        Tweetie
+
+
+                  isa            colour
+        bird o------<------o------>------ yellow
+                         canary
+
+
+                  isa            colour
+        bird o------<------o------>------ yellow
+                       yellow-bird
+
+
+Depending on what label we put on the middle node in this network, the network
+represents a SPECIFIC yellow bird (called "Tweetie"), a KIND of yellow bird
+(that is a canary), or the CONCEPT of a yellow bird itself (any yellow bird).
+
+Thus it is always unclear what a specific node is supposed to mean.  The next
+section shows an example of one important type of confusion that can occur
+because of this.
+
+
+-- Type-token confusion ------------------------------------------------------
+
+Suppose we want to represent the meaning of the sentence "The dog is wet".
+We might (naively) choose to do so as in figure 20:
+
+Figure 20: The dog is wet.
+
+                is
+        dog o--->---o wet
+
+
+Now suppose we want to add the additional fact that "Fido is a dog".  We might
+do so as in figure 21:
+
+Figure 21: Fido is a dog (and the dog is wet).
+
+                isa            is
+        Fido o--->---o dog o--->---o wet
+
+
+But now, due to property inheritance, we would also believe that Fido is wet,
+which is wrong.
+
+What has happened?  The answer is that we have confused the notion of "dog" as
+a TYPE of object with the notion of some SPECIFIC (or TOKEN) dog (the one
+which is wet).  Thus, the property of wetness, which should have been attached
+to the specific (token) dog was instead attached to the TYPE dog, representing
+the notion that "All dogs are wet" (and hence, if Fido is a dog, Fido must be
+wet too).
+
+This problem is called "type-token confusion", and is something to watch out
+for when dealing with (or reading about) semantic networks.  The possibility
+of this confusion (or at least the importance of making the distinction) was
+discovered with semantic nets by their originator (Quillian, 1968), but is
+point a point of general importance in all knowledge representation.
+
+
+-- Readings ----------------------------------------------------------------
+
+This section contains some recommended readings on semantic networks, and
+brief notes on them.  Full references to the readings can be found in the
+bibliography section at the end of the file.
+
+
+Readings on the basic concepts of semantic networks:
+
+Norman (1978) (O.U. course material).
+    This contains a very short section on semantic nets.
+
+Barr & Feigenbaum (1982) Vol. 1, Chapter III: "Representation of Knowledge",
+    Section C3 "Representation Schemes: Semantic networks".
+    Barr and Feigenbaum's book is an advanced AI textbook.  However, if you
+    can ignore his slightly terse style, this section should be reasonably
+    readable.
+
+
+More advanced readings:
+
+Winston (1977)
+    Chapter 2, last section on "Learning simple descriptions".
+    A good description of Winston's learning program, as described above.
+
+Rich (1983)
+    Chapter 7, sections 7.1 - 7.2.1.
+    This is a good introduction, except that Rich assumes a familiarity with
+    basic formal logic.  Unless you are familiar with it, ignore the pieces of
+    logic.  The main advantage of this reading is that it describes
+    partitioned semantic nets.
+
+Woods (1975) "What's in a Link?"
+    Classic paper on the pitfalls of semantic nets, and on the foundations of
+    knowledge representation in general.
+
+Slack (1978) (O.U. course material).
+    This is rather long, but worth skimming to get the gist of how semantic
+    nets are used as models of human memory.
+
+Collins & Quillian (1969)
+    A report of a classic experiment, looking at the psychological
+    plausibility of semantic networks.  Unfortunately, the results were open
+    to more than one interpretation.
+
+
+-- Bibliography ------------------------------------------------------------
+
+After each reference in this section, the University of Sussex Library
+classification mark is given in square brackets.
+
+ANDERSON, J. R. (1976) "Language, Memory and Thought", LEA.
+    [QZ 1030 And].
+
+ANDERSON, J. R. and BOWER, G. (1973) "Human associative memory", Hemisphere.
+    [BF 371 And].
+
+BARR, A. and FEIGENBAUM, E. A. (1982) "The Handbook of Artificial
+    Intelligence", Volumes 1 and 2, Pitman.
+    [QZ 1240 Han].
+
+BOBROW, D. G. and COLLINS, A. (1975) "Representation and Understanding:
+    Studies in Cognitive Science", Academic Press.
+    [QZ 1010 Rep].
+
+COLLINS, A. M. and QUILLIAN, M. R. (1969) "Retrieval time from semantic
+    memory", Journal of Verbal Learning and Verbal Behaviour, Vol. 8, pp
+    240-247, reprinted in "Offprints booklet", Open University, course D303:
+    "Cognitive Psychology", 1979.
+    [BF 311 Ope].
+
+FINDLER, N. V. (1979) "Associative Networks: Representation and Use of
+    Knowledge by Computers", Academic Press.
+    [QZ 1220 Ass].
+
+HENDRIX, G. G. (1977) "Expanding the Utility of Semantic Networks through
+    Partitioning", in IJCAI 4.
+
+MINSKY, M. (ed.) (1968) "Semantic Information Processing", MIT Press.
+    [QE 100 Min].
+
+NORMAN, D. (1978) "Overview", Open University, course D303: "Cognitive
+    Psychology", Units 31-32.
+    [BF 311 Ope].
+
+QUILLIAN, R. (1968) "Semantic Memory", in Minsky (ed.) (1968).
+
+RICH, E. (1983) "Artificial Intelligence", McGraw-Hill.
+    [QZ 1240 Ric].
+
+SLACK, J. (1978) "Semantic memory", Open University, course D303: "Cognitive
+    Psychology", Block 3: "Memory (part 2)", Units 18-19.
+    [BF 311 Ope].
+
+WINSTON, P. H. (1977) "Artificial Intelligence", Addison-Wesley.
+    [QZ 1240 Win].
+
+WOODS, W. A. (1975) "What's in a link: Foundations for Semantic Networks", in
+    Bobrow & Collins (1975), pp 35-82.
+
+--- $poplocal/local/teach/semnet1
+--- Copyright University of Sussex 1989. All rights reserved. ----------

@@ -1,0 +1,514 @@
+/home/sfkleach/poplog-lab/poplog_base/pop/src
+rebuilding system images
+opt=-d
+opt=-a=x86_64
+opt=popc
+IMAGE=popc
+pop_architecture = x86_64
+calling pop11_compile
+Loading POPC Version 14.24
+;;; LOADING lib.p
+;;; GC-auto(C) 0.01  MEM: u 9075 + f 24181 + s 24 = 33280
+;;; LOADING mcdata.p
+;;; GC-auto(C) 0.01  MEM: u 13530 + f 27940 + s 2 = 41472
+;;; LOADING files.p
+;;; LOADING wordflags.p
+;;; LOADING os_comms.p
+;;; LOADING sysint.p
+;;; LOADING syspop.p
+;;; GC-auto(C) 0.01  MEM: u 57518 + f 142672 + s 2 = 200192
+;;; LOADING ident_labs.p
+;;; LOADING genfloat.p
+;;; LOADING genstruct.p
+;;; GC-auto(C) 0.01  MEM: u 55299 + f 144875 + s 18 = 200192
+;;; GC-auto(C) 0.01  MEM: u 83554 + f 116422 + s 216 = 200192
+;;; LOADING pas_optimise.p
+;;; LOADING m_optimise.p
+;;; LOADING m_trans.p
+;;; GC-auto(C) 0.01  MEM: u 74508 + f 125655 + s 29 = 200192
+;;; LOADING vm_genp.p
+;;; GC-auto(C) 0.01  MEM: u 86427 + f 113762 + s 3 = 200192
+;;; LOADING pas_interpret.p
+;;; LOADING w_util.p
+;;; LOADING syspop_mode.p
+;;; LOADING do_asm.p
+;;; LOADING popc_main.p
+;;; GC-auto(C) 0.01  MEM: u 97813 + f 102127 + s 252 = 200192
+;;; GC-auto(C) 0.01  MEM: u 114366 + f 85824 + s 2 = 200192
+;;; GC-user(C) 0.01  MEM: u 93009 + f 107183 + s 0 = 200192
+pop11_compile done
+;;; GC-lock(C) 0.01  MEM: u 92188 + f 108004 + s 0 = 200192
+IMAGE=poplibr
+pop_architecture = x86_64
+calling pop11_compile
+Loading POPLIBR Version 14.22
+;;; LOADING lib.p
+;;; GC-auto(C) 0.01  MEM: u 9375 + f 23903 + s 2 = 33280
+;;; LOADING mcdata.p
+;;; LOADING files.p
+;;; LOADING wordflags.p
+;;; LOADING os_comms.p
+;;; LOADING w_util.p
+;;; LOADING w_module.p
+;;; LOADING poplibr_main.p
+;;; GC-user(C) 0.01  MEM: u 32409 + f 271719 + s 0 = 304128
+pop11_compile done
+;;; GC-lock(C) 0.01  MEM: u 19258 + f 284870 + s 0 = 304128
+IMAGE=poplink
+pop_architecture = x86_64
+calling pop11_compile
+Loading POPLINK Version 14.22
+;;; LOADING lib.p
+;;; GC-auto(C) 0.01  MEM: u 9375 + f 23903 + s 2 = 33280
+;;; LOADING mcdata.p
+;;; GC-auto(C) 0.01  MEM: u 14252 + f 27730 + s 2 = 41984
+;;; LOADING files.p
+;;; LOADING wordflags.p
+;;; LOADING os_comms.p
+;;; LOADING w_util.p
+;;; LOADING w_module.p
+;;; LOADING poplink_main.p
+;;; GC-auto(C) 0.01  MEM: u 80460 + f 227759 + s 5 = 308224
+;;; GC-user(C) 0.01  MEM: u 30872 + f 277352 + s 0 = 308224
+pop11_compile done
+;;; GC-lock(C) 0.01  MEM: u 29188 + f 279036 + s 0 = 308224
+-rw-rw-r-- 1 sfkleach sfkleach 826968 May  8 11:31 popc.psv
+-rw-rw-r-- 1 sfkleach sfkleach 245336 May  8 11:31 poplibr.psv
+-rw-rw-r-- 1 sfkleach sfkleach 323160 May  8 11:31 poplink.psv
+/home/sfkleach/poplog-lab/poplog_base/pop/extern/lib
+cc -c -g -O XtPoplog.c c_bignum.c c_callback.c c_core.c c_sysinit.c ext_arm.c pop_encoding.c pop_poll.c pop_stat.c pop_timer.c
+c_core.c: In function ‘_pop_set_xt_wakeup’:
+c_core.c:941:19: warning: ignoring return value of ‘write’, declared with attribute warn_unused_result [-Wunused-result]
+                 { write(xwk->XWK_FD_OUT, &c, 1);
+                   ^
+c_core.c:950:15: warning: ignoring return value of ‘read’, declared with attribute warn_unused_result [-Wunused-result]
+             { read(xwk->XWK_FD_IN, &c, 1);
+               ^
+c_core.c: In function ‘linux_setper’:
+c_core.c:2188:17: warning: ignoring return value of ‘write’, declared with attribute warn_unused_result [-Wunused-result]
+                 write(2, err_mess, sizeof(err_mess)-1);
+                 ^
+/home/sfkleach/poplog-lab/poplog_base/pop/com
+/home/sfkleach/poplog-lab/poplog_base/pop/obj
+saving library files in old
+total 4
+drwxrwxr-x 2 sfkleach sfkleach 4096 May  8 11:31 old
+mv: cannot stat '*.*': No such file or directory
+Recompiling base system
+/home/sfkleach/poplog-lab/poplog_base/pop/src
+popc
+x86_64/aarith.s
+;;; GC-auto(C) 0.01  MEM: u 34571 + f 32501 + s 0 = 67072
+x86_64/aextern.s
+x86_64/afloat.s
+x86_64/alisp.s
+x86_64/amain.s
+x86_64/amisc.s
+;;; GC-auto(C) 0.01  MEM: u 35656 + f 319157 + s 3 = 354816
+x86_64/amove.s
+x86_64/aprocess.s
+x86_64/aprolog.s
+x86_64/array_cons.p
+x86_64/asignals.s
+x86_64/ass.p
+;;; GC-auto(C) 0.01  MEM: u 70734 + f 429428 + s 62 = 500224
+x86_64/closure_cons.p
+;;; GC-auto(C) 0.01  MEM: u 60779 + f 439418 + s 27 = 500224
+x86_64/pdr_compose.p
+allbutfirst.p
+allbutlast.p
+alphabefore.p
+and_test.p
+appdic.p
+appproperty.p
+arctan2.p
+;;; GC-auto(C) 0.01  MEM: u 68730 + f 431492 + s 2 = 500224
+arith1.p
+arith2.p
+arithcmp.p
+arrays.p
+bigint.p
+;;; GC-auto(C) 0.01  MEM: u 81657 + f 418349 + s 218 = 500224
+bigint_divide.p
+bigint_float.p
+bigint_gcd.p
+bigint_logical.p
+bigint_random.p
+;;; GC-auto(C) 0.01  MEM: u 78024 + f 422139 + s 61 = 500224
+bigint_shift.p
+boolean.p
+caller_valof.p
+callstacklength.p
+chargetput.p
+charin.p
+chario.p
+charout.p
+;;; GC-auto(C) 0.01  MEM: u 62766 + f 437458 + s 0 = 500224
+class_data.p
+clawback.p
+complex.p
+complex_exp.p
+complex_float.p
+;;; GC-auto(C) 0.01  MEM: u 88177 + f 412045 + s 2 = 500224
+complex_invtrig.p
+complex_ops.p
+complex_power.p
+complex_sqrt.p
+complex_trig.p
+;;; GC-auto(C) 0.01  MEM: u 82358 + f 417864 + s 2 = 500224
+consclosure.p
+consdevice.p
+consident.p
+conskey.p
+conslist.p
+consword.p
+;;; GC-auto(C) 0.01  MEM: u 81839 + f 418383 + s 2 = 500224
+control.p
+data_concat.p
+data_generic.p
+dest_characters.p
+destroy_prop.p
+device_util.p
+;;; GC-auto(C) 0.01  MEM: u 69629 + f 430575 + s 20 = 500224
+devio.p
+;;; GC-auto(C) 0.01  MEM: u 191489 + f 308729 + s 6 = 500224
+discin.p
+discout.p
+dstring.p
+;;; GC-auto(C) 0.01  MEM: u 122090 + f 378132 + s 2 = 500224
+eqlhash.p
+errors.p
+exfunc_closure.p
+;;; GC-auto(C) 0.01  MEM: u 90003 + f 410221 + s 0 = 500224
+exp.p
+explode.p
+exptr_mem.p
+extern_callback.p
+extern_load.p
+;;; GC-auto(C) 0.01  MEM: u 101075 + f 399146 + s 3 = 500224
+extern_ptr.p
+extern_symbols.p
+fast_appproperty.p
+fast_prop_entry.p
+;;; GC-auto(C) 0.01  MEM: u 92252 + f 407969 + s 3 = 500224
+fi_arith2.p
+fi_arithcmp.p
+fi_logical.p
+fields.p
+float.p
+;;; GC-auto(C) 0.01  MEM: u 87198 + f 413024 + s 2 = 500224
+float_fields.p
+float_params.p
+float_power.p
+float_random.p
+float_util.p
+;;; GC-auto(C) 0.01  MEM: u 91494 + f 408724 + s 6 = 500224
+frozval.p
+fsub_vec.p
+gccopy.p
+;;; GC-auto(C) 0.01  MEM: u 142723 + f 357497 + s 4 = 500224
+gcmain.p
+gcncopy.p
+;;; GC-auto(C) 0.01  MEM: u 149285 + f 350805 + s 134 = 500224
+getstore.p
+;;; GC-auto(C) 0.01  MEM: u 150028 + f 350191 + s 5 = 500224
+getstore_fixed.p
+hash_if.p
+hash_include.p
+;;; GC-auto(C) 0.01  MEM: u 83729 + f 416493 + s 2 = 500224
+ident.p
+ident_declare.p
+identprops.p
+idval.p
+init_args.p
+init_idval.p
+;;; GC-auto(C) 0.01  MEM: u 95196 + f 405026 + s 2 = 500224
+initial.p
+initvectorclass.p
+int_convert.p
+integer.p
+integer_bit.p
+integer_field.p
+;;; GC-auto(C) 0.01  MEM: u 103470 + f 396752 + s 2 = 500224
+integer_length.p
+intgr_arith.p
+intvec.p
+is_fixed.p
+is_poplog_item.p
+iscaller.p
+;;; GC-auto(C) 0.01  MEM: u 100562 + f 399659 + s 3 = 500224
+ischarcode.p
+isclosed.p
+isdlocal.p
+issubstring.p
+item.p
+;;; GC-auto(C) 0.01  MEM: u 102834 + f 397341 + s 49 = 500224
+itemread.p
+key.p
+;;; GC-auto(C) 0.01  MEM: u 108078 + f 392126 + s 20 = 500224
+lispcore.p
+;;; GC-auto(C) 0.01  MEM: u 185203 + f 315017 + s 4 = 500224
+list_assoc.p
+list_dl.p
+list_hdtl.p
+list_member.p
+list_util.p
+;;; GC-auto(C) 0.01  MEM: u 90454 + f 409770 + s 0 = 500224
+locchar.p
+locchar_back.p
+logical.p
+lowertoupper.p
+matchvar.p
+memseg.p
+misc_fields.p
+;;; GC-auto(C) 0.01  MEM: u 102068 + f 398150 + s 6 = 500224
+miscio.p
+move_bytes.p
+move_subvector.p
+movebits.p
+newanyarray.p
+;;; GC-auto(C) 0.01  MEM: u 107204 + f 393018 + s 2 = 500224
+newanyproperty.p
+newproperty.p
+nfvec_generic.p
+nonlocal_goto.p
+number_coerce.p
+numbers.p
+;;; GC-auto(C) 0.01  MEM: u 102800 + f 397421 + s 3 = 500224
+os_process.p
+pair.p
+parse_string.p
+pdr_util.p
+perm_ident.p
+;;; GC-auto(C) 0.01  MEM: u 88753 + f 411439 + s 32 = 500224
+plog_area.p
+plog_process.p
+plogcore.p
+plogterms.p
+;;; GC-auto(C) 0.01  MEM: u 100350 + f 399871 + s 3 = 500224
+pop11_compile.p
+pop11_loops.p
+pop11_proglist_util.p
+;;; GC-auto(C) 0.01  MEM: u 91149 + f 409013 + s 62 = 500224
+pop11_sections.p
+pop11_syntax.p
+;;; GC-auto(C) 0.01  MEM: u 172091 + f 328129 + s 4 = 500224
+pop_callstack_lim.p
+pop_hash_lim.p
+pop_malloc_min_alloc.p
+popdevin.p
+popdevout.p
+poplog_main.p
+;;; GC-auto(C) 0.01  MEM: u 109850 + f 390371 + s 3 = 500224
+poprawdev.p
+poptitle.p
+power.p
+pr_field.p
+pretty.p
+print.p
+;;; GC-auto(C) 0.01  MEM: u 102953 + f 397271 + s 0 = 500224
+print_concat.p
+procedure.p
+process.p
+property.p
+;;; GC-auto(C) 0.01  MEM: u 102244 + f 397978 + s 2 = 500224
+property_active.p
+property_equal.p
+property_misc.p
+quot_rem.p
+random.p
+ratio.p
+;;; GC-auto(C) 0.01  MEM: u 95434 + f 404780 + s 10 = 500224
+ratio_float.p
+rawcharin.p
+rawcharout.p
+rawsubstringout.p
+readitem.p
+readline.p
+;;; GC-auto(C) 0.01  MEM: u 94251 + f 405973 + s 0 = 500224
+readstringline.p
+rec_generic.p
+ref.p
+regexp_compile.p
+regexp_search.p
+;;; GC-auto(C) 0.01  MEM: u 128582 + f 371589 + s 53 = 500224
+rtlex_closure.p
+rtlex_ident.p
+sect_1word.p
+sect_app_idents.p
+sect_cancel.p
+;;; GC-auto(C) 0.01  MEM: u 97225 + f 402999 + s 0 = 500224
+sect_current.p
+sect_currwid.p
+sect_ident.p
+sect_impexp.p
+sect_name.p
+sect_subsect.p
+sect_wid.p
+;;; GC-auto(C) 0.01  MEM: u 98826 + f 401373 + s 25 = 500224
+sect_widprop.p
+section.p
+setfrontlist.p
+setpop.p
+setpop_reset.p
+;;; GC-auto(C) 0.01  MEM: u 109505 + f 390716 + s 3 = 500224
+shift.p
+sig_async.p
+sig_max.p
+sig_queue.p
+sig_stop.p
+signals.p
+;;; GC-auto(C) 0.01  MEM: u 115512 + f 384706 + s 6 = 500224
+sigtab.p
+skipchar.p
+skipchar_back.p
+sqrt.p
+sr_incr.p
+;;; GC-auto(C) 0.01  MEM: u 96432 + f 403770 + s 22 = 500224
+sr_sys.p
+sr_util.p
+;;; GC-auto(C) 0.01  MEM: u 124271 + f 375950 + s 3 = 500224
+stack.p
+string.p
+stringin.p
+subscr_stack.p
+;;; GC-auto(C) 0.01  MEM: u 107086 + f 393128 + s 10 = 500224
+subscrl.p
+subsystem.p
+subsystem_compile.p
+sys_async_input.p
+sys_autoload.p
+sys_clear_input.p
+;;; GC-auto(C) 0.01  MEM: u 99839 + f 400385 + s 0 = 500224
+sys_current_ident.p
+sys_file_move.p
+sys_file_stat.p
+sys_fname.p
+;;; GC-auto(C) 0.01  MEM: u 110582 + f 389642 + s 0 = 500224
+sys_host_id.p
+sys_host_name.p
+sys_input_waiting.p
+sys_io_control.p
+sys_os_type.p
+sys_read_lines.p
+;;; GC-auto(C) 0.01  MEM: u 100217 + f 399955 + s 52 = 500224
+sys_read_path.p
+sys_real_time.p
+sys_search_doc_index.p
+sys_timer.p
+syscancelword.p
+;;; GC-auto(C) 0.01  MEM: u 116734 + f 383488 + s 2 = 500224
+syscreate.p
+sysdate.p
+sysdelete.p
+sysexecute.p
+sysexit.p
+;;; GC-auto(C) 0.01  MEM: u 116461 + f 383736 + s 27 = 500224
+sysfileok.p
+sysfork.p
+sysio.p
+sysisdirectory.p
+;;; GC-auto(C) 0.01  MEM: u 121053 + f 379165 + s 6 = 500224
+syslibcompile.p
+syslink.p
+syslock.p
+syslocksys.p
+sysmatch.p
+sysobey.p
+;;; GC-auto(C) 0.01  MEM: u 100664 + f 399520 + s 40 = 500224
+sysopen.p
+syspipe.p
+sysprarrow.p
+sysprotect.p
+sysreadwrite.p
+;;; GC-auto(C) 0.01  MEM: u 123264 + f 376957 + s 3 = 500224
+syssearchpath.p
+sysseek.p
+syssetup.p
+systime.p
+systmpfile.p
+sysutil.p
+;;; GC-auto(C) 0.01  MEM: u 132569 + f 367653 + s 2 = 500224
+syswait.p
+termcap.p
+testbit.p
+;;; GC-auto(C) 0.01  MEM: u 106726 + f 393494 + s 4 = 500224
+trace.p
+trig.p
+trigc.p
+trigcinv.p
+trigh.p
+trighinv.p
+;;; GC-auto(C) 0.01  MEM: u 102098 + f 398125 + s 1 = 500224
+undef.p
+underscore.p
+unix_dir.p
+unixextern.p
+;;; GC-auto(C) 0.01  MEM: u 140738 + f 359368 + s 118 = 500224
+unixfmatch.p
+uppertolower.p
+userrec.p
+uservec.p
+;;; GC-auto(C) 0.01  MEM: u 122333 + f 377888 + s 3 = 500224
+valof.p
+vec_generic.p
+vector.p
+vedstring.p
+vm_asm.p
+;;; GC-auto(C) 0.01  MEM: u 126933 + f 373284 + s 7 = 500224
+vm_conspdr.p
+;;; GC-auto(C) 0.01  MEM: u 176223 + f 323771 + s 230 = 500224
+vm_control.p
+;;; GC-auto(C) 0.01  MEM: u 174840 + f 325379 + s 5 = 500224
+vm_fields.p
+vm_global.p
+vm_optim.p
+;;; GC-auto(C) 0.01  MEM: u 154603 + f 345619 + s 2 = 500224
+vm_plant.p
+vm_plog.p
+;;; GC-auto(C) 0.01  MEM: u 113076 + f 387146 + s 2 = 500224
+word.p
+wordutil.p
+writeable.p
+xt_support.p
+poplibr
+;;; GC-auto(C) 0.01  MEM: u 46457 + f 20517 + s 98 = 67072
+;;; GC-auto(C) 0.01  MEM: u 70509 + f 33671 + s 268 = 104448
+After recompilation
+ -----------------------------------------------
+link a complete system into a newpop11 image, using pglink
+ -----------------------------------------------
+pglink -core
+@--- poplink command line
+poplink -p -date Sat May  8 11:31:49 EDT 2021 -ident 0 -x_complete -noshare -o newpop11 -e $-Sys$-Poplog_Main -s ( $- $-lisp ) $popobjlib/src.wlb -ex ( )
+;;; GC-auto(C) 0.01  MEM: u 53527 + f 13541 + s 4 = 67072
+Using built-in specs.
+COLLECT_GCC=cc
+COLLECT_LTO_WRAPPER=/usr/lib/gcc/x86_64-linux-gnu/5/lto-wrapper
+Target: x86_64-linux-gnu
+Configured with: ../src/configure -v --with-pkgversion='Ubuntu 5.4.0-6ubuntu1~16.04.12' --with-bugurl=file:///usr/share/doc/gcc-5/README.Bugs --enable-languages=c,ada,c++,java,go,d,fortran,objc,obj-c++ --prefix=/usr --program-suffix=-5 --enable-shared --enable-linker-build-id --libexecdir=/usr/lib --without-included-gettext --enable-threads=posix --libdir=/usr/lib --enable-nls --with-sysroot=/ --enable-clocale=gnu --enable-libstdcxx-debug --enable-libstdcxx-time=yes --with-default-libstdcxx-abi=new --enable-gnu-unique-object --disable-vtable-verify --enable-libmpx --enable-plugin --with-system-zlib --disable-browser-plugin --enable-java-awt=gtk --enable-gtk-cairo --with-java-home=/usr/lib/jvm/java-1.5.0-gcj-5-amd64/jre --enable-java-home --with-jvm-root-dir=/usr/lib/jvm/java-1.5.0-gcj-5-amd64 --with-jvm-jar-dir=/usr/lib/jvm-exports/java-1.5.0-gcj-5-amd64 --with-arch-directory=amd64 --with-ecj-jar=/usr/share/java/eclipse-ecj.jar --enable-objc-gc --enable-multiarch --disable-werror --with-arch-32=i686 --with-abi=m64 --with-multilib-list=m32,m64,mx32 --enable-multilib --with-tune=generic --enable-checking=release --build=x86_64-linux-gnu --host=x86_64-linux-gnu --target=x86_64-linux-gnu
+Thread model: posix
+gcc version 5.4.0 20160609 (Ubuntu 5.4.0-6ubuntu1~16.04.12) 
+COMPILER_PATH=/usr/lib/gcc/x86_64-linux-gnu/5/:/usr/lib/gcc/x86_64-linux-gnu/5/:/usr/lib/gcc/x86_64-linux-gnu/:/usr/lib/gcc/x86_64-linux-gnu/5/:/usr/lib/gcc/x86_64-linux-gnu/
+LIBRARY_PATH=/usr/lib/gcc/x86_64-linux-gnu/5/:/usr/lib/gcc/x86_64-linux-gnu/5/../../../x86_64-linux-gnu/:/usr/lib/gcc/x86_64-linux-gnu/5/../../../../lib/:/lib/x86_64-linux-gnu/:/lib/../lib/:/usr/lib/x86_64-linux-gnu/:/usr/lib/../lib/:/usr/lib/gcc/x86_64-linux-gnu/5/../../../:/lib/:/usr/lib/
+COLLECT_GCC_OPTIONS='-v' '-o' 'newpop11' '-L/home/sfkleach/poplog-lab/poplog_base/pop/extern/lib/' '-mtune=generic' '-march=x86-64'
+ /usr/lib/gcc/x86_64-linux-gnu/5/collect2 -plugin /usr/lib/gcc/x86_64-linux-gnu/5/liblto_plugin.so -plugin-opt=/usr/lib/gcc/x86_64-linux-gnu/5/lto-wrapper -plugin-opt=-fresolution=/tmp/ccm1KL3O.res -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lgcc_s --sysroot=/ --build-id --eh-frame-hdr -m elf_x86_64 --hash-style=gnu --as-needed -dynamic-linker /lib64/ld-linux-x86-64.so.2 -z relro -o newpop11 /usr/lib/gcc/x86_64-linux-gnu/5/../../../x86_64-linux-gnu/crt1.o /usr/lib/gcc/x86_64-linux-gnu/5/../../../x86_64-linux-gnu/crti.o /usr/lib/gcc/x86_64-linux-gnu/5/crtbegin.o -L/home/sfkleach/poplog-lab/poplog_base/pop/extern/lib/ -L/usr/lib/gcc/x86_64-linux-gnu/5 -L/usr/lib/gcc/x86_64-linux-gnu/5/../../../x86_64-linux-gnu -L/usr/lib/gcc/x86_64-linux-gnu/5/../../../../lib -L/lib/x86_64-linux-gnu -L/lib/../lib -L/usr/lib/x86_64-linux-gnu -L/usr/lib/../lib -L/usr/lib/gcc/x86_64-linux-gnu/5/../../.. -export-dynamic -no-as-needed poplink_1.o poplink_2.o poplink_3.o /home/sfkleach/poplog-lab/poplog_base/pop/obj/src.olb poplink_4.o poplink_dat.o -lpop -ldl -lncurses -lm -lc -lgcc --as-needed -lgcc_s --no-as-needed -lc -lgcc --as-needed -lgcc_s --no-as-needed /usr/lib/gcc/x86_64-linux-gnu/5/crtend.o /usr/lib/gcc/x86_64-linux-gnu/5/../../../x86_64-linux-gnu/crtn.o
+/usr/bin/ld: cannot find -lncurses
+collect2: error: ld returned 1 exit status
+
+;;; MISHAP - POPLINK: ERRORS IN LINKING (see above)
+;;; PRINT DOING
+;;; DOING    :  sysprmishap prmishap sys_pr_exception sys_exception_final
+;;; 	sys_exception_handler 
+;;; 	sys_raise_exception() assemble_and_link Main make_saved_image 00000000
+;;; 	007D05D0 sysEXECUTE pop11_exec_stmnt_seq_to sysCOMPILE pop11_comp_stre
+;;; 	am pop11_compile pop_setpop_compiler setpop 
+total 3808
+-rwxr-xr-x 1 sfkleach sfkleach 2490157 Aug 22  2020 corepop
+-rwxr-xr-x 1 sfkleach sfkleach   11315 Aug 22  2020 pglink
+lrwxrwxrwx 1 sfkleach sfkleach       7 May  8 11:31 popc -> corepop
+-rw-rw-r-- 1 sfkleach sfkleach  826968 May  8 11:31 popc.psv
+lrwxrwxrwx 1 sfkleach sfkleach       7 May  8 11:31 poplibr -> corepop
+-rw-rw-r-- 1 sfkleach sfkleach  245336 May  8 11:31 poplibr.psv
+lrwxrwxrwx 1 sfkleach sfkleach       7 May  8 11:31 poplink -> corepop
+-rw-rw-r-- 1 sfkleach sfkleach  323160 May  8 11:31 poplink.psv

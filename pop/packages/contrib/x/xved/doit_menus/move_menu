@@ -1,0 +1,31 @@
+MENU FILE HEADER (Don't delete)
+MENU FILE NAME: $popcontrib/x/xved/doit_menus/move_menu
+WARNING: the following move commands will
+not work with menu files. In menus move the
+cursor with the mouse, or with keypad keys.
+
+Move to top of file                         !!      vedtopfile
+Move to end of file                         !!      vedendfile
+
+Move to top of procedure                    !!      veddo(%'\\@adefine '%)
+Move to end of procedure                    !!      veddo(%'/@aenddefine'%)
+
+Screen left                                 !!      vedscreenleft
+Screen right                                !!      vedscreenright
+Screen up                                   !!      vedscreenup
+Screen down                                 !!      vedscreendown
+Text left                                   !!      vedtextleft
+Text right                                  !!      vedtextright
+
+Move up "lots"                              !!      RETURNAFTER vedcharuplots
+Move down "lots"                            !!      RETURNAFTER vedchardownlots
+Move left "lots"                            !!      RETURNAFTER vedcharleftlots
+Move right "lots"                           !!      RETURNAFTER vedcharrightlots
+
+Move word right                             !!      RETURNAFTER vedwordright
+Move word left                              !!      RETURNAFTER vedwordleft
+
+Move up a line                              !!      RETURNAFTER vedcharup
+Move down a line                            !!      RETURNAFTER vedchardown
+Scroll menu      ----->                     !!      'menu scroll'
+Menu menu        ----->                     !!      'menu menu'

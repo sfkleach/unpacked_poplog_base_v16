@@ -1,0 +1,23 @@
+MENU FILE HEADER (Don't delete)
+MENU FILE NAME: $popcontrib/x/xved/doit_menus/delete_menu
+Delete line                                 !!  RETURNAFTER vedlinedelete
+Undo it                                     !!  RETURNAFTER ved_yankl
+Delete line to left                         !!  RETURNAFTER vedclearhead
+Undo it                                     !!  RETURNAFTER ved_yankw
+Delete line to right                        !!  vedcleartail
+Undo it                                     !!  RETURNAFTER ved_yankw
+
+Delete word left                            !!  RETURNAFTER vedwordleftdelete
+Undo it                                     !!  RETURNAFTER ved_yankw
+Delete word right                           !!  RETURNAFTER vedwordrightdelete
+Undo it                                     !!  RETURNAFTER ved_yankw
+Delete marked range                         !!  ved_d
+Undo it                                     !!  ved_y
+Delete everything in file                   !!  ved_clear
+Undo it                                     !!  ved_y
+
+Delete file from disk                       !!  sysdelete(%vedpathname%) <> erase
+
+Delete up to string                         !!  ENTER 'ds '
+
+Menu menu      ----->                       !!  'menu menu'

@@ -1,0 +1,24 @@
+MENU FILE HEADER (Don't delete)
+MENU FILE NAME: $popcontrib/x/xved/doit_menus/menu_menu
+NB CTRL-X d or META Mouse-3 will "do" the
+selected menu action.  Click twice to clear
+all menu files. CTRL-X q quits menu files.
+
+Range menu         -->                      !!          'menu range'
+Range mark menu    -->                      !!          'menu rangemark'
+Dired menu         -->                      !!          'menu dired'
+Search menu        -->                      !!          'menu search'
+Replace menu       -->                      !!          'menu replace'
+Casechange menu    -->                      !!          'menu casechange'
+Position menu      -->                      !!          'menu position'
+Move menu          -->                      !!          'menu move'
+Scroll menu        -->                      !!          'menu scroll'
+Delete menu        -->                      !!          'menu delete'
+Command menu       -->                      !!          'menu command'
+Textblock menu     -->                      !!          'menu textblock'
+Miscellaneous menu -->                      !!          'menu miscellaneous'
+File menu          -->                      !!          'menu file'
+Programming menu   -->                      !!          'menu programming'
+Mail menu          -->                      !!          'menu mail'
+Help menu          -->                      !!          'menu help'
+Get rid of menu files                       !!          menu_clear_menu_files

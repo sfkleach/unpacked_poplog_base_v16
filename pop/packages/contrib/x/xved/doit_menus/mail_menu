@@ -1,0 +1,22 @@
+MENU FILE HEADER (Don't delete)
+MENU FILE NAME: $popcontrib/x/xved/doit_menus/menus/mail_menu
+{Send mail with "To: line}
+    Send whole file                         !!      ved_send
+    Send marked range                       !!      ved_sendmr
+
+{Send mail without "To: line}
+    Send whole file (give recipient)        !!      ENTER 'send '
+    Send marked range (give recipient)      !!      ENTER 'sendmr '
+
+Get help on sending mail                    !!      'help send'
+
+Get help on reading mail                    !!      'help ved_mail'
+Read mail in VED                            !!      ved_mail
+
+Reply to sender of current message          !!      ved_reply
+Reply to sender and other recipients        !!      ved_Reply
+
+Get information on Net News                 !!      'help ved_net'
+Information on posting news                 !!      'help ved_postnews'
+
+Menu menu           ----->                 !!      'menu menu'

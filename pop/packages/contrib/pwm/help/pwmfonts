@@ -1,0 +1,116 @@
+HELP PWMFONTS                                   Ben Rubinstein, Feb 1987
+                                             Revised: Nic Ford, Jul 1987
+
+    Writing text on graphics windows and in different fonts.
+
+    pwm_gfxtext(<integer:X>, <integer:Y>, <string>)
+    pwm_gfxloadfont(<string>) -> <font-id|false>
+    pwm_gfxkillfont(<font-id>)
+    pwm_fontwidth(<font-id>) -> <integer>
+    pwm_fontheight(<font-id>) -> <integer>
+    pwm_fontbaseline(<font-id>) -> <integer>
+    <font-id> -> pwmgfxfont
+
+Keywords: PWM, fonts, graphics, text
+
+== CONTENTS - (Use <ENTER> g to access sections) ==
+
+ -- Displaying text: pwmgfxtext
+ -- pwmgfxfont & pwmstdfont
+ -- Accessing font attributes
+ -- Creating and destroying additional fonts
+
+-- Displaying text: pwmgfxtext ----------------------------------------
+
+Graphics windows do not support terminal emulation facilities, so you
+cannot write text on them simply by assigning one to -pwmtextwindow- and
+printing. However, there is an explicit call which will display a line
+of text on a graphics window:
+
+    pwm_gfxtext(<integer:X>, <integer:Y>, <string>)
+
+will display the string (or as much of it as will fit) horizontally on
+the current graphics window (-pwmgfxsurface-), with the left edge and
+baseline of the first character at coordinate (X, Y).  This call can
+also be used on a text window, but the string will not be noted by the
+terminal emulation facilities: thus it will disappear if the window is
+refreshed, and may be corrupted by other terminal operations.
+
+The text is printed using -pwmgfxrasterop- (see HELP *PWMGRAPHICS) so
+for example if this is set to PWM_OR the text will be combined with
+the image underneath.
+
+Only pixels under the text are effected. Thus if you are changing existing
+text you must first clear the area where the text is to be written. This
+can be one in two ways, if the old text is known then it can be removed by
+setting -pwmgfxrasterop- and calling pwm_gfxtext with the old text, or you
+can call pwm_gfxwipearea with the same arguments as pwm_gfxtext.
+
+-- pwmgfxfont & pwmstdfont --------------------------------------------
+
+The font used by -pwm_gfxtext- is controlled by the active variable
+-pwmgfxfont-.   The default value of this is the standard font; that is,
+the font used by the terminal emulator in text windows.  This font is
+also assigned to the constant -pwmstdfont-.
+
+-- Accessing font attributes ------------------------------------------
+
+You may have noticed above that the arguments to -pwm_gfxtext- specify
+the coordinates of the left edge and baseline of the first character in
+the string.  If you wish to position the top of the text, you need to
+know the distance from the top of the text to the baseline; similarly if
+you wish to know the bottom and right-hand edges of the text that has
+been printed, you need to know the width and height (and baseline) of
+each character. There are three functions which return these values when
+applied to a font:
+
+    pwm_fontwidth(<font-id>) -> <integer>
+    pwm_fontheight(<font-id>) -> <integer>
+    pwm_fontbaseline(<font-id>) -> <integer>
+
+The width is the number of pixels that each character occupies
+horizontally; the height is the number of pixels that each character
+occupies vertically; subtracting the baseline from the vertical portion
+of the coordinate given to -pwm_gfxtext- gives the coordinate of the
+first pixel affected by the operation.
+
+Note that if the font is proportionally-spaced the width and height
+values returned by the above functions will be those of the widest and
+highest characters in the font.  There is at present no proper support
+for proportional fonts.
+
+-- Creating and destroying additional fonts ---------------------------
+
+If the workstation on which your PWM is running supports multiple fonts,
+you can load a new font with the function -pwm_gfxloadfont-.  This
+function takes a string which is passed uninterpreted to the PWM: the
+PWM will interpret this to specify a font however that is done on
+the particular workstation, and if it can be successfully loaded, will
+return a font-id by which the font can be referenced.  On the Sun, for
+example, the string should be the full pathname of a font file stored in
+"vfont" format (see MAN 5 VFONT).
+
+Once loaded, the font-id can be assigned to -pwm_gfxfont-, and
+subsequent calls of -pwm_gfxtext- will use this font.
+
+Because all operations except -pwm_gfxloadfont- are applied to
+font-id's, a program which is designed to work with several different
+PWM's can confine the PWM-specific code to a initialisation routine that
+loads a font using the appropriate specification string.  The rest of
+the program can be completely general.
+
+Maintaining a font ties up resources in the PWM: therefore if you are
+using a lot of different fonts, it is worth telling the PWM it can
+reclaim the resources when you have finished with a font.  The
+function -pwm_gfxkillfont- does this:
+
+    pwm_gfxkillfont(<font-id>)
+
+In addition, if you lose all references to the font-id and can therefore
+no longer use it (or kill it with the above function) POPLOG will
+instruct the PWM to kill it at the next garbage collection.  (Note that
+this will not happen if the font is still the one assigned to
+-pwmgfxfont-.)
+
+--- C.all/help/pwmfonts ------------------------------------------------
+--- Copyright University of Sussex 1987. All rights reserved. ----------

@@ -1,0 +1,54 @@
+REF XPWMOUSE                                Andreas Schoter, August 1990
+
+        COPYRIGHT University of Sussex 1990. All Rights Reserved.
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+<<<<<<<<<<<<<<<<<<<<<<<<<                       >>>>>>>>>>>>>>>>>>>>>>>>
+<<<<<<<<<<<<<<<<<<<<<<<<<    XPWMOUSE LIBRARY   >>>>>>>>>>>>>>>>>>>>>>>>
+<<<<<<<<<<<<<<<<<<<<<<<<<                       >>>>>>>>>>>>>>>>>>>>>>>>
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+
+This ref file details the facilities provided by LIB *XpwMouse
+
+
+xpw_last_event(-EVENT)                                       [predicate]
+        This predicate  returns the  last  event registered.  The  exact
+        meaning of the value  will vary depending on  the event, but  in
+        the case of a  mouse button event  EVENT will be  an INT in  the
+        range -3 to 3 where 1 signifies the leftmost mouse button, 2 the
+        middle button and  3 the  rightmost button  - if  the number  is
+        positive then  it refers  to a  button press  event and  it  the
+        number is negative it refers to a button release event.
+
+
+xpw_mouse_xy(+WIDGETID,-X,-Y)                                [predicate]
+        This predicate returns  the X,Y  coordinates of  the last  mouse
+        event in the widget specified by the WIDGETID. X,Y are  returned
+        as INTS.
+
+
+on_button_event(+WIDGETID,+PRED,+MODE)                       [predicate]
+on_motion_event(+WIDGETID,+PRED,+MODE)                       [predicate]
+on_mouse_event(+WIDGETID,+PRED,+MODE)                        [predicate]
+        These  predicates   provide   convenient   interfaces   to   the
+        xpw_add_callback/4 predicate. For example the call
+
+            ?- on_button_event(1,test,clear).
+
+        is equivalent to the call
+
+            ?- xpw_add_callback(1,test,button_event,clear).
+
+        WIDGETID is  the  ID of  a  valid  Prolog widget.  PRED  is  the
+        principle functor of  the Prolog  predicate to be  added to  the
+        specified callback list, and MODE specifies how the predicate is
+        to be added to the list. MODE is a Prolog atom (either clear  or
+        append). If  MODE is  given  as clear  then all  procedures  are
+        removed from the callback  list before adding  PRED, if MODE  is
+        specified as append the  PRED is simply added  on to the end  of
+        the existing list of callbacks. (See also REF * xcallbacks)
+
+
+--- C.all/x/plog/ref/XpwMouse
+--- Copyright University of Sussex 1990. All rights reserved. ----------

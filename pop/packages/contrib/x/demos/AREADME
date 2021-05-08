@@ -1,0 +1,13 @@
+$popcontrib/x/demos/AREADME
+
+This file contains a mishmash of example programs using Xpop facilities.
+The only purpose is to provide some illustrations of ways of using
+those facilities. The programs are not guaranteed to be useful, or
+interesting, or even to work as you might expect.
+
+They have no documentation apart from comments in the files.
+
+
+WARNING:
+Programs included here in one version of Poplog may not be included
+in the next distribution. So copy anything you want to preserve.

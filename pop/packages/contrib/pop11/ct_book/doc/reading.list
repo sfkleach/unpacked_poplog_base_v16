@@ -1,0 +1,330 @@
+
+
+
+Computers and Thought - Reading list.
+====================================
+
+Tom Khabaza
+October 1985.
+
+
+General notes on readings:
+-------------------------
+
+There are no basic introductory textbooks for the material covered in this
+course.  Instead, we provide a variety of readings in the hope that you will
+find at least some of them available and comprehensible.
+
+In addition to the basic readings, advanced readings are provided for the
+"expertise and stored knowledge" section of the course.  Read these if you
+find the basic reading too simple (or un-available), or if you are covering
+these topics in an essay.  The sections referenced from Barr & Feigenbaum's
+"Handbook of Artificial Intelligence", although sometimes in the "basic
+readings" section, tend to be rather terse, but they are straight-forward and
+clear descriptions of the relevant concepts.
+
+Where possible, the library classification of the book or journal has been
+included in the bibliography, following the entry, in square brackets ([]).
+
+Readings on "What is AI":
+------------------------
+
+Boden (1977)
+    Chapter 1, conveniently titled "What is Artificial Intelligence".
+McCorduck (1979)
+    Most of parts I and II are relevant - this is a readable book, and well
+    worth skimming.
+Feigenbaum & McCorduck (1983)
+    Most of Part One is relevant; all of the book is readable and interesting.
+
+
+Readings on Eliza:
+-----------------
+
+Boden (1977)
+    Chapter 5 on "Responding to Language".
+Weizenbaum (1976)
+    Chapter 7 on "The computer and natural language".
+
+Slightly more advanced:
+
+Weizenbaum (1966)
+    This is the original paper in which Weizenbaum revealed all - ignore the
+    obscure bits of program, and concentrate on the description.
+
+
+Introductory readings on Expertise and Stored Knowledge:
+-------------------------------------------------------
+
+Basic reading:
+
+
+
+                                                            October 1985
+
+
+
+CT Reading list                                                   Page 2
+
+
+Feigenbaum & McCorduck (1983)
+    Part Three "Experts in Silicon".
+McCorduck (1979)
+    Chapter 12 on "Applied Artificial Intelligence".
+
+More advanced:
+
+Bramer (1982)
+    In particular, this contains a long list of existing expert systems and
+    their major characteristics.
+Hayes-Roth et al. (1983) and Stefik et al. (1982)
+    These are both good overviews, but rather advanced.
+Barr & Feigenbaum (1982) Vol. 1, Chapter III: "Representation of Knowledge",
+    Section A: "Overview", pp 143-152.
+
+
+Readings on Semantic Nets:
+-------------------------
+
+Basic concepts:
+
+Norman (1978) (O.U. course material).
+    This contains a very short section on semantic nets.
+Barr & Feigenbaum (1982) Vol. 1, Chapter III: "Representation of Knowledge",
+    Section C3 "Representation Schemes: Semantic networks".
+
+More advanced:
+
+Winston (1977)
+    Chapter 2, last section on "Learning simple descriptions".
+    Gives some idea of how semantic nets can be used in machine learning.
+Rich (1983)
+    Chapter 7, sections 7.1 - 7.2.1.
+Woods (1975) "What's in a Link?"
+    Classic paper on semantic nets.
+Slack (1978) (O.U. course material).
+    This is rather long, but worth skimming to get the gist of how semantic
+    nets are used as models of human memory.
+Collins & Quillian (1969)
+    This is a good paper on the psychological aspects of this topic.
+
+
+Readings on Production Systems:
+------------------------------
+
+Basic concepts:
+
+Many modern introductions to AI contain brief explanations of production
+systems - for example Bundy et al. (1980), Chapter 5, Section 5, although this
+unfortunately uses the simplified AI programming language "LOGO" - try to
+ignore the bits of program that you don't understand.
+
+More advanced:
+
+Luger (1978) (O.U. course material).
+    This contains relevant sections; although this is rather long, it's worth
+    skimming for the psychological angle.
+
+
+                                                            October 1985
+
+
+
+CT Reading list                                                   Page 3
+
+
+Winston (1977)
+    Chapter 5, sections on "Situation-action rules and production systems" and
+    "Production systems and human problem solving".
+Barr & Feigenbaum (1982). Vol. 1, Chapter III: "Representation of Knowledge",
+    Section C4 "Representation Schemes: Production Systems"
+
+
+Readings on perception
+----------------------
+
+Boden (1977)
+    Part IV: "The visual world".
+Rich (1983)
+    Chapter 10: "Perception".
+Frisby (1979).
+
+
+Readings for philosophical section
+----------------------------------
+    and "What can programming computers teach us about thought" essay:
+    -----------------------------------------------------------------
+
+Boden (1977)
+    Chapter 14 on "Philosophical Issues", and Chapter 15 on "Social
+    Significance"
+Hagueland (1981)
+    This book contains many interesting papers; particularly relevant are the
+    chapters by Dreyfus, Dennett and Searle.
+Hofstadter & Dennet (1981)
+    Again, this contains many interesting papers; particularly relevant are
+    those in sections II ("Soul Searching") and IV ("Mind as Program").
+Turing (1950).
+    A classic article on the question of thinking computers.  Essential
+    reading.
+Weizenbaum (1976)
+    This is quite a readable book; in particular, chapters 5, 8, 9 and 10 are
+    relevant to this section of the course.
+Sloman (1978).
+
+
+
+Bibliography:
+------------
+
+ANDERSON, A. R. (1964) "Minds and machines", Prentice-Hall.
+    [QE 100 And].
+    3 copies.
+
+BARR, A. and FEIGENBAUM, E. A. (1982) "The Handbook of Artificial
+    Intelligence", Volumes 1 and 2, Pitman.
+    [QZ 1240 Han].
+
+BARRETT, R., RAMSAY, A. AND SLOMAN, A. (1985) "POP-11: A practical language
+    for Artificial Intelligence", Ellis Horwood and Wiley, 1985.
+
+
+
+
+
+                                                            October 1985
+
+
+
+CT Reading list                                                   Page 4
+
+
+BOBROW, D. G. and COLLINS, A. (1975) "Representation and Understanding:
+    Studies in Cognitive Science", Academic Press.
+    [QZ 1010 Rep].
+
+BODEN, M. A. (1977) "Artificial Intelligence and Natural Man", Harvester
+    Press.
+    [QZ 1240 Bod].
+
+BRAMER, M. A. (1982) "A survey and critical review of expert systems
+    research", in Michie (ed.) (1983), pp 3-29.
+
+BUNDY, A., BURSTALL, R. M., WEIR, S. and YOUNG, R. M. (1980) "Artificial
+    Intelligence: An introductory course", Edinburgh University Press.
+
+COLLINS, A. M. and QUILLIAN, M. R. (1969) "Retrieval time from semantic
+    memory", Journal of Verbal Learning and Verbal Behaviour, Vol. 8, pp
+    240-247, reprinted in "Offprints booklet", Open University, course D303:
+    "Cognitive Psychology", 1979.
+    [BF 311 Ope].
+
+FEIGENBAUM, E. A. and FELDMAN, J. (eds.) (1963) "Computers and Thought",
+    McGraw-Hill.
+    [QE 1000 Fei].
+
+FEIGENBAUM, E. A. and McCORDUCK, P. (1983) "The Fifth Generation", Pan.
+    [QZ 1240 Fei].
+
+FRISBY, J. P. (1979) "Seeing: Illusion, brain and mind", O.U.P.
+    [QZ 314 Fri].
+
+HAUGELAND, J. (ed.) (1981) "Mind design", MIT Press.
+    [QE 100 Min].
+    1 copy.
+
+HAYES-ROTH, F., WATERMAN, D. A. and LENAT, D. B. (1983) "An Overview of Expert
+    Systems", in Hayes-Roth, Waterman & Lenat (eds.) "Building Expert
+    Systems", Addison Wesley, 1983
+    [QZ 1240 Bui].
+
+HOFSTADTER, D. R. and DENNET, D. C. (eds.) (1981) "The Mind's I", Harvester
+    Press.
+    [BD 331 Min].
+    7 copies.
+
+LUGER, G. (1978) "Formal analyses of problem solving behaviour", Open
+    University, course D303: "Cognitive Psychology", Block 4: "Learning and
+    problem solving (part 3)", Unit 28.
+    [BF 311 Ope].
+
+McCORDUCK, P. (1979) "Machines Who Think: A Personal Inquiry into the History
+    and Prospects of Artificial Intelligence", Freeman.
+    [QZ 1240 Mac].
+
+MICHIE, D. (ed.) (1982) "Introductory Readings in Expert Systems", Gordon and
+    Breach.
+    [QZ 1240 Int].
+
+
+
+                                                            October 1985
+
+
+
+CT Reading list                                                   Page 5
+
+
+NORMAN, D. (1978) "Overview", Open University, course D303: "Cognitive
+    Psychology", Units 31-32.
+    [BF 311 Ope].
+
+RICH, E. (1983) "Artificial Intelligence", McGraw-Hill.
+    [QZ 1240 Ric].
+
+SLACK, J. (1978) "Semantic memory", Open University, course D303: "Cognitive
+    Psychology", Block 3: "Memory (part 2)", Units 18-19.
+    [BF 311 Ope].
+
+SLOMAN, A. (1978) "The Computer Revolution in Philosophy", Harvester Press.
+
+STEFIK, M., AIKINS, J., BALZER, R., BENOIT, J., BIRNAUM, L., HAYES-ROTH, F.
+    and SACERDOTI, E. (1982) "The Organisation of Expert Systems, A Tutorial",
+    Artificial Intelligence, Volume 18, Number 2, March 1982.
+    [QE 1 Art].
+
+TURING, A. M. (1950) "Computing Machinery and Intelligence", Mind, Vol. LIX,
+    No. 236, reprinted in Feigenbaum & Feldman (1963), in Anderson (1964), and
+    in Hofstadter & Dennet (1981).
+
+WEIZENBAUM, J. (1966) "ELIZA - A Computer Program For the Study of Natural
+    Language Communication Between Man And Machine", in Communications of the
+    ACM, Vol. 9, No. 1, January 1966.
+    [QE 1 Com].
+
+WEIZENBAUM, J. (1976) "Computer power and human reason", Freeman.
+    [QE 1000 Wei].
+
+WINSTON, P. H. (1977) "Artificial Intelligence", Addison-Wesley.
+    [QZ 1240 Win].
+
+WOODS, W. A. (1975) "What's in a link: Foundations for Semantic Networks", in
+    Bobrow & Collins (1975), pp 35-82.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                                            October 1985
+
+
+

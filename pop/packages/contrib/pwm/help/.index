@@ -1,0 +1,26 @@
+Plug Archive Index: send poplog/pwm/help/.index
+===============================================
+
+This file lists all of the files in this terminal directory.
+
+The numbers to the left of the file names are their sizes in K
+Bytes. These numbers, and comments beginning with "#", will be
+stripped out by the archive server, so you needn't remove them,
+unless you want to.
+
+#  total 96 K Bytes
+
+   1 poplog/pwm/help/.index
+
+# Extensions to POPLOG PWM.
+# You will want all of the lib and source files.
+  22 poplog/pwm/help/pwm_trackmouse
+  10 poplog/pwm/help/pwmcolours
+   5 poplog/pwm/help/pwmfonts
+  23 poplog/pwm/help/pwmgraphics
+  36 poplog/pwm/help/pwmitems
+     poplog/pwm/lib
+#source code for PWM under SUNOS4.0 (allows more windows).
+     poplog/pwm/src
+#source code for PWM under SUNOS3.X
+     poplog/pwm/src_OS3.X

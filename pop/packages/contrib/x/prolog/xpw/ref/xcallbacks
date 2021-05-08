@@ -1,0 +1,52 @@
+REF XCALLBACKS                              Andreas Schoter, August 1990
+
+        COPYRIGHT University of Sussex 1990. All Rights Reserved.
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+<<<<<<<<<<<<<<<<<<<<<<<<<                       >>>>>>>>>>>>>>>>>>>>>>>>
+<<<<<<<<<<<<<<<<<<<<<<<<<  XCALLBACKS LIBRARY   >>>>>>>>>>>>>>>>>>>>>>>>
+<<<<<<<<<<<<<<<<<<<<<<<<<                       >>>>>>>>>>>>>>>>>>>>>>>>
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+Overview
+--------
+
+This file details the facilities provided in xprolog for adding and
+removing callbacks from widgets.
+
+
+
+xpw_add_callback(+WIDGETID,+PRED,+CALLLIST,+MODE)            [predicate]
+        This predicate  adds  a  callback to  the  widget  specified  by
+        WIDGETID. WIDGETID is  a valid  widget identifier,  PRED is  the
+        principle functor of the predicate definition to be added to the
+        callback list, CALLLIST is the callback list the action is to be
+        added to, and MODE is a  Prolog atom, specifically one of  clear
+        or append.  For example, the call
+
+            ?- xpw_add_callback(1,toggle,button_event,append).
+
+        would add the Prolog predicate with the principle functor toggle
+        to the callback list button_event of widget 1. The predicate  is
+        simply added on to the end of the callback list. In contrast the
+        call
+
+            ?- xpw_add_callback(1,toggle,button_event,clear).
+
+        would first  remove all procedures from  the callback  list  for
+        button_event before adding toggle.
+
+        Note that xprolog  does not allow  user specification of  client
+        data for callbacks as this is used internally.  (See also REF
+        *XpwMouse)
+
+
+xpw_remove_all_callbacks(+WIDGETID,+CALLLIST)                [predicate]
+        WIDGETID is a valid Prolog widget ID, CALLLIST is a Prolog  atom
+        corresponding to the name of a callback list for the widget. All
+        procedures in the specified list are removed.
+
+
+
+--- C.all/x/plog/ref/xcallbacks
+--- Copyright University of Sussex 1990. All rights reserved. ----------

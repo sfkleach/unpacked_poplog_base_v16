@@ -1,0 +1,31 @@
+Plug Archive Index: send archive/poplog/pwm/lib/.index
+======================================================
+
+This file lists all of the files in this terminal directory. They
+are not annotated here. See the corresponding help directory for
+annotation. The help directory is a sibling of this one.
+
+The numbers to the left of the file names are their sizes in K
+Bytes. These numbers, and comments beginning with "#", will be
+stripped out by the archive server, so you needn't remove them,
+unless you want to.
+
+#  total 92 K Bytes
+   1 poplog/pwm/auto/.index
+
+   7 poplog/pwm/auto/newpwmrasterarray.p
+   2 poplog/pwm/auto/pwm_displayprompt.p
+   2 poplog/pwm/auto/pwm_gfxfillpoly.p
+   1 poplog/pwm/auto/pwm_gfxpagesize.p
+   2 poplog/pwm/auto/pwm_gfxwipearea.p
+   2 poplog/pwm/auto/poplog/pwm/auto/pwm_menucall.p
+   8 poplog/pwm/auto/pwmcycleitem.p
+   8 poplog/pwm/auto/pwmexecitem.p
+   8 poplog/pwm/auto/pwmlabelitem.p
+  19 poplog/pwm/auto/pwmlistitem.p
+   3 poplog/pwm/auto/pwmmenuitem.p
+   6 poplog/pwm/auto/pwmradioitem.p
+   8 poplog/pwm/auto/pwmslideritem.p
+   1 poplog/pwm/auto/pwmsun_gfxcmslength.p
+   5 poplog/pwm/auto/pwmtoggleitem.p
+   7 poplog/pwm/auto/sunrasterfile.p

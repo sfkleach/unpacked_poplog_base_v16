@@ -1,0 +1,224 @@
+TEACH ROUTE                                 David Young, November 1986
+
+This is an introduction to two libraries, LIB ROUTE and LIB ROUTETREE.
+They demonstrate Branch and Bound search, applied to finding optimum
+routes on the London Underground. This file does not seek to explain the
+search strategy, but simply to enable you to use the libraries.
+
+         CONTENTS - (Use <ENTER> g to access required sections)
+
+ -- Using ROUTE
+ -- Changing the information printed
+ -- Looking at and adding to the map
+ -- Using the routine in your programs
+ -- Looking at the ROUTE program
+ -- Looking at the search tree with ROUTETREE
+ -- Exercises
+
+-- Using ROUTE --------------------------------------------------------
+
+To find a route on a small section of the Underground, you need only
+load the library, then call the routine ROUTE, passing it the names of
+the start and destination stations.  The library knows about 20 stations
+with 6 lines connecting them. The section it knows about corresponds
+exactly to Figure 2 of Chapter 5 of the Computers & Thought book by Mike
+Sharples et al.
+
+To load the library, mark the following instruction:
+
+    lib route;
+
+and then do <ENTER> lmr. To find a good route between, say, Victoria and
+Marble Arch, mark and do the following instruction:
+
+    route([Victoria],[Marble Arch]) ==>
+
+The procedure ROUTE takes, as you can see, two lists as arguments. The
+first contains the name of the starting station and the second the name
+of the destination. You will find that the search pattern is printed out
+as the search proceeds: every time the search reaches a new station or
+joins a new line, notification is printed. The format is largely
+self-evident, but note that line names are in capitals whilst station
+names use lower-case. When the destination has been reached, the best
+route is returned as a list giving the each station passed through, with
+the line, and the time at which that station was reached. Again the
+format of this list should be evident from the example.
+
+In station names, each word begins with a capital letter, and full stops
+and apostrophes are omitted. The only abbreviation is St for Saint. Thus
+[St Jamess Park] is correct.
+
+Try some other routes, preferably with the map from the book in front of
+you. (If you do not have the map you can reconstruct it from the library
+file - see below.) Note that sometimes the route returned will not be
+the best one in the REAL underground - for instance to go from
+Embankment to Warren Street in real life you would probably take the
+Northern Line, but as the library happens not to know about that line it
+will route you up the Bakerloo line. The database in the library can
+easily be extended to know about more lines and stations.
+
+-- Changing the information printed -----------------------------------
+
+The library normally prints out the progress of the search. You may
+prefer it to keep quiet, especially if you are using it as part of a
+tourist guide. You can do this with the following line:
+
+    false -> chatty;
+
+You can reset it with
+
+    true -> chatty;
+
+If you do
+
+    true -> verychatty;
+
+then the effect will be to print out not only the stations arrived at,
+but also the future consequences of each arrival. Try this on a short
+route.
+
+-- Looking at and adding to the map -----------------------------------
+
+It is possible to expand the map, which is held in the database. To see
+what the program knows about already, do             
+
+    database ==>
+
+after loading the library. If you have already found a route, there will
+also be information in the database about that route. The map itself is
+represented by the lines which include the word "connects".             
+
+You can add information using ADD. This is how to start off the Northern
+Line going north from Embankment. The format should be clear from the
+example.
+
+    add([[NORTHERN Embankment] connects [NORTHERN Charing Cross]]);
+    add([[NORTHERN Charing Cross] connects [NORTHERN Leicester Square]]);
+
+Of course if you did this you would probably also want to connect
+Leicester Square to Piccadilly Circus on the Piccadilly Line. Each
+statement must refer to two stations directly connected together - ie
+with no intervening stations. For this program to work properly, you
+MUSTN'T connect stations UNLESS they are adjacent on a line. You do not
+need to mention the two possible directions of travel separately.
+
+-- Using the routine in your programs ---------------------------------
+
+You may wish to incorporate the ROUTE program into your own tourist
+guide to London. To do that, you will have to write a procedure that
+finds out from the user the start and destination stations, and then
+calls ROUTE. It could then just print out the list that ROUTE returns,
+but it may be clearer to the user if it modified it first, perhaps only
+saying where to join and where to leave each line. Be warned: printing
+the information really clearly takes quite a lot of thought.
+
+What happens if the user mistypes the station name, or mentions one the
+program doesn't know about? ROUTE checks for this, and will print an
+error message and return the value FALSE instead of a list if it can't
+find a station. If you want your own routine to catch this and take
+appropriate action you can use CHECKSTAT to do so: try
+
+    checkstat([St Jamess Park])=>
+    checkstat([Nightsbridge])=>
+
+-- Looking at the ROUTE program ---------------------------------------
+
+ROUTE is written in TPOP (with a minor exception or two mentioned in the
+comments). It is a fairly long program and you will not want to plough
+all the way through it, but you may find it helpful to look at some
+sections and try to understand what they are doing. The appendix to
+Chapter 5 of the Computers & Thought book is a description of this
+program.
+
+To look at the code, do
+
+    <ENTER> showlib route
+
+-- Looking at the search tree with ROUTETREE --------------------------
+
+As the program runs, it generates a tree corresponding to the possible
+routes out from the start station. After the route has been returned,
+the information corresponding to this tree is left in the database.
+
+Before giving the instructions to draw the tree, you need to know a
+little about how to manipulate the display. When the tree display
+appears, you can move the cursor around to explore it using the normal
+cursor movement keys. These are often on the numeric keypad, eg 2 for
+up, 6 for right and so on, but if you are not using a terminal set up
+this way then use whichever keys move the cursor. You should soon find
+out which directions are useful for moving the cursor to different
+positions in the tree.
+
+To stop looking at the tree, you must press the 'end-of-file' key - on a
+Visual 200 this is the key marked 'HOME' at the top right of the
+keyboard. It is essential to remember this unusual use of the key. For
+more details refer to HELP SEETREE.
+
+Now you are in a position to look at a tree. First load the necessary
+library with
+
+    lib routetree;
+
+this will take a minute or two. Now, assuming that you have already used
+ROUTE to find a route, give the instruction
+
+    routetree();
+
+This will draw the tree and leave you ready to move around it.
+
+Each node will correspond either to arriving at a station from another
+on the same line, or to joining a new line at a station. Station names
+are shown as 3-letter abbreviations using lower case; line names as
+3-letter abbreviations using upper case. The first sort of node just
+shows the station name; to find the line go up the tree till you come to
+line name. Likewise the second sort of node just shows the new line
+name; to find the station look at the next node up in the tree.
+
+The start station is of course at the top; the destination station will
+appear near the bottom, marked with an asterisk.
+
+If you make the tree for the route from Victoria to Marble Arch, you
+will get Figure 3 from Chapter 5 of the Computers & Thought book. Note,
+however, that it is drawn rather differently: in the book lower levels
+in the figure show later times. On your screen, the levels just
+correspond to the number of nodes passed through in the tree, though the
+times are shown at each node. This is just a matter of draughting; in
+actually doing the search the ROUTE program correctly took into account
+the time to get to each node.
+
+-- Exercises ----------------------------------------------------------
+
+1. Write a program that asks the user for their start and destination
+stations and prints out the route they should take and an estimate of
+the time taken. This could either stand alone as a specialist program or
+could be part of a more general tourist guide with broader knowledge.
+
+2. At the start of the ROUTE library, the following lines appear:
+
+    vars travtime changetime;
+    2 -> travtime;
+    3 -> changetime;
+
+These variables are of course the time to travel between stations and
+the time to change lines. Try assigning different values to them and
+rerunning the program on some carefully selected routes to see the
+effect. You might, for instance, make CHANGETIME equal to 0: then the
+program will find the shortest route if all the stations are the same
+distance apart.
+
+3. (Harder) Understanding search strategies: set both TRAVTIME and
+CHANGETIME to 1. Look at the search trees. Explain why the search that
+the program now carries out is called 'Breadth-First' search.
+
+4. (Much harder - only for those with a good working knowledge of
+programming and plenty of time) Look at the code in LIB ROUTE. It keeps
+all the pending arrivals in the database, in the order in which they
+were generated. To find the next event it searches through all of them.
+It would be more efficient to keep them in a list in time order, with
+the earliest at the start. Then the next event would always be the head
+of the list. When future events were generated they would need to be
+inserted into the list at the appropriate place. Modify the program to
+do this.
+
+--- $poplocal/local/teach/route
+--- Copyright University of Sussex 1988. All rights reserved. ----------

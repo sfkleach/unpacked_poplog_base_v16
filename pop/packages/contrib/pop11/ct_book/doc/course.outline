@@ -1,0 +1,462 @@
+INTRO.CT                                                          Page 1
+
+
+            INTRO.CT: COMPUTERS AND THOUGHT - COURSE OUTLINE
+            ================================================
+
+                            Spring Term 1987
+
+                             Mike Sharples
+                            Chris Hutchison
+
+
+
+_I_N_T_R_O_D_U_C_T_I_O_N
+
+The Computers and Thought course is concerned with the new and growing
+area of Cognitive Science. It aims to introduce some general topics and
+teach some useful skills.
+
+The general topics are in the field of Artificial Intelligence, which
+concerns computer simulations of human abilities, like mental imagery,
+problem solving or understanding English. The skill is in computing -
+writing programs in POP-11, an advanced but friendly programming
+language.
+
+Computers and Thought is relevant also to students who plan to take a
+course on Philosophy of Mind, or courses on Psychology or Linguistics.
+Besides its relevance to specific courses available at Sussex, it
+introduces and illustrates concepts and techniques which will help you
+to appreciate the potential uses of computers in a wide variety of
+applications: in offices, in the home, in schools, in hospitals, etc.
+
+In addition it should help you think about what you are. Are you some
+kind of machine, with programs governing your behaviour? If not, how do
+you differ from a programmed computer? In order to have sensible views
+on such questions you need to know more about computers than you can
+learn from the popular press, or from programming in BASIC on a BBC
+micro or similar microcomputer.
+
+_W_H_I_C_H _T_I_M_E_S
+
+The course is taught by means of a combination of lectures, tutorials,
+and practical programming exercises.
+
+Lectures will be held in D541 at the following times each week:
+    Monday      12.30 - 1.30
+    Tuesday     11.30 - 12.30
+    Wednesday    9.10 - 10.10
+
+You have been allocated to a tutorial group with one of the course
+tutors and you will have a weekly tutorial of one hour in a group of
+three or four.  There will also be opportunities for individual
+consultation. See your tutor to arrange tutorial times
+
+You are doing two courses, so this one should take up half your time -
+say at least a solid sixteen hours a week. Of that, you'll spend about
+four in the lectures and your tutorial and the rest of the time you're
+on your own! We expect you to spend a lot of time, working with the
+computer -- up to about ten hours, and the remainder spent reading and
+writing essays, and reports on your programs, or answers to exercises.
+
+
+                                                            October 1985
+
+
+
+INTRO.CT                                                          Page 2
+
+
+_W_H_E_R_E _T_O _G_E_T _H_E_L_P
+
+If you get into any difficulties which you cannot resolve alone after
+trying for a few minutes, don't wait for a tutorial but immediately get
+help from someone. First try others in the terminal room; whoever is
+nearby.  There will also be graduate "demonstrators" hired to help you
+with your computing problems on duty in D110 most days of the week -
+they will be sitting at a desk labeled "Computing Help".  The times
+these demonstrators will be available will be shown on notices on the
+doors of D110 and E201.
+
+    COMPUTING HELP DESK:    D110  (the non-smoking terminal room).
+
+For problems with malfunctioning terminals, printer breakdowns etc.,
+please consult:
+
+    STUART HORNE, Arts Technician:  Room B139.
+
+_T_U_T_O_R_S
+
+You can of course also ask your tutor for help.  Tutors offices are:
+
+    MIKE SHARPLES        Room E305
+    CHRIS HUTCHISON      Room D443
+
+If your tutor is not in, you can pin a note to his door.
+
+
+_C_O_U_R_S_E _S_T_R_U_C_T_U_R_E
+
+The course will use some handouts like this one, and a collection of
+'help files' or 'teach files' stored on the computer.  Most contain
+programming exercises to be done on the computer.
+
+In addition to essays and programming exercises, discussed in tutorials,
+the last three weeks of the term will be spent on a programming "mini-
+project".  This will probably be based around the "London advisor", a
+program for giving advice about tourism in London, which will be used as
+a source of programming examples throughout the course.
+
+Programming exercises include writing reports on your programs.  We
+place great importance on the ability not only to write programs but
+also to explain clearly what their purpose is and how they work.
+
+A timetable for the term follows. Note that the lectures are arranged in
+three streams. The Monday lectures give an overview of the core material
+of Cognitive Science. The Tuesday lectures are concerned with the
+programming language POP-11 and are essential for the practical part of
+the course. The Wednesday lectures usually draw together the material of
+the other lectures by describing applications and giving demonstrations.
+
+
+
+
+
+
+
+
+
+                                                            October 1985
+
+
+
+INTRO.CT                                                          Page 3
+
+
+Week        Lecture 1           Lecture 2           Lecture 3
+            Monday 12.30        Tuesday 11.30       Thursday 9.10
+
+ 1            -                 Introduction        Introduction
+                                to the course (MS)  to computing (CH)
+
+ 2          Performance with-   POP (CH)            Eliza (CH)
+            out knowledge (CH)
+
+ 3          Natural Language    POP (CH)            MSDEMO (CH)
+            (CH)
+
+ 4          Stored Knowledge    POP (CH)            Scholar (MS)
+            (MS)
+
+ 5          Cognitive Models    POP (CH)            Guest Speaker
+            (MS)
+
+ 6                        R E A D I N G   W E E K
+
+ 7          Search (MS)         POP (MS)            ROUTE (MS)
+
+ 8          Reasoning (MS)      POP (MS)            WINEO (MS)
+
+ 9          Perception (MS)     POP (MS)            Vision Demo (MS)
+
+ 10         Perception (MS)
+
+
+(MS = Mike Sharples, CH = Chris Hutchison)
+
+
+
+
+_W_E_E_K _B_Y _W_E_E_K _S_U_M_M_A_R_Y
+
+WEEKS 1 and 2
+    Get acquainted with the computer (see WEEK1.CT). Learn to log in and
+    out. Play with a demonstration program called ELIZA, a program
+    "conversational" that "pretends" to be a psychotherapist.  Learn to
+    use the 'VED' editor for simple "word processing" and the 'MAIL' and
+    'DIRECTORY' commands.  Start to learn the POP-11 programming
+    language.
+
+WEEK 3 and 4
+    Learn about how computers can be programmed to deal with natural
+    language and about the use of "stored knowledge" in artificial
+    intelligence, and the forms in which knowledge can be represented in
+    a computer. Some of the programming exercises will be concerned with
+    simple knowledge representation problems.
+
+WEEKS 5 and 6
+    Continue with programming exercises.  Learn about the way in which a
+    computer can be programmed to model human cognition.
+
+WEEKS 7 and 8
+    Continue to study knowledge representation and POP-11. Learn about
+
+
+                                                            October 1985
+
+
+
+INTRO.CT                                                          Page 4
+
+
+    the important techniques of search and reasoning, and how to build
+    Expert Systems.  Begin a programming "mini-project"; this will
+    follow on from the knowledge representation exercises.
+
+WEEKS 9 and  10
+    Learn about AI models of perceptual processing (eg vision, and
+    speech recognition). Finish your project and hand it in at the end
+    of Week 9. Get back your project reports with tutor's comments.
+    Discuss how the course has gone and what it all add up to.
+
+Your tutorial group may deviate from the plan, if the tutor thinks that
+is appropriate.
+
+The lectures will in part introduce you to basic concepts and techniques
+needed for your programming activities. In addition they will tell you
+about some of the achievements of researchers in Artificial
+Intelligence, e.g. in vision, expert systems, language and so on.
+
+Finally, they will raise the question whether human beings should be
+thought of as computers (albeit very sophisticated ones) and the
+question whether machines can be made to think, have emotions, etc.
+There may also be some discussion, in lectures and tutorials of the
+social implications of the computer revolution and work in Artificial
+Intelligence.
+
+_W_R_I_T_T_E_N _E_X_E_R_C_I_S_E_S
+
+Exercise 1 - Report on ELIZA (hand in by 19th January): While playing
+    with the ELIZA program, see if you can guess or work out the methods
+    it uses to generate its responses.  Write a very short (one page)
+    report on your conclusions, using the editor VED to prepare it and
+    printing it out from the computer.
+
+Exercise 2 - "Natural language and  computers" (hand in by 30th
+    January): This should be a short essay (about 1000 - 1500 words),
+    based on your reading, lectures and tutorial discussions on the
+    limitations of Eliza and SHRDLU as means of human-machine
+    communication, and how they might be improved.
+
+Exercise 3 - "What can programming computers teach us about thought?"
+    (hand in by 13th February): essay of about 2000 words.
+
+Exercise 4 - Mini-project programming exercise (hand in by 6th March):
+    including a written description of the program, a listing of the
+    program itself and an example of its output.
+
+_T_E_A_C_H _F_I_L_E_S
+
+As you progress on the course you will study a nubmer of 'teach files'.
+These are intended to be used at a computer terminal, and will guide you
+through the initial introduction to the computer, as well as the later
+programming exercises. The main sequence of teach files is:
+TEACH VED COFFEE BUFFERS WINDOW VEDPOP RESPOND LONDON SEMNET1 SEMNET2
+PSYS1 PSYS2
+
+
+
+
+
+                                                            October 1985
+
+
+
+INTRO.CT                                                          Page 5
+
+
+_U_S_E_R _N_A_M_E_S
+
+In order to use the computer you will have to have a USER NAME. This
+will normally consist of your first name and the first letter of your
+surname, except where that clashes with someone else's user name. As
+soon as we have a list of user names it will be posted on the notice
+board opposite room E325.
+
+The WEEK1.CT handout will tell you how to use your user name to log in
+to the computer.
+
+_W_O_R_K_I_N_G _L_A_T_E _O_N _T_H_E _T_E_R_M_I_N_A_L_S
+
+The building is officially closed at 7pm every night, and from mid-day
+on Saturdays and all day Sunday. However, we have arranged for the non-
+smoking terminal room (D110) to be available for your use in the
+evenings and at weekends.  Although the room is locked at these times,
+you can obtain a key to the OUTSIDE door of D110 from the building
+superintendant, Dennis King in room D206; for this you must pay a
+deposit of 3 pounds, which will be returned to you when you return the
+key.
+
+If you work late in D110, please:
+
+1. Make sure you write your name clearly on the sheet provided in the
+    terminal room; this is partly to show that the after-hours
+    facilities are actually being used.
+
+2. Leave ONLY by the EXTERNAL doors, and make SURE that the door shuts
+    behind you (i.e. don't trust the spring to shut it).
+
+3. If you are the last to leave make sure that all lights are turned
+    off, all windows are shut, and the printers in D110 are switched
+    off. Also turn off any other terminals which have been left on.
+
+4. Never go out leaving the doors open, even if you expect to be back
+    soon. If this practice is detected by the security patrols we'll
+    have to ban students after the building is shut.
+
+
+_F_O_O_D _A_N_D _P_A_P_E_R
+
+Please never take food into the terminal rooms, even if you see others
+doing so. Inevitably crumbs, etc. make the place messy, and can fall
+into keyboards interfering with the reliability of the terminals. We
+cannot afford to pay cleaners to deal with the mess. Don't leave mugs in
+the rooms.
+
+Similarly please be tidy with paper printed out, even if you don't see
+others doing the same. When your own work is printed out, if somebody
+else's work is attached and has not been collected, don't leave it lying
+in a mess: fold it neatly with the name showing and leave it on the
+table next to the printer.  When you discard old print out, don't throw
+it away any old how. Fold it _n_e_a_t_l_y and place it _c_a_r_e_f_u_l_l_y in one of the
+boxes provided. This helps to prevent the boxes overflowing.
+
+Don't print out things unless you are sure you need them. The printer
+
+
+                                                            October 1985
+
+
+
+INTRO.CT                                                          Page 6
+
+
+consumes lots of paper, which not only costs us money, but also helps to
+destroy trees!
+
+_W_R_I_T_I_N_G _E_S_S_A_Y_S _U_S_I_N_G _T_H_E _C_O_M_P_U_T_E_R
+
+You will learn, as part of this course, to use the 'text editor' on the
+computer to write reports, as well as using it for creating programs.
+You may use the editor for writing essays and reports only for this
+course.  You will probably be tempted to use the computer for writing
+essays for your other course, because of its convenience. Please don't!
+We are very short of computer terminals, and the computer can easily be
+overloaded by having too many users.
+
+Remember, by using the computer for something which you _c_o_u_l_d do without
+the computer you will be interfering with the work of others which
+cannot be done without the computer. Thanks.
+
+_S_U_R_V_I_V_I_N_G
+
+Almost everyone finds programming painful. This is because it is rarely
+possible to sort your ideas out correctly first time. So the programs
+you write will often go wrong. In other courses you write essays, but
+the paper and pen do not tell you that you have gone wrong. Even your
+tutor may be too polite or too busy to indicate your shortcomings. But
+the computer is relentless, and the mishaps and bizarre behaviour of
+your program cannot be suppressed.
+
+One typical response is _d_e_f_e_a_t_i_s_t.  This is probably encouraged by a
+culture and an educational system which inculcates the idea that some
+people are gifted and others not. So if things go wrong you tend to
+think you just haven't got the ability. This makes you depressed. So you
+don't carry on playing with the computer so much. Lack of practice makes
+you forget things and make more mistakes, and slows down your learning.
+So things get worse. In extreme cases students even stop coming to
+tutorials because they can't bear to expose what they see as their
+failures.
+
+Our view is that if you get things wrong it is not because you are
+'stupid' but rather because the computing tools may be badly designed or
+one or more of your thinking or problem-solving or learning strategies
+needs to be improved. And both can be altered. It isn't a matter of
+permanently having or lacking gifts nor of having to put up with poor
+computing systems for ever.
+
+Another response is _p_l_a_y_f_u_l.
+    'Oh how strange ... I didn't expect that. Let's see, what can I do
+    differently to prevent that happening ... Perhaps its so and so ...
+    Let's try changing that...I wonder if the person at the next
+    terminal can help...'
+The playful response leads to more experiments, more practice, the
+development of skill and fluency, and above all confidence. A student
+who is not afraid of being branded stupid will ask other students, or
+tutors, for help, and will consequently go on making progress. The
+feedback loop instead of being negative is positive.
+
+The point is that personality can be more important than intelligence in
+determining how you get on.
+
+
+                                                            October 1985
+
+
+
+INTRO.CT                                                          Page 7
+
+
+Which kind of student do you think you are going to be? If you find
+yourself falling into the first trap and you can't get out of it, don't
+despair. Make a point of coming to talk to your tutor. Ask to see him
+alone if necessary.
+
+In some of our classes, or in private conversations, you will also have
+a chance to hear others lamenting over their difficulties. It is always
+consoling to find that others are having similar problems.
+
+You may find it specially useful to do a lot of work in close
+collaboration with one or more other students in your tutorial. But
+don't let it turn into a team in which one does all the work!
+
+Don't be too depressed if one or two students seem to be specially able,
+and shoot ahead. There are always some -- and their progress is partly
+due to their spending a great deal of time working at the computer. But
+they may not be as good as you at explaining what they have done, or
+discussing its social or philosophical significance, or ...
+
+With the right attitude to minor frustrations and mishaps you can really
+enjoy this course. We hope you will.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                                            October 1985
+
+
+

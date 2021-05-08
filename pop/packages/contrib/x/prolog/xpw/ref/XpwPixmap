@@ -1,0 +1,418 @@
+REF XPWPIXMAP                               Andreas Schoter, August 1990
+
+        COPYRIGHT University of Sussex 1990. All Rights Reserved.
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+<<<<<<<<<<<<<<<<<<<<<<<<<                       >>>>>>>>>>>>>>>>>>>>>>>>
+<<<<<<<<<<<<<<<<<<<<<<<<<   XPWPIXMAP LIBRARY   >>>>>>>>>>>>>>>>>>>>>>>>
+<<<<<<<<<<<<<<<<<<<<<<<<<                       >>>>>>>>>>>>>>>>>>>>>>>>
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+         CONTENTS - (Use <ENTER> g to access required sections)
+
+ --  Predicates
+ --  Resources
+ --  Raster Function Values
+
+
+Predicates
+----------
+
+xpw_graphic_window(+NAME,+ARGLIST,-WIDGETID)                 [predicate]
+        Takes an atom as NAME to be used by the X server as the name  of
+        the widget, and an ARGLIST of the form [X,Y,W,H] or [W,H]  where
+        W is the width of the window  in pixels, H is the height on  the
+        window in pixels, and X,Y is the coordinates on the screen where
+        the new window is to placed. WIDGETID must be instantiated to an
+        atom, which is used by the prolog X interface as a handle on the
+        the widget, which is of class XpwGraphic. (see HELP *XPROLOG)
+
+
+xpw_clear_window(+WIDGETID)                                  [predicate]
+        Clears the graphics widget specified by the WIDGETID
+
+
+xpw_draw_point(+WIDGETID,+XYPAIR)                            [predicate]
+        Draws a  point  on  the  window specified  by  WIDGETID  at  the
+        coordinates  specified  by XYPAIR  where XYPAIR is a list of the
+        form [X,Y]
+
+
+xpw_draw_points(+WIDGETID,+COORDLIST,+MODE)                  [predicate]
+        COORDLIST is a list of lists, where each list contains a pair of
+        integers representing the x,y coordinates  of a single point  as
+        for xpw_draw_point. WIDGETID is a valid name for a widget or the
+        atom current.  MODE  is  either  the atom  origin  or  the  atom
+        previous. The  points in  COORDLIST are  plotted to  the  window
+        specified by  WIDGETID. If  MODE  is the  atom origin  then  all
+        coordinates are  interpreted  relative  to  the  origin  of  the
+        widget's window,  if MODE  is he  atom previous  then the  first
+        coordinate pair is interpreted relative to the window frame  and
+        all subsequent coordinate pairs are interpreted relative to  the
+        preceding coordinate pair.
+
+
+xpw_draw_line(+WIDGETID,+LINESPECIFICATION)                  [predicate]
+        WIDGETID is the ID of a valid widget, and LINESPECIFICATION is a
+        list  of  four  integers  [X1,Y1,X2,Y2]  where  X1,Y1  are   the
+        coordinates of one end of the line and X2,Y2 are the coordinates
+        of the other end of the line. The line is drawn on the specified
+        widget.
+
+
+xpw_draw_lines(+WIDGETID,+COORDLIST,+MODE)                   [predicate]
+        WIDGETID is the ID of a valid widget. COORDLIST is a list of 2*N
+        integers. MODE is  as described for  xpw_draw_points. Draws  N-1
+        connected lines, starting  at the coordinates  specified by  the
+        first pair  in  the  list  and  continuing  until  the  list  is
+        exhausted.
+
+
+xpw_draw_segements(+WIDGETID,+COORDLIST)                     [predicate]
+        WIDGETID is the  ID of a  valid widget. COORDLIST  is a list  of
+        lists  where   each   constituent   list   of   COORDLIST   is a
+        LINESPECIFICATION as described in  REF * xpw_draw_line.
+
+
+xpw_draw_rectangle(+WIDGETID,+RECTANGLESPECIFICATION)        [predicate]
+        WIDGETID is the name  of a valid widget.  RECTANGLESPECIFICATION
+        is   a   list   containing    four   integers   of   the    form
+        [X,Y,Width,Height] where X,Y are the coordinates of the top left
+        hand corner of the rectangle to  be drawn, and WIDTH and  HEIGHT
+        specify the dimensions.
+
+
+xpw_draw_rectangles(+WIDGETID,+COORDLIST)                    [predicate]
+        WIDGETID is the  ID of a  widget. COORDLIST is  a list of  lists
+        where    each    constituent    list    of    COORDLIST     is a
+        RECTANGLESPECIFICATION as described in REF * xpw_draw_rectangle.
+
+
+xpw_draw_arc(+WIDGETID,+ARCSPECIFICATION,+MODE)              [predicate]
+        WIDGETID is the ID of a widget. ARCSPECIFICATION is a list  of 6
+        numbers  of  the  form   [X,Y,Width,Height,StartAngle,AngleIncr]
+        where Width,Height,X,Y,  specify a  rectangle as  described  for
+        xpw_draw_rectangle that is to be used as the bounding  rectangle
+        of the arc. StartAngle is the position on the arc, measured from
+        the 3  o'clock  position,  at  which drawing  is  to  start  and
+        AngleIncr is the size  of the arc to  be drawn measured  counter
+        clockwise from StartAngle. MODE is an atom specifying the  units
+        in which the angles are to be measured. MODE is one of deg, rad,
+        or raw.  If  MODE is  deg  then all  angles  are assumed  to  be
+        measured in  degrees,  if  MODE  is  rad  then  all  angles  are
+        calculated as  radians,  and if  MODE  is raw  then  angles  are
+        calculated in the raw underlying  X representation of 64th  of a
+        degree. For example, each of the following three calls would all
+        draw the same curve:
+
+            xpw_draw_arc(widget1,10,10,50,50,10,100,deg)
+            xpw_draw_arc(widget1,10,10,50,50,0.175,1.745,rad)
+            xpw_draw_arc(widget1,10,10,50,50,640,6400,raw)
+
+
+xpw_draw_arcs(+WIDGETID,+ARCSLIST,+MODE)                     [predicate]
+        WIDGETID is the  ID of  a valid widget.  ARCSLIST is  a list  of
+        lists  where   each  constituent   list   of  ARCSLIST   is   an
+        ARCSPECIFICATION as described in REF * xpw_draw_arc
+
+
+xpw_fill_arc(+WIDGETID,+ARCSPECIFICATION,+MODE)              [predicate]
+        WIDGETID is the ID  of a valid  widget. The remaining  arguments
+        specify an arc in the same manner as described in  xpw_draw_arc.
+        The arc is draw on the widget with a radius connecting each  end
+        to the centre of the defining rectangle. The area so demarked is
+        filled.
+
+
+xpw_fill_arcs(+WIDGETID,+ARCSLIST,+MODE)                     [predicate]
+        WIDGETID is the  ID of  a valid widget.  ARCSLIST is  a list  of
+        lists  where   each  constituent   list   of  ARCSLIST   is   an
+        ARCSPECIFICATION as described in REF * xpw_draw_arc
+
+
+xpw_fill_polygon(+WIDGETID,+COORDLIST)                       [predicate]
+        WIDGETID is the ID of a valid widget. COORDLIST is a list of 2*N
+        integers, where each pair of integers specifies the  coordinates
+        of a  point  on the  window  relative to  the  window  origin. A
+        polygon is drawn connecting each of the points in the order they
+        appear in the list, connecting the last point to the first.  The
+        area so defined is filled.
+
+
+xpw_fill_rectangle(+WIDGETID,+RECTANGLESPECIFCATION)         [predicate]
+        WIDGETID is the ID of a valid widget and  RECTANGLESPECIFICATION
+        is a  list  specifying  the rectangle.  as  described  in  REF *
+        xpw_draw_rectangle. The rectangle  is drawn to  the widget,  and
+        the area defined is filled.
+
+
+xpw_fill_rectangles(+WIDGETID,+COORDLIST)                    [predicate]
+        WIDGETID is the  ID of a  valid widget. COORDLIST  is a list  of
+        lists  where   each   constituent   list   of   COORDLIST   is a
+        RECTANGLESPECIFICATION as described in REF *  xpw_draw_rectangle
+        the area defined by each rectangle is filled.
+
+
+xpw_draw_string(+WIDGETID,+X,+Y,+STRING)                     [predicate]
+        WIDGETID is the ID of a valid widget. X,Y are the coordinates of
+        the bottom left hand corner (not allowing for descenders) of the
+        box that will contain the text to be displayed. STRING is either
+        a Prolog atom such  as 'this is printable',  or a Prolog  string
+        such as "this is a Prolog string". The area of the window is not
+        cleared before the STRING is drawn. The characters of the string
+        are displayed in the currently selected font.
+
+
+xpw_draw_image_string(+WIDGETID,+X,+Y,+STRING)               [predicate]
+        WIDGETID is the ID of a valid widget. X,Y are the coordinates of
+        the box  in  which  the  text will  be  drawn  as  described  in
+        xpw_draw_string, and STRING is as described in  xpw_draw_string.
+        The characters of the STRING are displayed in the current  font,
+        and the area where the STRING  is to be drawn is cleared  before
+        the string is drawn.
+
+
+xpw_copy_to(+WIDGETID1,+WIDGETID2,+RECTANGLESPECIFICATION    [predicate]
+                +XYPAIR)
+        WIDGETID1  and  WIDGETID2   are  the  IDs   of  valid   widgets.
+        RECTANGLESPECIFICATION is a list of the form described in  REF *
+        xpw_draw_rectangle and  it specifies  a  rectangular  region  of
+        WIDGETID1 that is to be copied to WIDGETID2. XYPAIR is a list of
+        the form described in REF * xpw_draw_point and it specifies  the
+        position of  the top  left corner  where the  rectangle will  be
+        positioned in the destination window WIDGETID2.
+
+
+xpw_copy_from(+WIDGETID1,+WIDGETID2,+RECTANGLESPECIFICATION  [predicate]
+                +XYPAIR)
+        WIDGETID1  and  WIDGETID2   are  the  IDs   of  valid   widgets.
+        RECTANGLESPECIFICATION is a list of the form described in  REF *
+        xpw_draw_rectangle and  it specifies  a  rectangular  region  of
+        WIDGETID2 that is to be copied to WIDGETID1. XYPAIR is a list of
+        the form described in REF * xpw_draw_point and it specifies  the
+        position of  the top  left corner  where the  rectangle will  be
+        positioned in the destination window WIDGETID1.
+
+
+xpw_graphic_raster_op(+WIDGETID,?RASTERMODE)                 [predicate]
+        WIDGETID is the  ID of  a valid  widget. RASTERMODE  is an  atom
+        corresponding to  the  name of  an  X draw  function  mode  (see
+        section on Raster  Function Values below).  If RASTERMODE is  an
+        uninstantiated variable it is unified with the current value for
+        the X draw function, if RASTERMODE is instantiated to a  valid X
+        draw function name then the current draw function is set to that
+        value.
+
+
+Resources
+---------
+
+Xprolog allows access to X resources via the predicate xt_value/3 which
+is called as follows (see REF * xt_value for details)
+
+    ?- xt_value(WIDGETID,RESOURCENAME,RESOURCEVALUE)
+
+where the first two arguments must always be instantiated, and the third
+may be uninstantiated to query a value, or instantiated to set a value.
+
+
+private_gc                                                    [resource]
+        This resource should not  be modified - it  is a server  default
+        graphics context used by XpwPixmap and subclasses.  Applications
+        may use this  resource if they  wish to use  a default  graphics
+        context for some operation.
+
+
+pixmap_status                                                 [resource]
+        The value of  this resource determines  the interaction  between
+        the pixmap associated with  a widget and  the visible window  of
+        that widget. A pixmap can be in one of four states:
+
+        On: this  is the  default state,  any changes  are made  to  the
+        display and to the pixmap.  Changing from any state into  pixmap
+        On will cause a redisplay of the widget.
+
+        Off: the  widget has  a valid  pixmap, but  any graphic  actions
+        performed on the widget effect  the visible window only and  are
+        not recorded in the pixmap. This  means that when the window  is
+        redisplayed it will be repainted as it was prior to the  changes
+        made during the pixmap Off stage.
+
+        Only: this is the  reverse of pixmap  Off. Any graphics  actions
+        will only effect the pixmap and will not be drawn to the window.
+        This allows the user to draw  an image quickly (since it is  not
+        being echoed to  the window this  will be quite  fast) and  then
+        have it appear 'in a flash' by switching pixmap On.
+
+        HasNone: this indicates that there is no pixmap associated  with
+        the  widget.  Switching  to  pixmap  On  from  HasNone  causes a
+        XCreatePixmap request, and  changing to HasNone  from On  causes
+        the current pixmap to be freed.
+
+        Note that if the value of this resource is either Off or HasNone
+        then XpwGraphic call the 'xpwCallback' list to notify the client
+        of an exposure event.
+
+        The integer codes for the resource values are:
+
+            pixmap on       = 0
+            pixmap off      = 1
+            pixmap has none = 2
+            pixmap only     = 3
+
+
+line_width                                                    [resource]
+        Determines the width  of lines  drawn on  the window  associated
+        with a given widget.  For example
+
+            ?- xt_value(current,line_width,X).
+
+        would return the line_width being used for the current widget in
+        the variable X. This  resource can be  set by instantiating  the
+        variable prior to the call. To set the line width to 5
+
+            ?- xt_value(current,line_width,5).
+
+
+line_style                                                    [resource]
+        The value of this resource  determines the line style used  in a
+        given widget. It  can be inspected  by passing an uninstantiated
+        variable to xt_value/3 as the third argument, or set by  passing
+        an instantiated variable as the third argument. There are  three
+        possible line  styles,  signified  by  integer  values  for  the
+        line_style resource, these are;
+
+            a solid line         = 0
+            a dashed line        = 1
+            a double dashed line = 2
+
+        For example, to select drawing a dashed line, do
+
+            ?- xt_value(current,line_style,1).
+
+
+cap_style                                                     [resource]
+        The value of this resource determines  the shape of the ends  of
+        lines drawn using predicates such as xpw_draw_line/5. There  are
+        four possible styles for line caps, these are:
+
+            not last   = 0
+            butt       = 1
+            round      = 2
+            projecting = 3
+
+        So if you  wished the ends  of lines to  be rounded rather  that
+        square you could do:
+
+            ?- xt_value(current,cap_style,2).
+
+
+join_style                                                    [resource]
+        This  resource  determines  the   appearance  of  corners   when
+        connected   lines    are    drawn    using    predicates    such
+        xpw_draw_lines/3. There  are three  possible join  styles,  each
+        coded by an integer, these are:
+
+            miter joint = 0
+            round joint = 1
+            bevel joint = 2
+
+        To set the join style to bevelled corners, do
+
+            ?- xt_value(current,join_style,2).
+
+        To find the style of join in use do
+
+            ?- xt_value(current,join_style,X).
+
+
+subwindow_mode                                                [resource]
+        This resource  determines the  subwindow  mode of  the  graphics
+        context of the widget. The subwindow mode is selected by passing
+        an integer as the third argument of xt_value/3. Valid  subwindow
+        modes are:
+
+            clip by children  = 0
+            include inferiors = 1
+
+        To inspect the current value of this resource do:
+
+            ?- xt_value(current,subwindow_mode,X).
+
+
+
+Raster Function Values
+----------------------
+
+The following values are available for raster settings from Prolog:
+
+clear, and, and_reverse, copy, and_inverted, noop, xor, or, nor, equiv,
+invert, or_reverse, copy_inverted, or_inverted, nand, set
+
+For example, to set the raster operation for he current widget to xor
+use the command:
+
+?- xpw_graphic_raster_op(current,xor).
+
+To inspect the current  value for the  raster op for  a widget call  the
+predicate with an uninstantiated variable as its second argument.
+
+
+    copy
+    ----
+The default  value  is copy  -  in this  mode  the graphics  command  is
+executed  by  simply copying  the  shape to  the  window in  the  colour
+specified, overlaying any existing colours in the window.
+
+    clear
+    -----
+If the raster op is  set to clear then any  area drawn to the window  is
+cleared, that is restored to the background colour.
+
+
+The remaining  values for  raster ops  involve interaction  between  the
+background colour, the colour of any elements already in the window  and
+the colour of the ink currently being used to draw with. For an  example
+try experimenting with the following piece of code. First copy the  code
+into a temporary file called, say, temp.pl then mark and load the file
+
+% DEMONSTRATION CODE
+
+:- library(xploginit).
+
+?-  xpw_graphic_window(test2,[0,0,300,300]),
+    xpw_current_widget(test2),
+    xt_value(current,line_width,10).
+
+setup :-
+    xpw_clear_window,
+    xpw_graphic_raster_op(copy),
+    xpw_set_color(red,_),
+    xpw_fill_rectangle([5,25,290,50]),
+    xpw_set_color(blue,_),
+    xpw_fill_rectangle([5,90,290,50]),
+    xpw_set_color(green,_),
+    xpw_fill_rectangle([5,155,290,50]),
+    xpw_set_color(yellow,_),
+    xpw_fill_rectangle([5,220,290,50]).
+
+demo_raster(Color,Mode):-
+    setup,
+    xpw_set_color(Color,_),
+    xpw_graphic_raster_op(Mode),
+    xpw_draw_line([10,10,290,290]).
+
+?- demo_raster(magenta,xor).
+
+% END OF CODE
+
+...then experiment with calls to demo_raster trying different values for
+Color (see REF * XCOLOURS for a list of available colours) and different
+values for Mode  from the  above list.  Note that  raster operations  on
+colours are done on the logical value of the colour, not the RGB  value,
+so the results are often unexpected.  See also TEACH * xprolog section
+on resources and raster operations.
+
+
+--- /csuna/pop/master/contrib/x/prolog/xpw/ref/XpwPixmap
+--- Copyright University of Sussex 1990. All rights reserved. ----------

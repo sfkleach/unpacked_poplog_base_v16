@@ -1,0 +1,176 @@
+
+                Contents of the Poplog CONTRIB Directory
+
+                          (Updated 27 May 2001)
+
+                    The root directory is $popcontrib
+
+Updated by A.Sloman for Birmingham Users
+and for the Poplog site.
+
+AREADME
+    General descriptions and disclaimer.
+
+
+CONTENTS
+    This file
+
+
+ai_through_search
+    Programs from the book AI Through Search by Chris Thornton and
+    Benedict du Boulay.
+
+
+contrib.news
+    News file concerning "contrib" directory
+
+
+emacs/
+    Files contributed by Richard Cayley to help Emacs users drive
+    Poplog without using Ved
+    [No longer included. Instead see emacs files in
+        http://www.cs.bham.ac.uk/research/poplog/
+        ftp://ftp.cs.bham.ac.uk/pub/dist/poplog/
+    extended by Brian Logan at Birmingham]
+
+lisp/
+
+    lisp/clx/
+        CLX (Common Lisp X interface). For details see
+            $popcontrib/lisp/clx/teach/clx
+
+    lisp/modules/
+        Libraries to make CLX and PCL easily accessible, also
+
+        lisp/modules/mit-loop.lsp
+            Enhanced version of LOOP iteration macro, produced at MIT
+
+    lisp/pcl/
+        The PCL implementation of CLOS, tailored for Poplog. For details
+        see $popcontrib/lisp/pcl/ref/pcl
+
+
+nlp_book/
+    Text and code from the book on Natural Language Processing
+    by Gazdar and Mellish, in three versions:
+
+    nlp_book/lisp/
+        Lisp version
+
+    nlp_book/pop11/
+        Pop-11 version
+
+    nlp_book/prolog/
+        Prolog version
+
+
+pml/
+    Files relating to Poplog Standard ML
+
+    pml/WorkingProgrammer/
+        Programs from the book ML for the Working Programmer by Lawrence
+        C. Paulson
+
+    pml/mllex
+        ML-Lex, a lexical analyser generator
+
+    pml/mlyacc
+        ML-Yacc, an LALR parser generator
+
+    pml/smllib/
+        The Edinburgh Standard ML Library
+
+
+pop11/
+    Files relating to Pop-11
+
+    pop11/ct_book/
+        Programs from the book Computers and Thought, by M.Sharples et al.
+        along with associated teach and help files. (With four
+        subdirectories).
+
+    pop11/help/
+        Pop-11 related HELP files
+
+    pop11/include/
+        Include files used by programs in pop11/lib
+
+    pop11/lib/
+        Various Pop-11 library packages, including an ATMS package
+        and an interface to the SPARC audio device.
+
+    pop11/ref/
+        Pop-11 related REF files
+
+    pop11/teach/
+        Teach files relating to Pop-11
+
+
+popvision/
+    Programs and teaching material for computer vision and image processing.
+    For installation information, see $popcontrib/popvision/README. For
+    information on the contents, see $popcontrib/popvision/help/popvision.
+
+    NO LONGER INCLUDED. David Young's system has been much extended in
+    recent years. At Birmingham the latest version is in
+        $local/popvision
+    and
+        http://www.cs.bham.ac.uk/research/poplog/popvision
+        http://www.cs.bham.ac.uk/research/poplog/popvision.tar.gz
+        ftp://ftp.cs.bham.ac.uk/pub/dist/poplog/popvision.tar.gz
+
+
+prolog/
+    Files relating to Prolog
+
+
+pwm/ [[No longer usable. Requires Sunview, not X.]]
+    Files relating to the modified version of the Poplog Window
+    Manager developed by Anthony Worrall at Reading University.
+    This version of the PWM has some bugs fixed and some extensions.
+    Unfortunately the program libraries do not incorporate the
+    changes to Pop-11 pwm identifiers introduced in V13.8 and
+    described in HELP * PWMNAMES
+
+    pwm/auto/
+        Pop-11 files corresponding to the autoloadable library
+        $usepop/pop/lib/pwm/*
+
+    pwm/help/
+        Help files
+
+    pwm/lib/
+        Non-autoloadable Pop-11 files
+
+    pwm/src/
+        C source programs for building the "pwmtool" (for Sun
+        workstations running Sunview, only)
+
+
+ved/
+    Files relating to the Poplog editor Ved
+
+
+x/
+    Files relating to the Poplog X Windows Interface
+
+    x/demos/
+        Demonstration programs
+
+    x/prolog/
+        Using the X Windows interface from Prolog
+
+        x/prolog/xpw/
+            Prolog interface to the Poplog Widget Set
+
+    x/xved/
+        Demonstrations based on XVed. See HELP * XVED
+
+        x/xved/doit_menus/
+            A portable, extendable, file-based menu mechanism available
+            within XVed. For details see
+                $popcontrib/x/xved/doit_menus/ved_doit
+
+
+--- contrib/CONTENTS
+--- Copyright University of Sussex 1994. All rights reserved.

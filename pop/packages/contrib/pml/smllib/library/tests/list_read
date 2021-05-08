@@ -1,0 +1,169 @@
+RCS LOG
+
+$Log:	list_read,v $
+# Revision 1.1  91/02/22  20:12:48  20:12:48  db (Dave Berry)
+# Initial revision
+# 
+
+
+(* TESTS FOR readSep *)
+
+(* Empty Integer Lists *)
+ListParse.readSep "" "" "" IntParse.read Instream.stdIn;
+
+	(* OK [] *)
+ListParse.readSep "" "" "" IntParse.read Instream.stdIn;
+ 	(* whitespace *) 
+	(* OK [] *)
+ListParse.readSep "[" "]" "" IntParse.read Instream.stdIn;
+[]
+	(* OK [] *)
+ListParse.readSep "[" "]" "," IntParse.read Instream.stdIn;
+ [ ]
+	(* OK [] *)
+ListParse.readSep "" "]" "" IntParse.read Instream.stdIn;
+]
+	(* OK [] *)
+ListParse.readSep "" "]" " " IntParse.read Instream.stdIn;
+ ]
+	(* OK [] *)
+ListParse.readSep "" "]" "" IntParse.read Instream.stdIn;
+ ]
+	(* Fail (Some []) *)
+ListParse.readSep "[" "" "" IntParse.read Instream.stdIn;
+[
+	(* OK [] *)
+ListParse.readSep "[" "" "" IntParse.read Instream.stdIn;
+ [
+	(* OK [] *)
+ListParse.readSep "[" "" "" IntParse.read Instream.stdIn;
+[ 
+	(* OK [] *)
+
+
+(* Non-empty Integer Lists *)
+ListParse.readSep "" "" "" IntParse.read Instream.stdIn;
+ 1
+	(* OK [1] *)
+ListParse.readSep "" "" " " IntParse.read Instream.stdIn;
+ 1 2
+	(* OK [1 2] *)
+ListParse.readSep "" "" "" IntParse.read Instream.stdIn;
+ 1 2
+	(* OK [1 2] *)
+ListParse.readSep "[" "]" "" IntParse.read Instream.stdIn;
+ [ 1 ]
+	(* Fail (Some [1]) *)
+ListParse.readSep "[" "]" "" IntParse.read Instream.stdIn;
+ [ 1 
+	(* Fail (Some [1]) *)
+ListParse.readSep "" "]" "," IntParse.read Instream.stdIn;
+ 1, 2]
+	(* OK [1 2] *)
+ListParse.readSep "" "," "," IntParse.read Instream.stdIn;
+ 1, 2
+	(* Fail (Some [1 2]) *)
+ListParse.readSep "" "," "," IntParse.read Instream.stdIn;
+ 1, 2,
+	(* OK [1 2] *)
+ListParse.readSep "[" "," "," IntParse.read Instream.stdIn;
+[ 1, 2,
+	(* OK [1 2] *)
+ListParse.readSep "[" "]" "," IntParse.read Instream.stdIn;
+[ 1, 2]
+	(* OK [1 2] *)
+
+
+(* Byte Lists *)
+ListParse.readSep "" "]" "" Byte.read Instream.stdIn;
+ ]
+	(* OK [" "] *)
+ListParse.readSep "[" "]" "" Byte.read Instream.stdIn;
+ [ 1 ]
+	(* OK [" ". "1", " "] *)
+ListParse.readSep "" "," "," Byte.read Instream.stdIn;
+ 1, 2,
+	(* OK ["1", "2"] *)
+
+
+(* TESTS FOR readSepN *)
+
+(* Empty Lists *)
+ListParse.readSepN "" "" "" IntParse.read 0 Instream.stdIn;
+
+	(* OK [] *)
+ListParse.readSepN "" "" "" IntParse.read 0 Instream.stdIn;
+ 1
+	(* OK [] *)
+ListParse.readSepN "[" "]" "" IntParse.read 0 Instream.stdIn;
+[]
+	(* OK [] *)
+ListParse.readSepN "[" "]" " " IntParse.read 0 Instream.stdIn;
+ [ ]1
+	(* OK [] *)
+ListParse.readSepN "[" "]" "" IntParse.read 0 Instream.stdIn;
+ [ ]1
+	(* Fail (Some []) *)
+ListParse.readSepN "[" "]" "," IntParse.read 0 Instream.stdIn;
+ [ ]1
+	(* OK [] *)
+ListParse.readSepN "" "]" "" IntParse.read 0 Instream.stdIn;
+]1
+	(* OK [] *)
+ListParse.readSepN "" "]" " " IntParse.read 0 Instream.stdIn;
+ ]1
+	(* OK [] *)
+ListParse.readSepN "" "]" "" IntParse.read 0 Instream.stdIn;
+ ]1
+	(* Fail (Some []) *)
+ListParse.readSepN "[" "" "" IntParse.read 0 Instream.stdIn;
+[
+	(* OK [] *)
+ListParse.readSepN "[" "" "" IntParse.read 0 Instream.stdIn;
+ [
+	(* OK [] *)
+ListParse.readSepN "[" "" "" IntParse.read 0 Instream.stdIn;
+[ 
+	(* OK [] *)
+ListParse.readSepN "" "" "" IntParse.read 1 Instream.stdIn;
+
+	(* Fail (Some []) *)
+ListParse.readSepN "[" "" "" IntParse.read 1 Instream.stdIn;
+[ 
+	(* Fail (Some []) *)
+
+
+(* Non-empty Lists *)
+ListParse.readSepN "" "" "" IntParse.read 1 Instream.stdIn;
+ 1
+	(* OK [1] *)
+ListParse.readSepN "" "" "" IntParse.read 2 Instream.stdIn;
+ 1
+	(* Fail (Some [1]) *)
+ListParse.readSepN "" "" "" IntParse.read 2 Instream.stdIn;
+ 1 2
+	(* OK [1 2] *)
+ListParse.readSepN "" "" "" IntParse.read 1 Instream.stdIn;
+ 1 2
+	(* OK [1] *)
+ListParse.readSepN "[" "]" " " IntParse.read 1 Instream.stdIn;
+ [ 1]
+	(* OK [1] *)
+ListParse.readSepN "[" "]" "" IntParse.read 1 Instream.stdIn;
+ [ 1 ]
+	(* Fail (Some [1]) *)
+ListParse.readSepN "[" "]" "" IntParse.read 1 Instream.stdIn;
+ [ 1 
+	(* Fail (Some [1]) *)
+ListParse.readSepN "" "," "," IntParse.read 2 Instream.stdIn;
+ 1, 2
+	(* Fail (Some [1 2]) *)
+ListParse.readSepN "" "" "," IntParse.read 2 Instream.stdIn;
+ 1, 2,
+	(* OK [1 2] *)
+ListParse.readSepN "" "," "," IntParse.read 2 Instream.stdIn;
+ 1, 2,
+	(* OK [1 2] *)
+
+
+

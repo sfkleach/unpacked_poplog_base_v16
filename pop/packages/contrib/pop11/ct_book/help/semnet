@@ -1,0 +1,86 @@
+
+HELP SEMNET                                     Mike Sharples, September 1985
+
+This library is a semantic network package that operates on the *DATABASE. Each
+entry in the database is assumed to be of the form: [<node> <relation> <node>]
+The procedures behave in an identical manner to the corresponding DATABASE
+procedures, except for database items containing the relation "isa" or
+"ispart" or "connects". Properties are inherited down the chain of "isa"
+relations. Thus:
+
+     [[john isa boy][boy isa person][person needs food]]->database;
+     spresent([john needs food])=>
+
+returns "true". The "ispart" relations are transitive. Thus:
+
+     [[finger ispart hand] [hand ispart body]]->database;
+     spresent([finger ispart body])=>
+
+would return "true". The "connects" relations are both commutative and
+transitive, thus:
+
+     [[c connects b][b connects d]
+     [g connects h][c connects e][e connects f][b connects a]]
+     ->database;
+
+     spresent([a connects f])=>
+
+would return "true". The procedures are:
+
+    sadd(<item>);                 identical to ADD
+    sremove(<pattern>);           identical to REMOVE
+    sflush(<pattern>);            identical to FLUSH
+    spresent(<pattern>);          infers an item matching the pattern
+    slookup(<pattern>);           like spresent, but error if no item inferred
+    sforeach                      iterates over database.
+    sforevery                     iterates over combinations of database items
+    salladd(<list_of_items>);     identical to ALLADD
+    sallremove(<list_of_patterns>);
+                                  identical to ALLREMOVE
+    sallpresent(<list_of_patterns>);
+                                 checks that a combination of patterns can be
+                                 consistently instantiated in the database
+    swhich(<variables>,<list_of_patterns>) -> <list_of_values>;
+                                 finds items satisfying a test
+
+SPRESENT and SALLPRESENT return the result TRUE or FALSE
+Three variables, ISLINK, PARTLINK, and CONNECTLINK are used to match the
+inheritance, transitive and transitive/commutative relations. By default these
+are set to "isa", "ispart" and "connects", but can be assigned to.
+
+Example:
+
+   lib semnet;
+   vars y;
+   [[john isa philatelist] [philatelist isa person] [philatelist likes stamps]
+     [john likes oysters] [mary isa palaeontologist] [palaeontologist likes
+     fossils] [palaeontologist isa person] [person likes food]]->database;
+   swhich([ y ],[[john likes ?y][mary likes ?y]])=>
+
+** [[food]]
+
+   vars junction line1 line2;
+   [[[marble arch] connects [bond street]]
+    [[oxford circus] connects [bond street]]
+    [[oxford circus] connects [regents park]]
+    [[oxford circus] connects [tottenham court road]]
+    [[baker street] connects [regents park]]
+    [[marble arch] ison [central]]
+    [[bond street] ison [central]]
+    [[oxford circus] ison [central]]
+    [[oxford circus] ison [bakerloo]]
+    [[regents park] ison [bakerloo]]
+    [[baker street] ison [bakerloo]]]->database;
+    swhich([junction],
+         [[[marble arch] connects ?junction]
+          [[marble arch] ison ?line1]
+          [?junction ison ?line1]
+          [?junction connects [baker street]]
+          [[baker street] ison ?line2]
+          [?junction ison ?line2]])=>
+
+** [[[oxford circus]]]
+
+--- File: local/help/semnet
+--- Distribution: all
+--- University of Sussex Poplog LOCAL File ------------------------------

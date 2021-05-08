@@ -1,0 +1,15 @@
+MENU FILE HEADER (Don't delete)
+MENU FILE NAME: $popcontrib/x/xved/doit_menus/position_menu
+Store current position on position
+stack, or move to position on stack
+
+Push position                               !!      vedpushkey
+Pop position                                !!      vedpopkey
+Exchange position                           !!      vedexchangeposition
+
+Cut between two positions                   !!      ved_cut
+Splice in last "cut" text                   !!      ved_splice
+Cut then splice here                        !!      ved_cut <> ved_splice
+
+Text block menu       ---->                 !!      'menu textblock'
+Menu menu             ---->                 !!      'menu menu'

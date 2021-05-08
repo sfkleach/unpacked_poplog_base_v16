@@ -1,0 +1,471 @@
+TEACH CT_SYNTAX                                             Chris Hutchison
+                                                            15th October 1986
+
+*****************************************************************************
+File:           $usepop/pop/local/teach/ct_syntax
+Purpose:        Introduction to syntactic theory and parsing
+Author:         Chris Hutchison 15th October 1986
+Machines:
+Documentation:  referenced in text
+Related Files:  TEACH *CT_ELIZA
+*****************************************************************************
+
+
+
+             FORMAL GRAMMARS IN NATURAL LANGUAGE UNDERSTANDING
+
+
+1.  Why grammars?
+
+    Human beings are able to produce and understand a quasi-infinite number of
+novel sentences,  the 'quasi' indicating  a non-linguistic limitation  only of
+physical tiredness and length of life. E.g. you've probably never before heard
+or read the sentences in (1):
+
+    (1) a. All stuffed grey elephants are moderately inflammable.
+        b. There are no such things as triangular virtues.
+
+and you could no  doubt invent any number of new  sentences yourself, and feel
+reasonably confident that nobody has ever produced them before. Put in another
+way,  this means  that in  any human  language there  are infinitely  numerous
+different sentences.
+
+    The task  the linguist has  set himself  is to describe  human languages -
+i.e.  infinitely large  sets of  sentences -  and to  do so  in a  manner that
+enables him to  distinguish between those strings of words  that are sentences
+in the  language described  and those  that are not;  that is,  to distinguish
+between strings such as those in (1) and non-sentences of the kind exemplified
+in (2):
+
+    (2) a. Inflammable all grey moderately elephants stuffed are.
+        b. There are are are are as as virtues.
+
+There are essentially two ways the linguist can go about his job:
+
+        Method I:
+            The linguist can attempt to list all the sentences in a
+            particular language.  Any possible sentence is then bound
+            to be included in the enumeration and can be checked against
+            it.  Non-sentences, such as those in (2), will not be
+            included, and therefore will not be recognized as sentences
+            in the language.
+
+This method has some severe disadvantages,  however: (i) Since we have already
+established that the number of sentences in a language is infinitely numerous,
+it follows that no  finite list could ever be complete.  For example, we could
+create from a list  of sentences of length N an N+1th sentence  made up of all
+the sentences in the list conjoined by the word 'and'. (ii) Although putting a
+large number  of sentences down  on paper may in  some sense be  equivalent to
+describing them,  this method does  not allow  for the explicit  expression of
+what kinds  of things those sentences  have in common that  distinguishes them
+from  non-sentences;  that  is,  does  not  account  for  our  intuitions,  on
+encountering a  string of  words we  have never  seen or  heard before,  as to
+whether that string  belongs to the list of sentences  (i.e., to the language)
+or not.
+
+    Method I  is clearly  unsatisfactory. The  two disadvantages  listed above
+converge  in a  common general  observation. The  human brain  contains only a
+finite, even if awesomely vast, number of neurons and connecting synapses, and
+therefore human beings  have a strictly limited memory. No  single human brain
+nor even the totality of all human brains could therefore, by definition, hold
+in  memory all  the sentences  of a  language, since  a finite  space can  not
+contain  an infinite  number of  entities. Linguists  therefore adopt  another
+method of describing languages:
+
+        Method II:
+
+            The linguist seeks to specify a finite, and generally very
+            small, number of criteria which any sentence in any particular
+            language has to fulfill and of which native speakers have an
+            implicit knowledge they can use when making linguistic
+            judgements.
+
+This makes much more sense: a string of  words is a sentence in a language not
+according to whether it appears on some hypothetical infinite list (and in any
+case, who would decide,  and by what criteria, which strings  should be in the
+list and  which not?) but according  to whether it meets  certain criteria for
+sentence-hood,  such  criteria  being  implicitly known  to  speakers  of  the
+language  and  constituting,  when  formally expressed,  the  GRAMMAR  of  the
+language. (We  shall think of  a grammar in this  sense as including  both the
+words of the language and the rules for their combination).
+
+    We may provisionally  say, then, that a grammar contains  a finite list of
+words - the dictionary - together with a limited number of rules which specify
+the possible combinations of words; in much  the same way, the small number of
+pieces on  a chess board (its  'dictionary') together with the  rules of chess
+(its 'grammar') account for the quasi-infinite number of possible chess games.
+(We shall need to modify this informal definition later on).
+
+
+2.  The form of grammars.
+
+    How do we go about discovering those rules?  What form should the rules
+take?  Remember how we found sentence patterns in ELIZA, for example:
+
+            [my ??words drinks ??more_words]
+and
+            [you == me]
+
+which match, respectively, the sentences
+
+            'my aunt Mabel drinks pina colada'
+and
+            'you never listen to me'
+
+ELIZA doesn't much care  what words fill in the spaces  in the patterns marked
+by the variables "??something" and by the symbols "==", and therefore the GIGO
+('garbage  in, garbage  out')  principle permits  the  generation of  absolute
+nonsense. For example, if ELIZA's response to the first pattern is
+
+            [tell your ??words to stop drinking ??more_words]
+
+and if the current input is
+
+            [my last three drinks were all disgusting]
+
+then the nonsensical output will be
+
+            [tell your last three to stop drinking were all disgusting]
+
+This is  because ELIZA, though it  makes rough predictions about  the kinds of
+expressions that  can appear in  the spaces,  has no mechanism  for processing
+those  expressions  nor  any  linguistic  knowledge that  would  allow  it  to
+recognise what kinds of expressions those are.
+
+    The point  is that  sentences tend to  be patterned in  a small  number of
+fairly regular ways.  For example, I presume we all  intuitively feel that the
+sentences in (3)  share certain structural features, which  are different from
+those shared by  the sentences in (4).  What is it that  distinguishes the two
+groups of sentences?
+
+        (3) a.  My pet wallaby bit the postman
+            b.  My mother burned your letter
+            c.  My girlfriend caught a bus
+
+        (4) a.  My pet wallaby disappeared
+            b.  My mother died
+            c.  My girlfriend fainted
+
+We need to say more, for example, than  that the pattern of the first group of
+sentences is:
+
+            [my ??any_number_of_words]
+
+or more simply, if we're not going to want to use those words in the response:
+
+            [my ==]
+
+since,  in  any case,  this  does  not allow  us  to  distinguish between  the
+sentences  in (3)  and  those in  (4).  One thing  we might  say  is that  the
+sentences in  (3) have a final  direct object while  those in (4) do  not. The
+general form of the sentences in (3) is
+
+            <subject something-ed object>
+
+and of (4) is
+
+            <subject something-ed>
+
+Since the subject in both groups of sentences can be the same, the difference
+between the two groups must lie in the rest of the sentence.  The second item
+-- that is, the verb -- in the sentences in (3) has different properties from
+that in the second group of sentences.  Note the starngeness of, for example:
+
+        (3') a. *My pet wallaby disappeared the postman
+             b. *My mother died your letter
+             c. *My girlfriend fainted a bus
+
+        (4') a. *My pet wallaby bit
+             b. *My mother burned
+             c. *My girlfriend caught
+
+(--  the asterisk  indicates that  the  sentence is  ungrammatical. (4'b),  of
+course, means something but not what it  meant in (3b)). We can now say, then,
+that there  is a part of  speech -- a lexical  category -- called a  verb, and
+that some verbs require an object while  others don't; those of the first kind
+we call 'transitive' verbs, those of the second we call 'intransitive' verbs.
+
+    Can we be more  specific about the form of the subject  and object? Let us
+go back  to one  of our  earlier patterns and  look at  some more  examples of
+possible and impossible  sentences in the English language. We  began with the
+pattern:
+            [my ??words drinks ??more_words]
+
+and decided that  input sentence (5) elicited a grammatical  response (5') but
+that sentence (4) didn't:
+
+        (5)  My aunt Mabel drinks pina colada
+        (5') Tell your aunt Mabel to stop drinking pina colada
+
+        (6)  My last three drinks were all disgusting
+        (6') Tell your last three to stop drinking were all disgusting
+
+The subject and  the object of the  sentence have to be NOUN  PHRASES or other
+expressions which have the same DISTRIBUTION as noun  phrases. The expressions
+"my aunt Mabel", "the postman", "pina  colada", "a bus", and "your letter" are
+all  noun phrases,  and  as such  they  all have  the  same distribution.  For
+example, the sentences  in (7) are all perfectly grammatical  sentences -- let
+us say that they  are SYNTACTICALLY WELL-FORMED -- even if one  or two of them
+have slightly odd meanings:
+
+        (7) a.  The postman bit my mother
+            b.  My girlfriend burned my pet wallaby
+            c.  Your letter caught a bus
+            d.  A bus bit my girlfriend
+
+So we can say that a possible sentence pattern in English is:
+
+            [noun_phrase    verb    noun_phrase]
+
+and you can probably see already that  this is a much more formal and specific
+description  of a  sentence  than our  original  ELIZA-like sentence  pattern.
+(Ignore, for a  moment, the details of  how a computer program  would go about
+recognizing a noun-phrase or a verb). The sentences in (8), like those in (7),
+are also  SYNTACTICALLY WELL-FORMED, but  differ from  those in (7)  in having
+intransitive rather than transitive verbs as main verbs:
+
+        (8) a.  The postman disappeared
+            b.  A bus died
+            c.  Your letter fainted
+            d.  My pet wallaby escaped
+
+The underlying pattern here is:
+
+            [noun_phrase    verb]
+
+So  we  can see  that  an  initial noun-phrase  can  be  followed by  either a
+transitive  verb  and   another  noun-phrase  or  by   an  intransitive  verb.
+Schematically, we might represent that rule as follows:
+
+                           /  transitive_verb   noun_phrase
+            [noun_phrase                                    ]
+                           \  intransitive_verb
+
+In other words, a <transitive verb + noun-phrase> has the same DISTRIBUTION as
+an <intransitive  verb>; and  we can  easily demonstrate  this by  listing two
+synonymous sentences which differ only in the transitivity of the verb:
+
+        (9) a.  My pet wallaby kicked the bucket
+            b.  My pet wallaby croaked
+
+each having  the meaning "My  pet wallaby  died". So let  us now say  that the
+sentence is in  each case made up of  a subject and a predicate,  and that the
+predicate can  have one  of two  forms, depending on  the transitivity  of the
+verb. Actually, predicates can be made up of other things as well, so we shall
+be more specific and say that, in the  above cases, the sentence is made up of
+an  initial  NOUN-PHRASE  and  a  following  VERB-PHRASE.  We  can  write  the
+PHRASE-STRUCTURE rules  (sometimes called 'rewrite rules')  we have discovered
+so far in the following conventional manner:
+
+            S    -->    NP  VP
+            VP   -->    Vtrans NP
+            VP   -->    Vintrans
+
+where the  symbols "S"  = sentence,  "NP" =  noun-phrase, "VP"  = verb-phrase,
+"Vtrans" =  transitive verb, "Vintrans"  = intransitive verb, and  "-->" means
+"can  be replaced  by".  We can  draw  a diagram,  called  a PHRASE-MARKER  or
+PARSE-TREE, to  show how these  rules capture  the syntactic structure  of the
+sentences in (9):
+
+        (9') a.
+                            S
+                           / \
+                         /     \
+                       /         \
+                      NP         VP
+                      |           |
+                      |          / \
+                      |        /     \
+                      |      Vtrans   NP
+                      |        |      |
+                      |        |      |
+             My pet wallaby  kicked  the bucket
+
+
+             b.
+                            S
+                           / \
+                         /     \
+                       /         \
+                      NP         VP
+                      |           |
+                      |           |
+                      |       Vintrans
+                      |           |
+                      |           |
+               My pet wallaby   croaked
+
+
+Compare the form  of the PHRASE-MARKERS with the form  of the PHRASE-STRUCTURE
+RULES. You will see that reading the phrase-markers from top to bottom is much
+like reading the phrase-structure rules from left to right.
+
+    Just as we have been able to analyse a VP into its constituents, so too we
+can analyse the structure of a NP.  In the following sentences the initial NPs
+all have  the same distribution  -- that  is, they can  all occur in  the same
+syntactic 'slot' in the sentence:
+
+       (10) a.  The grey squirrel drank a pink gin
+            b.  Harvey drank a pink gin                    
+            c.  He drank a pink gin
+
+And yet the  three NPs have different  forms: 'he' is a  pronoun, 'Harry' is a
+name  or proper  noun, and  'the grey  squirrel' is  made up  of the  definite
+article 'the',  an adjective 'grey',  and a noun 'squirrel'.  Expressing these
+facts as phrase-structure rules, we get:
+
+            NP   -->    Pronoun
+            NP   -->    Proper_noun
+            NP   -->    Art  Adj  Noun
+
+and  we could  then add  these  rules to  the phrase-structure  rules we  have
+already discovered, thus:
+
+            S    -->    NP  VP
+            VP   -->    Vtrans NP
+            VP   -->    Vintrans
+            NP   -->    Pronoun
+            NP   -->    Proper_noun
+            NP   -->    Art  Adj  Noun
+
+The phrase-marker for sentence (10b), for example, might then be represented in
+the following manner:
+
+        (10') a.
+                            S
+                           / \
+                         /     \
+                       /         \
+                     /             \
+                    NP             VP
+                    |              |
+                    |             / \
+                    |           /     \
+                 ProperN      Vtrans   NP
+                    |          |       |
+                    |          |       |
+                    |          |      / \
+                    |          |    /  |  \
+                    |          |  Art  |   Noun
+                    |          |   |  Adj   |
+                    |          |   |   |    |
+                    |          |   |   |    |
+                  Harvey     drank  a  pink  gin                    
+
+
+3.  The form of grammars: revised definition.
+
+    I informally defined  a grammar earlier as  a finite list of  words -- the
+vocabulary or  dictionary of  the language --  and a finite  set of  rules for
+specifying all possible grammatical orderings of  those words. But we can only
+order those  words if we know  what KINDS of words  they are. I suppose  it is
+just possible  that we could say  that "after the  word 'the' we can  have the
+word 'man' or the  word 'alligator' or the word 'artichoke'  or ..."; but this
+is hardly an economical way of going about things. A better way is to say that
+"after an article we can have zero  or more adjectives followed by a noun". In
+other words,  in addition  to the  rules on  the one  hand and  the dictionary
+entries on the other, we have an  intermediate set of items -- 'verb', 'noun',
+'article', 'adjective',  and so on  -- which connect  the words to  the rules.
+These intermediate items name word classes  or LEXICAL CATEGORIES; thus we can
+augment our grammar in the following manner:
+
+            S       -->    NP  VP
+            NP      -->    Pronoun
+            NP      -->    Proper_noun
+            NP      -->    Art Noun
+            NP      -->    Art  Adj  Noun
+            VP      -->    Vtrans NP
+            VP      -->    Vintrans
+            N       -->    man
+            N       -->    squirrel
+            N       -->    gin
+            N       -->    lemonade
+            Pron    -->    he
+            PropN   -->    Ralph
+            Adj     -->    old
+            Adj     -->    pink
+            Adj     -->    beautiful
+            Art     -->    the
+            Art     -->    a
+            Vtrans  -->    drank
+            Vtrans  -->    caught
+            Vintr   -->    died
+            Vintr   -->    evaporated
+
+These rules  then permit us  to produce or GENERATE  a fairly large  number of
+different sentences, e.g.
+
+       (11) a.  A beautiful squirrel drank the lemonade
+            b.  The pink gin evaporated
+            c.  The old man caught a pink squirrel
+
+and so  on. Try to work  out for yourself  which rules, starting from  the "S"
+symbol,  would  have  been  used  to  generate  the  above  sentences.  Draw a
+phrase-marker for each sentence, labelling  each sub-constituent in the manner
+of (9') and (10') above.
+
+4.  Generating versus parsing.
+
+    Although the 'rewrite  arrow' ( --> )  only points one way,  this does not
+mean to  say that  the rules  only work in  one direction.  The right-pointing
+arrow is  no more than an  arbitrary historical convention, and  could just as
+easily be replaced by, for example, "<--",  or "==", and still be held to mean
+the same thing: "can be replaced by".  Thus:
+
+            an Art + a Noun    can be replaced by     a NP
+
+just as well as:
+
+            a NP     can be replaced by     an Art + a Noun
+
+The way  in which one reads  the arrow may  sometimes depend (though NB  by no
+means always) on whether one is GENERATING a novel sentence or PARSING a given
+sentence. Suppose, for example, you wish  to generate a sentence; you might go
+through the following reasoning:
+
+        "if I want to make a sentence, then I must first make a noun
+         phrase and then a verb phrase.  But to make a noun phrase I
+         must find an article, perhaps an adjective, and then a noun;
+         or, alternatively, I could use a pronoun or a proper noun.
+         Then, to make up a verb phrase, I must find either an intransitive
+         verb; or, alternatively, a transitive verb followed by another
+         noun phrase"
+
+Compare this  English description with  the phrase-structure rules  above. Now
+suppose you are given  a string of words, and you want to  know whether or not
+it is  an English sentence. You  might reason in something  like the following
+manner:
+
+        "Let's look at each word of the string.  Is it listed in the
+         grammar as an instance of a lexical category?  (That is, does
+         it appear on the right hand side of any grammar rule?) If so,
+         then replace it with the lexical category.  Do any of the
+         symbols I now have combine together to form larger constituents?
+         If so, then replace them with the label for the higher
+         constituent.  If I can keep on doing this until I get back to
+         the symbol "S", then I have found a well-formed sentence; if not,
+         then the string is not a sentence of English"
+
+Actually, there is  no reason why a  parser should not start from  the "S" and
+work down towards the words of the  input string, nor why a sentence generator
+should do so; and in fact, there are  many kinds of parser which do start from
+the  hypothesis that  the string  is a  "S" and  go on  to try  to prove  that
+therefore the  string is  composed of a  NP +  VP, and so  on. A  parser which
+starts from the  words themselves and works  towards the building of  a "S" we
+call a  bottom-up or  data-driven parser;  one which starts  from the  "S" and
+seeks to prove, by going down through the constituents and sub-constituents of
+"S", that the  words in the input  string can be combined in  specific ways to
+build  up a  well-formed sentence  is called  a top-down  or hypothesis-driven
+parser.  But  for the  time  being  you need  not  concern  yourself with  the
+technicalities of parsing and generation.
+
+    In the next lecture we shall  consider other types of linguistic knowledge
+that are likely to be necessary  for the correct interpretation, by machine or
+man, of English sentences and texts. In the meantime, perhaps you can think of
+some kinds  of knowledge, other  than phrase-structure structure rules  of the
+kind listed above, that a human being or a machine would have to have in order
+to understand ordinary English.
+
+--- File: local/teach/ct_syntax
+--- Distribution: all
+--- University of Sussex Poplog LOCAL File ------------------------------

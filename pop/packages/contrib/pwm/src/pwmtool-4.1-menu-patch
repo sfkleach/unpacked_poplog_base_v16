@@ -1,0 +1,69 @@
+*** pwinput.orig.c	Mon Jun  4 17:12:24 1990
+--- pwinput.c	Mon Jun  4 17:03:14 1990
+***************
+*** 17,23 ****
+  extern int errno;
+  
+  #include <suntool/menu.h>
+! extern struct menu *wmgr_toolmenu;
+  
+  /* these are for the tool selected proc to play with */
+  int  fake_obits, fake_ebits;
+--- 17,36 ----
+  extern int errno;
+  
+  #include <suntool/menu.h>
+! struct menuitem toolmenuitem[]={
+! 	{MENU_IMAGESTRING,"Open",(caddr_t)3},
+! 	{MENU_IMAGESTRING,"Move",(caddr_t)5},
+! 	{MENU_IMAGESTRING,"Resize",(caddr_t)6},
+! 	{MENU_IMAGESTRING,"Expose",(caddr_t)7},
+! 	{MENU_IMAGESTRING,"Hide",(caddr_t)8},
+! 	{MENU_IMAGESTRING,"Redisplay",(caddr_t)1},
+! 	{MENU_IMAGESTRING,"Quit",(caddr_t)2}
+! 	};
+! struct menu toolmenu = {MENU_IMAGESTRING,"Frame",
+! 	sizeof(toolmenuitem)/sizeof(toolmenuitem[0]),
+! 	toolmenuitem,
+! 	NULL,
+! 	0};
+  
+  /* these are for the tool selected proc to play with */
+  int  fake_obits, fake_ebits;
+***************
+*** 232,237 ****
+--- 245,251 ----
+  {
+  	struct tool *toolp;
+  	char toolfd, iconic;
++ 	struct menu * mytoolmenu = &toolmenu;
+  
+  	toolp = wt_toolwp[win_num];
+  	toolfd = toolp->tl_windowfd;
+***************
+*** 259,267 ****
+  			if ((inevent.ie_flags && IE_NEGEVENT) == 0)	/* button down */
+  			{
+  				struct menuitem *mi;
+  
+! 				wmgr_setupmenu(toolfd);
+! 				mi = menu_display(&wmgr_toolmenu, &inevent, toolfd);
+  
+  				if (mi != (struct menuitem *) NULL)
+  					switch (mi->mi_data)
+--- 273,287 ----
+  			if ((inevent.ie_flags && IE_NEGEVENT) == 0)	/* button down */
+  			{
+  				struct menuitem *mi;
++ 				if (iconic == WT_ICONIC) {
++ 					toolmenuitem[0].mi_imagedata = "Open";
++ 					toolmenuitem[0].mi_data = (caddr_t)3;
++ 				} else {
++ 					toolmenuitem[0].mi_imagedata = "Close";
++ 					toolmenuitem[0].mi_data = (caddr_t)4;
++ 				}
+  
+! 				mi = menu_display(&mytoolmenu, &inevent, toolfd);
+  
+  				if (mi != (struct menuitem *) NULL)
+  					switch (mi->mi_data)

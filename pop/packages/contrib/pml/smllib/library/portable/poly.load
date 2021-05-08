@@ -1,0 +1,27 @@
+(* POLY/ML SPECIFIC LOAD FILE
+
+Created by:     Dave Berry, LFCS, University of Edinburgh
+		db@lfcs.ed.ac.uk
+
+Date:           14 Nov 1989
+
+Maintenance:    Author
+
+RCS LOG
+
+$Log:	poly.load,v $
+Revision 1.2  91/01/24  16:29:15  16:29:15  db (Dave Berry)
+Moved definitions of loadFun, etc. to build files.
+
+Revision 1.1  90/12/20  16:04:05  16:04:05  db (Dave Berry)
+Initial revision
+
+
+*)
+
+structure NonStandard =
+struct
+  val use = PolyML.use
+  val flush_out = ExtendedIO.flush_out
+end;
+

@@ -1,0 +1,32 @@
+HELP DOCTOR                                     Mike Sharples October 1986
+
+DOCTOR is a mini-vesion of the ELIZA program (see TEACH ELIZA) written in
+TPOP and designed so the the POP-11 code is easy to read.
+
+To run the program type:
+
+lib doctor
+converse();
+
+You will then hold a conversation with DOCTOR, which you can finish by typing:
+
+bye
+
+You can inspect the program itself by pressing the ENTER key (if you are using
+VED) and then typing:
+
+showlib doctor
+
+You will then be able to inspect the POP-11 program. You can also alter the
+program and run your new version (see TEACH VEDPOP). Don't worry about messing
+up the program, it's your own copy!
+
+To finish inspecting DOCTOR:
+
+Press: ENTER
+Type: q
+Press: RETURN
+
+--- File: local/help/doctor
+--- Distribution: all
+--- University of Sussex Poplog LOCAL File ------------------------------

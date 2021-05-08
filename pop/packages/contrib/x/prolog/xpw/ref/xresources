@@ -1,0 +1,193 @@
+REF XRESOURCES                              Andreas Schoter, August 1990
+
+        COPYRIGHT University of Sussex 1990. All Rights Reserved.
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+<<<<<<<<<<<<<<<<<<<<<<<<<                       >>>>>>>>>>>>>>>>>>>>>>>>
+<<<<<<<<<<<<<<<<<<<<<<<<<   XRESOURCES LIBRARY  >>>>>>>>>>>>>>>>>>>>>>>>
+<<<<<<<<<<<<<<<<<<<<<<<<<                       >>>>>>>>>>>>>>>>>>>>>>>>
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+         CONTENTS - (Use <ENTER> g to access required sections)
+
+ --  Useful Resources
+ --  Core Resources
+
+
+Useful Resources
+----------------
+
+The following resources may be usefully accessed by the user.
+
+
+background                                                    [resource]
+foreground                                                    [resource]
+        This resource determines the pixel value used for the foreground
+        or background of the widget. It can be accessed and updated  via
+        xt_value/3 - for example, to determine the current value of  the
+        foreground or background for the widget whos ID number is 3, use
+        the command:
+
+            ?- xt_value(3,foreground,X).
+
+
+depth                                                         [resource]
+        This resource holds the colour specification for the widget.  It
+        specifies the number of bits used to describe the colour of  any
+        given pixel. Thus a  monochrome window would  have a depth  of 1
+        (the pixel is either on or off) whilst most colour windows  have
+        a depth of 8, meaning that up to 256 colours can be held in  the
+        colormap for display.
+
+
+font                                                          [resource]
+        This is the resource whos value is accessed and altered via  the
+        xpw_set_font predicate.
+
+
+function                                                      [resource]
+        This resources provides  direct access  to the  X draw  function
+        resource. This is  less convenient than  xpw_graphic_raster_op/2
+        since the later knows symbolic  names for the X draw  functions,
+        but this method requires that  the user specify the code  number
+        for each draw function. The mapping between draw function  names
+        and code numbers is given below:
+
+            clear         =  0
+            and           =  1
+            and_reverse   =  2
+            copy          =  3
+            and_inverted  =  4
+            noop          =  5
+            xor           =  6
+            or            =  7
+            nor           =  8
+            equiv         =  9
+            invert        = 10
+            or_reverse    = 11
+            copy_inverted = 12
+            or_inverted   = 13
+            nand          = 14
+            set           = 15
+
+        Thus the call
+
+            ?- xt_value(current,function,6).
+
+        is equivalent to
+
+            ?- xpw_graphic_raster_op(current,xor).
+
+        See also REF *XpwPixmap/Raster Function Values
+
+
+height                                                        [resource]
+width                                                         [resource]
+x                                                             [resource]
+y                                                             [resource]
+        These resources  hold  the  data about  the  physical  size  and
+        position of the widget on the screen, height and width hold  the
+        height and width of the widget, and x,y hold the coordinates  of
+        the top  left corner of  the  widget. These  resources  are  all
+        'shorts' so  xt_value/4  should  be used  to  access  them.  For
+        example:
+
+            ?- xt_value(current,width,short,X).
+            X = 300 ?
+            yes
+
+
+pixmap                                                        [resource]
+        This resource holds  the pixmap associated  with the widget.  It
+        can be modified, but care should be exercised, as the width  and
+        height of  the pixmap  may go  out of  sync with  the width  and
+        height of the widget causing strange side effects.
+            See also REF *XpwPixmap/pixmap_status
+
+
+
+
+Core Resources
+--------------
+
+The following resources are included in the Prolog system for
+completeness, the user is referred to the MIT X documentation for more
+details.
+
+
+
+accelerators                                                  [resource]
+allow_horiz                                                   [resource]
+allow_vert                                                    [resource]
+ancestor_sensitive                                            [resource]
+background_pixmap                                             [resource]
+bitmap                                                        [resource]
+border_color                                                  [resource]
+border                                                        [resource]
+border_pixmap                                                 [resource]
+border_width                                                  [resource]
+colormap                                                      [resource]
+destroy_callback                                              [resource]
+edit_type                                                     [resource]
+file                                                          [resource]
+force_bars                                                    [resource]
+highlight                                                     [resource]
+h_space                                                       [resource]
+index                                                         [resource]
+inner_height                                                  [resource]
+inner_width                                                   [resource]
+inner_window                                                  [resource]
+insert_position                                               [resource]
+internal_height                                               [resource]
+internal_width                                                [resource]
+jump_proc                                                     [resource]
+justify                                                       [resource]
+knob_height                                                   [resource]
+knob_indent                                                   [resource]
+knob_pixel                                                    [resource]
+knob_width                                                    [resource]
+label                                                         [resource]
+length                                                        [resource]
+lower_right                                                   [resource]
+mapped_when_managed                                           [resource]
+menu_entry                                                    [resource]
+name                                                          [resource]
+notify                                                        [resource]
+orientation                                                   [resource]
+parameter                                                     [resource]
+popup_callback                                                [resource]
+popdown_callback                                              [resource]
+resize                                                        [resource]
+reverse_video                                                 [resource]
+screen                                                        [resource]
+scroll_proc                                                   [resource]
+scroll_d_cursor                                               [resource]
+scroll_h_cursor                                               [resource]
+scroll_l_cursor                                               [resource]
+scroll_r_cursor                                               [resource]
+scroll_u_cursor                                               [resource]
+scroll_v_cursor                                               [resource]
+selection                                                     [resource]
+selection_array                                               [resource]
+sensitive                                                     [resource]
+shown                                                         [resource]
+space                                                         [resource]
+string                                                        [resource]
+text_options                                                  [resource]
+text_sink                                                     [resource]
+text_source                                                   [resource]
+thickness                                                     [resource]
+thumb                                                         [resource]
+thumb_proc                                                    [resource]
+top                                                           [resource]
+translations                                                  [resource]
+update                                                        [resource]
+use_bottom                                                    [resource]
+use_right                                                     [resource]
+value                                                         [resource]
+v_space                                                       [resource]
+window                                                        [resource]
+
+
+--- C.all/x/plog/ref/xresources
+--- Copyright University of Sussex 1990. All rights reserved. ----------

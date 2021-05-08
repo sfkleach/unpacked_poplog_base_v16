@@ -1,0 +1,452 @@
+TEACH PSYS1                                             Tom Khabaza
+                                                        8th September 1985
+
+This teach file is an introduction to a kind of AI system known as a
+"production system".  It explains what production systems are, what they are
+used for, and why AI considers them important.
+
+To understand this teach file, it is helpful if you already understand the
+concept of a "database".
+One source of this information is the teach file TEACH * DATABASE.
+
+After reading this teach file, go on to TEACH * PSYS2.
+
+Contents of this file:
+ -- What is a production system ?
+ -- The database
+ -- The rules
+ -- The production system interpreter
+ -- What are production systems used for?
+ -- Why are production systems important in AI?
+ -- Production systems are flexible
+ -- Production systems can be "modular"
+ -- Production systems can be comprehensible
+ -- Production systems are plausible
+ -- Summary
+ -- What next?
+ -- Readings on production systems
+ -- Bibliography
+
+
+-- What is a production system ? -------------------------------------------
+
+A production system is a collection of a specific type of knowledge, stored in
+and used by a computer.  A production system has three major components:
+
+(i)     A set of FACTS, called a "database".
+(ii)    A set of RULES, called a "rulebase".
+(iii)   A program to use the rules and facts together, called a
+        "production system interpreter".
+
+
+-- The database ------------------------------------------------------------
+
+The facts, or database (i), are similar to a POP-11 database - that is, they
+tend to be small items of information, stored in a simple form - for example
+        [tom likes cream cakes]
+        [tom is fat]
+    and [tom is thin]
+are typical of the size and simplicity of the facts stored in a production
+system database.
+
+The database is also sometimes called the "working memory", because it is
+usually used to store facts in the short term.
+
+
+-- The rules ---------------------------------------------------------------
+
+The rules (ii) are all of the following form:
+
+    IF  <some condition is true>    THEN    <perform some action>.
+
+The condition is usually something like "the database contains such-and-such a
+fact", and the action is usually something like "add this other fact to the
+database", or "remove this fact from the database".
+
+Thus, a typical (if frivolous) rule might read something like
+
+    IF  [tom likes cream cakes]     THEN    add [tom is fat]
+
+This rule, expressed in English, means something like: "if ever you find that
+the database contains the fact [tom likes cream cakes], then add to the
+database the fact [tom is fat]".
+
+A more complex example might be
+
+    IF  [tom likes cream cakes]    AND   [tom is thin]
+    THEN    remove [tom is thin]
+            add [tom is fat]
+
+Again, the English translation is something like: "if you ever discover that
+the database contains the fact [tom likes cream cakes], AND ALSO, AT THE SAME
+TIME the database contains the fact [tom is thin], then remove from the
+database the fact [tom is thin], and add to the database the fact [tom is
+fat]".
+
+The conditions and actions in these examples are entirely to do with the
+database; whether some fact or facts are present or absent in the database,
+and adding or removing facts from the database.  This is usually true but not
+always; in particular, the actions might sometimes say things like "print this
+message to the terminal", or "read what the user types on the terminal and add
+it to the database in some form".
+
+A rule's conditions are sometimes called the RULE HEAD, and its actions are
+called the RULE BODY.
+
+For a given production system, the set of rules is fixed; that is, even if all
+the other components are the same, it is considered a different production
+system if the rules are different.
+
+
+-- The production system interpreter ----------------------------------------
+
+The third component of a production system, the production system interpreter
+(iii), is the program that APPLIES the rules.  That is, it looks at the
+database, decides which rules have conditions that are currently true, decides
+which of these to use next, and performs the actions in that rule's body.
+Thus, a production rule interpreter repeatedly performs the following steps:
+
+(1)     Find the rules whose conditions are true;
+(2)     Decide which one to use;
+(3)     Perform the actions in its body.
+
+These steps are usually repeated until one of the following occurs:
+    (A)     no rule can be found whose conditions are true;
+or
+    (B)     some rule is used which explicitly has as part of it's body
+            (i.e. in its <action> part) the action "stop".
+
+In particular, note step (2); once the system has collected together all the
+rules whose conditions are true, it may have to make some kind decision - if
+there is more than one rule whose conditions are true, it must decide which
+one to use.  There are various different ways that this might be decided; we
+might use the rule whose conditions most recently became true, or we might use
+the rule with the strictest conditions - for example, those conditions that
+demand the most facts to be in the database.  The method used by a production
+system interpreter to decide which rule to use when more than one applies is
+called its "conflict resolution strategy".
+
+Different production system interpreters use different conflict resolution
+strategies; different kinds of strategies can be useful for different
+purposes.  We will not go into the complex details of choosing a good
+strategy; in this series if teach files, very simple strategies will be
+sufficient.  The simple strategy that we will use is described in the next
+teach file: TEACH * PSYS2.
+
+
+-- What are production systems used for? -----------------------------------
+
+Production systems are used in AI to represent knowledge, when the knowledge
+in question is best represented as rules acting on facts or "symbols".  There
+is some disagreement as to exactly how universal they will be for representing
+knowledge, but there is no doubt that they have been used to build systems
+that are "usefully intelligent", that is they contain knowledge which allows
+them to act in a useful way.
+
+Most of these useful production systems are what are called "expert systems".
+An expert system is a program which "contains" some expert knowledge - that is
+some of the knowledge of some trained individual such as a doctor, and can use
+this knowledge to reason about the domain, and answer question, such as "what
+disease am I suffering from?", given certain facts, such as your symptoms.
+
+However, expert systems need not be based on the knowledge of a highly trained
+technical expert.  They can also hold and use knowledge of more everyday
+matters, such as, for example, where to go shopping for certain items.  One
+might store in a production system some rules about where to find certain
+kinds of shops in London.  Here is an example of a rule of this sort:
+
+    IF  [want to buy shoes]     THEN    [try oxford street]
+
+This rule formalises the knowledge that if you want to buy shoes, you could
+try the shops in Oxford Street.  Note that it does not capture this knowledge
+perfectly - all of us know lots of things about shoes and Oxford Street (even
+those of us who have never been to London) that are not contained in this
+rule.  But the rule contains enough information to be useful to someone who
+wants to know where to buy shoes, especially if they already know the things
+that the rule leaves out - they just happen not to know about the excessive
+number of shoe shops in Oxford street.
+
+
+-- Why are production systems important in AI? -----------------------------
+
+One of the basic goals of AI is to represent human knowledge in a form that
+can be used by a computer.  When we write a program to perform some
+"intelligent" task, we must give it knowledge of the domain it will be working
+in.  So, for example, a program to perform medical diagnosis must know about
+the area of medicine, a program to advise you about travel in London must know
+about the London underground system (among other things), and so on.
+
+There is certainly more to human intelligence than large amounts of knowledge
+stored, as it were, "by rote".  However, it turns out that "usefully
+intelligent" behaviour can often be produced by a computer using a very simple
+program with a lot of stored knowledge.  The "simple program" might
+be something like a production system interpreter, or perhaps a program to
+handle semantic nets (see TEACH * SEMNET1).  These programs are not
+intelligent in themselves, but when operating on a large amount of knowledge,
+they may seem to be so.  How intelligent they appear is determined entirely by
+the knowledge that they work on - by giving them incorrect "knowledge", they
+could also be made to seem extremely stupid!
+
+The area of Artificial Intelligence concerned mainly with storing
+domain-specific knowledge is known as "knowledge engineering".
+In knowledge engineering, it is important that the method used for storing
+(or "representing") knowledge in a computer has certain properties.  Some of
+these are:
+
+-   It should be flexible, that is it should allow one to represent many
+    different kinds of knowledge.
+
+-   It should be "modular", that is, it should allow the stored knowledge to
+    be split into "chunks" of a reasonable size that can be understood
+    independently of the other knowledge stored.
+
+-   The mechanisms that act on the knowledge should work in comprehensible
+    steps.  This, together with the last ("modular") property, helps the user
+    of the system to understand its actions.  This is especially important if
+    the system is giving advice on matters of importance, such as medical
+    advice.
+
+-   It should be "plausible", that is it should bear some relation to the way
+    humans tackle the task it performs.
+
+
+-- Production systems are flexible ------------------------------------------
+
+This flexibility is more than merely allowing one to represent knowledge in
+different domains.  For example, the rule:
+
+    IF  [want to buy shoes]     THEN    [try oxford street]
+
+and the rule:
+
+    IF  [symptom sore throat]   THEN    [disease may be common cold]
+
+while being from widely differing domains, have this in common: that both
+start with a fact, and conclude another fact (or suggestion).  Both rules
+represent knowledge used in a REASONING process, whether reasoning about
+shopping, or about medical diagnosis.  But we can also use production rules to
+express completely different kinds of knowledge, for example the knowledge or
+skill of riding a bicycle, using rules like:
+
+    IF      [bicycle wobbles to the left]
+    THEN    [turn handlebars slightly leftward]
+
+So production rules can represent knowledge used in reasoning, or in
+exercising a skill, and many other kinds of knowledge.
+
+
+-- Production systems can be "modular" --------------------------------------
+
+Production systems can be modular in that the production rules, as well as the
+facts in the database, can represent bits of knowledge of a sensible size.
+The examples above show this; for example the link between buying shoes and
+oxford street seems sensible as a single piece of information.
+
+However, like most ways of expressing things to a computer, they can be used
+badly if you try hard enough!  For example, the following rules, which might
+be used in a shopping advisor, do not seem so modular:
+
+    IF  [want to buy clothes]   THEN    [shopping1]
+
+    IF  [you are rich]          THEN    [shopping2]
+
+    IF  [you are not rich]      THEN    [shopping3]
+
+    IF  [shopping1]  AND  [shopping2]
+    THEN    [try harrods]
+
+    IF  [shopping1]  AND  [shopping3]
+    THEN    [try marks and spencers]
+
+This is because facts like [shopping1] and [shopping2] have no sensible
+meaning, except in the context of the other rules; these rules are of no use
+individually, but only as a group.  The following rules express the same
+knowledge, but in a more modular fashion:
+
+    IF  [want to buy clothes]  AND  [you are rich]
+    THEN    [try harrods]
+
+    IF  [want to buy clothes]  AND  [you are not rich]
+    THEN    [try marks and spencers]
+
+So it is possible to use production rules to represent knowledge in a modular
+way, but modularity does not necessarily follow from using a production
+system.
+
+
+-- Production systems can be comprehensible --------------------------------
+
+For reasons similar to those above, production systems can be used in a way
+that makes them easy to understand, or if we try hard enough, we can make
+their activities difficult to understand.
+
+However, production systems have the advantage that, if the individual rules
+are themselves sensible pieces of knowledge, then the production system
+interpreter will always perform sensible steps.  This is partly because the
+rules and facts are always used in the same way; facts are always bits of
+knowledge about the current situation, and rules are always knowledge about
+how to react to a certain situation or type of situation.
+
+However, it is also partly because the activity of a production system
+interpreter seems intuitively sensible - to find a piece of knowledge that
+pertains to the current situation, and then apply it, seems a sensible
+activity for a computer system to be engaged in.  This helps to keep the
+reasoning steps of production systems comprehensible to their users.
+
+
+-- Production systems are plausible ---------------------------------------
+
+The workings of the human mind are not well understood.  This might seem to
+make the "plausibility" criterion on knowledge representation schemes, that
+they should bear some relation to the way humans do things, very difficult to
+meet.  However, this criterion may be taken in a less arduous way.  In its
+simplest form, we are only saying that if a human being, say an expert in some
+field, looks at the activity of an expert system in a computer and says "that
+has nothing to do with the way I do things", this is a point against the
+expert system.  On the other hand, if she says "this looks like the kind of
+way I reason, and its knowledge of my field seems to bear some relation to my
+knowledge", that is a point in its favour.
+
+The flexibility and comprehensibility of production systems help them to meet
+this criterion; experts can be encouraged to state their knowledge in the form
+of rules, which can often be encoded directly into production rules.  This
+process of inducing experts to express their knowledge in a form that will be
+useful in building an expert system is called "knowledge elicitation", and is
+one of the major tasks of a knowledge engineer.
+
+Aside from the "intuitive" kind of plausibility mentioned above, production
+systems have some psychological plausibility in their own right.  They have
+been by psychologists used for modelling various types of thought processes,
+and the growth of their use has strong historical links with the "information
+processing" school of psychology.
+
+
+-- Summary -------------------------------------------------------------------
+
+-   A production system is made up of a short term memory or "database", a set
+    of rules or "rulebase", and a production system interpreter which applies
+    the rules to items in the database.
+
+-   Production systems are used in AI for tasks where the required knowledge
+    is "symbolic"; this may be expert knowledge, but can be knowledge of a
+    more mundane kind.
+
+-   Production systems are important for AI because they provide a simple
+    framework that can be used with large amounts of knowledge to perform
+    sophisticated tasks.
+
+-   Production systems satisfy certain important criteria for a good knowledge
+    representation framework; they are flexible, modular, comprehensible and
+    plausible.
+
+
+-- What next? ---------------------------------------------------------------
+
+The next teach file in this series is TEACH * PSYS2.  This will show you how
+to write production rules in POP-11, to perform simple advisory tasks.
+
+
+-- Readings on production systems --------------------------------------------
+
+General:
+
+Many modern introductions to AI contain brief explanations of production
+systems - for example McCorduck (1979) and Feigenbaum & McCorduck (1983) both
+contain relevant sections.
+
+For slightly more technical detail, Bundy et al. (1980) chapter 5 section 5
+(5.5) is a good introduction, but unfortunately uses the simplified AI
+programming language "LOGO" for the examples.
+
+More advanced general readings are:
+
+Luger (1978) sections 2.4 - 2.5 & section 3; (O.U. course material). This is
+rather long, but worth skimming for the psychological angle.
+
+Winston (1977) chapter 5, sections on "Situation-action rules and production
+systems" and "Production systems and human problem solving".
+
+Barr & Feigenbaum (1982) Vol. 1, Chapter III: "Representation of Knowledge",
+Section C4 "Representation Schemes: Production Systems".
+
+Finally, the Waterman & Hayes-Roth book contains many good papers, and in
+particular a long bibliography.
+
+
+Production systems and psychological modelling:
+
+Anderson's (1976) book is a classic example of such work.
+
+See also Young's papers on using production systems to model cognitive
+development, and Newell's (1977) on analysing human problem solving in terms
+of production systems
+
+
+-- Bibliography --------------------------------------------------------------
+
+ANDERSON, J. R. (1976) "Language, Memory and Thought", LEA.
+    [QZ 1030 And].
+
+BARR, A. and FEIGENBAUM, E. A. (1982) "The Handbook of Artificial
+    Intelligence", Volumes 1 and 2, Pitman.
+    [QZ 1240 Han].
+
+BUNDY, A., BURSTALL, R. M., WEIR, S. and YOUNG, R. M. (1980) "Artificial
+    Intelligence: An introductory course", Edinburgh University Press.
+
+FEIGENBAUM, E. A. and McCORDUCK, P. (1983) "The Fifth Generation", Pan.
+    [QZ 1240 Fei].
+
+HAYES-ROTH, F., WATERMAN, D. A. and LENAT, D. B. (1978) "Principles of
+    pattern-directed inference systems", in Waterman and Hayes-Roth (eds.)
+    (1978a), pp 577-601.
+
+JOHNSON-LAIRD, P. N. and WASON, P. C. (eds.) (1977) "Thinking: Readings in
+    Cognitive Science", Cambridge University Press.
+    [QZ 1010 Thi].
+
+LUGER, G. (1978) "Formal analyses of problem solving behaviour", Open
+    University, course D303: "Cognitive Psychology", Block 4: "Learning and
+    problem solving (part 3)", Unit 28.
+    [BF 311 Ope].
+
+McCORDUCK, P. (1979) "Machines Who Think: A Personal Inquiry into the History
+    and Prospects of Artificial Intelligence", Freeman.
+    [QZ 1240 Mac].
+
+NEWELL, A. (1973) "Production Systems: Models of control structures", in Chase
+    (1973), pp 463-526.
+
+NEWELL, A. (1977) "On The Analysis of Human Problem Solving Protocols", in
+    Johnson-Laird & Wason (1977).
+
+WATERMAN, D. A. (1975) "Adaptive production systems", IJCAI 4, pp 296-303.
+
+WATERMAN, D. A. and HAYES-ROTH, F. (eds.) (1978) "Pattern-directed inference
+    systems", Academic Press.
+    [QZ 1240 Wor].
+
+WINSTON, P. H. (1977) "Artificial Intelligence", Addison-Wesley.
+    [QZ 1240 Win].
+
+YOUNG, R. M. (1974) "Production systems as models of cognitive development",
+    AISB 1, pp 284-295.
+
+YOUNG, R. M. (1976) "Seriation by Children: An Artificial Intelligence
+    Analysis of a Piagetian Task", Interdisciplinary Systems Research 17,
+    Birkhauser.
+    [QZ 1620 You].
+
+YOUNG, R. M. (1977) "Mixtures of strategies in structurally adaptive
+    production systems: Examples from seriation and subtraction", Research
+    Report No. 33, Department of Artificial Intelligence, University of
+    Edinburgh.
+    [QZ 1240 You].
+
+YOUNG, R. M. (1979) "Production systems for modelling human cognition", in
+    "Expert Systems in the Micro-Electronic Age", Michie, D. (ed.), Edinburgh
+    University Press.
+
+--- File: local/teach/psys1
+--- Distribution: all
+--- University of Sussex Poplog LOCAL File ------------------------------

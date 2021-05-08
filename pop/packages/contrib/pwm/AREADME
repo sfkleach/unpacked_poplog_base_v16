@@ -1,0 +1,8 @@
+$popcontrib/pwm/AREADME                               A.Sloman Sept 1990
+
+This file contains the Reading PWM, produced by Anthony Worrall,
+at Reading University.
+
+I.e. the files have the C sources for building the PWM on a Sun,
+in the src directory, and Pop-11 libraries in the lib and auto
+directory, with documentation in the help directory.

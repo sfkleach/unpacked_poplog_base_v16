@@ -1,0 +1,256 @@
+HELP XPROLOG                               Andreas Schoter  August 1990
+
+
+         CONTENTS - (Use <ENTER> g to access required sections)
+
+ -- Overview
+ -- Naming Conventions
+ -- Handeling Widgets in Prolog
+ -- Current Widget
+ -- Active Widgets
+ -- Resources
+ -- Further Documentation
+
+-- Overview -----------------------------------------------------------
+
+The Poplog XProlog system provides users of Prolog with access to the
+XWindows graphics capabilities.  The basic facilities are contained in a
+number of libraries which have to be loaded in order to make the
+graphics capabilities available.  There are four main libraries in the
+system, these are:
+
+    LIB *XpwCore
+    LIB *XpwPixmap
+    LIB *XpwGraphic
+    LIB *XpwMouse
+
+Each of these library files has an associated REF file detailing the
+predicates it defines. These four basic libraries are LIB *xwidgets
+*xresources *xcallbacks and *xt_value - each of these basic libraries
+has an associated REF file.
+
+LIB *xwidgets defines the code for dealing with widget identifiers (see
+Sections Handeling Widgets in Prolog - Current Widget - and Active
+Widgets below).  LIB *xresources and *xt_value define the code for
+interfacing to the XWindows widget resources (see Section Resources
+below), and LIB *xcallbacks defines the code for adding and deleting
+callback procedures from a widget's resources.
+
+LIB *XpwCore contains definitions of the predicates for accessing the
+facilities of the Poplog XpwCore widget class.  LIB *XpwGraphic and
+*XpwPixmap add the predicates for accessing the widget classes
+XpwGraphic and XpwPixmap respectively.  XpwGraphic is a subclass of
+XpwPixmap which is a subclass of XpwCore.
+
+All of the xprolog libraries depend on LIB *xwidgets for the basic
+routines so this must be loaded.  LIB *xcallbacks and *xt_value both
+depend on LIB *xresources, so if callbacks are to be used, or the user
+wishes to alter widget resource values LIB *xresources must be loaded.
+LIB *XpwCore *XpwPixmap *XpwGraphic and *XpwMouse all require LIB
+*xresources to have been loaded since each of these libraries add their
+own resources to the system.
+
+The recommended way of initialising the xprolog system is with a single
+call the the library xploginit as shown below:
+
+:- library(xploginit).
+
+This first ensures that all the necessary xpop libraries are loaded, and
+then loads the basic Prolog libraries as described above, followed by
+the Prolog Xpw libraries.  Once the call to load the library xploginit
+is complete then the xprolog system is ready.
+
+For a more detailed introduction and tutorial to Poplog Prolog under X
+see TEACH * xprolog
+
+-- Naming Conventions -------------------------------------------------
+
+Because initial uppercase letters in Prolog indicate that the item is a
+variable it has not been possible to exactly duplicate the Pop11 names
+of equivalent procedures.  Instead the following convention has been
+adopted: where a Pop11 procedure name has an uppercase letter
+in its name this is signaled by an underscore in the Prolog predicate
+name.  For example xpop11 has a procedure XpwDrawLine - in xprolog the
+predicate that corresponds to this is called xpw_draw_line.
+
+For the names of resources a similar convention is adopted.  Where
+xpop11 has a resource named XtNlineWidth, xprolog has a resource named
+line_width, with the initial XtN dropped and uppercase letters
+signaled by underscores.
+
+
+-- Handeling Widgets in Prolog ----------------------------------------
+
+In Prolog, rather than referring directly to widgets by the X structures
+as is done in pop11, the facility to attach atoms as names is provided.
+There are then used to reference the widget.  Each widget created
+through the Prolog interface must be assigned a unique atom name key at
+the time of its creation and this name is then used to refer to the
+widget from that point on.  In detail what occurs is that the actual
+widget record structure is placed in a property table hashed under the
+key of the specific atom.  When an atom is given to a Prolog xpw
+predicate this is used to retrieve the required widget record from the
+property table.
+
+For example, the call shown here creates a widget of class XpwGraphic,
+of size 400x200 at location 50,50 on the screen.  The first argument is
+a name used by the Xserver to name the window and by Prolog to access
+the X window structure, and the second argument list specifies the size
+and location.
+
+?- xpw_graphic_window(test,[50,50,400,200]).
+
+yes
+
+Having created a widget it is now possible to perform actions on simply
+by referring to its atom ID.  For example, given the widget created
+above, to draw a rectangle of size 100x50 with the top left corner at
+window location 5,5, the command
+
+?- xpw_draw_rectangle(test,[5,5,100,50]).
+
+
+Using atoms as keys for widgets in this way saves the user the overheads
+of having to pass complex structures around, instead, all that needs to
+be handled at the application level is an atom.
+
+See also REF *XpwPixmap
+
+
+-- Current Widget -----------------------------------------------------
+
+Xprolog has the notion of a current widget.  This allows the user to
+write code that does not need to specify the atom ID of the widget that
+it is to act upon.  Instead the user can designate any existing widget
+as the current widget, and from then on any predicates specified as
+acting on the current widget will act upon the correct widget.  For
+example, suppose, after creating the graphic window shown above the user
+did
+
+?- xpw_graphic_current(test).
+
+yes
+
+and her code contained lines such as, for example,
+
+    xpw_draw_line(current,[10,10,50,50])
+
+then the line would be draw on the widget specified by the ID test
+because this is the widget ID specified as the current widget. If the
+user subsequently created another widget, in addition to widget test
+then the call to xpw_draw_line shown above would continue to act on
+widget test until the user specified a new widget ID as the current
+widget.  It is also possible to ommit the name of the window altogether
+for some predicates - this will then assume that the command refers to
+the current window
+
+    xpw_draw_line([10,10,50,50])
+
+The identity of the current widget can be found by calling the predicate
+with a variable
+
+?- xpw_graphic_current(X).
+X = test ?
+yes
+
+Note that if the answer to a query like the above is <false> this means
+that no widget is specified as the current widget.  If the user attempts
+to set the current widget to an ID atom that refers to a dead widget, or
+a widget that does not exist then a mishap is caused.
+
+See also REF *xwidgets and TEACH * xprolog for a full introductory
+turtorial on window handling.
+
+
+-- Active Widgets -----------------------------------------------------
+
+In addition to having a specified `current' widget, xprolog gives the
+user access to the IDs of all active widgets.  To get at this
+information the predicate xpw_active_widgets/1 is used.  For example, if
+the user had created 3 widgets in a session, called test1, test2 and
+test3 and the second one had been destroyed then the widgets specified
+by IDs test1 and test3 would still be active.  To get at this
+information the following call could be used
+
+?- xpw_active_widgets(X).
+X = [test3, test1] ?
+yes
+
+See also REF *xwidgets
+
+
+-- Resources ----------------------------------------------------------
+
+Each of the libraries LIB *XpwCore *XpwPixmap and *XpwGraphic all add
+their own resources to Prolog's cache of resources - however in order
+for this to work LIB *xresources must be in place.  LIB *xresources
+defines the procedures needed to add resources to the cache as well as
+initializing the basic set of resources.  Before any resource related
+actions can be performed this library must have been loaded.
+
+The resources for a widget can be access in xprolog via the predicates
+xt_value/3 and xt_value/4 (see REF * xt_value for calling details).
+
+Prolog maintains a property table of X resource names mapped to Prolog
+widgets.  This means that users do not need to construct strings for
+themselves, rather they can use the Prolog atom corresponding to the
+resource name.  For example, to determine the line width of the current
+widget, the command
+
+?- xt_value(current,line_width,X).
+X = 2 ?
+yes
+
+would be used.  If the resource name is not known to Prolog then a
+mishap occurs and execution terminates.  The files REF *XpwCore
+*XpwPixmap and *XpwGraphic detail the resources made available by each
+library.
+
+Some resource values require coercion to be intelligible. To facilitate
+this xprolog provides a predicate xt_value/4 that is identical to
+xt_value/3 except that it takes a fourth argument specifying the
+coercion type to be used.  For example, to access the width of a widget
+that was 400 pixels wide, if one used the no-coercion xt_value then one
+would get an incorrect result:
+
+?- xt_value(current,width,X).
+X = 26214755 ?
+yes
+
+but if one used the coercing version then the result would be correct:
+
+?- xt_value(current,width,short,X).
+X = 400 ?
+yes
+
+If the user requires access to a resource that prolog does not know
+about then the predicates xt_value_nocheck/3 and xt_value_nocheck/4 can
+be used.  Unlike the xt_value predicates these versions do not check
+their resource names against the cache, instead the atom is converted
+directly into a null terminated string and passed to the X server.  It
+is thus up to the user to ensure that the resource name they supply is
+correct when using these predicates.
+
+For a list of the basic resources see REF *xresources  For a list of
+library specific resources see the REF file for the specific library.
+
+For a list of valid coercion types see REF *xt_value
+
+
+-- Further Documentation ----------------------------------------------
+
+REF *xwidgets
+REF *xresources
+REF *xt_value
+REF *xcallbacks
+REF *XpwCore
+REF *XpwPixmap
+REF *XpwGraphics
+REF *XpwMouse
+
+TEACH *xprolog
+
+
+
+--- C.all/x/plog/help/xprolog
+--- Copyright University of Sussex 1990. All rights reserved. ----------
